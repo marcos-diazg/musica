@@ -1,6 +1,4 @@
-# MutSignatures_ShinyApp
-
-Mutational Signatures Shiny App
+# Mutational Signatures Shiny App
 
 By Maria Vila-Casadesús & Marcos Díaz-Gay
 
