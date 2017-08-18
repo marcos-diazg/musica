@@ -2,6 +2,7 @@ library(shiny)
 
 shinyServer(function(input, output) {
 
+   #Changing maximum file size for uploading
    options(shiny.maxRequestSize=300*1024^2)
    
    
@@ -24,7 +25,6 @@ shinyServer(function(input, output) {
    })
    
    mut_mat <- reactive({ mut_matrix(vcfs(),ref_genome()) })
-
    
    output$prof96 <- renderPlot({
       plot_96_profile(mut_mat())
@@ -37,10 +37,23 @@ shinyServer(function(input, output) {
    
    fit_res <- reactive({ fit_to_signatures(mut_mat(), cancer_signatures) })
    
+   proposed_etiology <- c("Age","APOBEC","BRCA1 / BRCA2","Smoking","Unknown (all cancers)","Defective DNA MMR","UV light","Unknown (breast cancer and medulloblastoma)","POLH (CLL, BCL)","POLE","Alkylating agents","Unknown (liver cancer)","APOBEC","Unknown (hypermutation)","Defective DNA MMR","Unknown (liver cancer)","Unknown (different cancers)","Unknown (different cancers)","Unknown (pilocytic astrocytoma)","Defective DNA MMR","Unknown (stomach cancer / MSI tumors)","Aristolochic acid","Unknown (liver cancer)","Aflatoxin","Unknown (Hodgkin lynphoma)","Defective DNA MMR","Unknown (kidney clear cell carcinomas)","Unknown (stomach cancer)","Tobacco chewing","Unknown (breast cancer) / NTHL1")
+   
+
+   #divisionRel function creation to print final dataframe
+   divisionRel<-function(df){
+      sum_df<-sapply(df,sum)
+      for (i in 1:ncol(df)){
+         df[,i]<-df[,i]/sum_df[i]
+      }
+      return(df)
+   }
+   
+   
    output$contr <- renderDataTable({
-      fit_res()$contribution
+      data.frame(colnames(cancer_signatures), proposed_etiology, divisionRel(as.data.frame(fit_res()$contribution)))
    })
-  
+
 
    
 })
