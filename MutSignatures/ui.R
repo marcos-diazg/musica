@@ -13,7 +13,8 @@ shinyUI(fluidPage(
     ),
     
     mainPanel(
-       verbatimTextOutput("result")
+       plotOutput("prof96"),
+       dataTableOutput("contr")
     )
   )
 ))
