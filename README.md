@@ -1,8 +1,7 @@
 # Mutational Signatures Shiny App
 
-By Maria Vila-Casadesús & Marcos Díaz-Gay
+Authors: Marcos Díaz-Gay & Maria Vila-Casadesús
 
-Vamos a por un Primer Decil!!!
 
 # Example Shiny app
 
