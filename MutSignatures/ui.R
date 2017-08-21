@@ -15,8 +15,8 @@ shinyUI(fluidPage(
       mainPanel(
          tabsetPanel(type="tabs",
             tabPanel("Mutational profile of provided sample/s", plotOutput("prof96")),
-            tabPanel("Cosmic mutational signatures contributions", dataTableOutput("contr")),
-            tabPanel("Comparison with other cancers", dataTableOutput("known"))
+            tabPanel("Cosmic mutational signatures contributions", dataTableOutput("contr"), downloadButton("download_contr",label="Download table")),
+            tabPanel("Comparison with other cancers", dataTableOutput("known"), downloadButton("download_known",label="Download table"))
             )
       )
    )
