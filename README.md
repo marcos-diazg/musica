@@ -1,13 +1,11 @@
 # Mutational Signatures Shiny App
 
-Authors: Marcos Díaz-Gay & Maria Vila-Casadesús
+Mutational Signatures ShinyApp is an app aimed to ...
 
 
-# Example Shiny app
+# Running the app
 
-This is an example application for Shiny.
-The main purpose of this example is to illustrate how to run Shiny apps from a remote source.
-There are many ways to download and run it:
+There are many ways to download and run Mutational Signatures ShinyApp:
 
 First check the dependencies (you only need to do this once):
 
@@ -43,5 +41,6 @@ setwd("~/MutSignatures_ShinyApp/MutSignatures")
 runApp()
 ```
 
+Authors: Marcos Díaz-Gay & Maria Vila-Casadesús
 
 
