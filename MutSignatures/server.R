@@ -41,7 +41,6 @@ shinyServer(function(input, output) {
    
    known_cancer_signatures<-read.table("cancermatrix.csv",header=TRUE,sep="\t",row.names=1)
    
-
    #divisionRel function creation to print final dataframe
    divisionRel<-function(df){
       sum_df<-sapply(df,sum)
@@ -56,12 +55,11 @@ shinyServer(function(input, output) {
       data.frame(colnames(cancer_signatures), proposed_etiology, divisionRel(as.data.frame(fit_res()$contribution)))
    })
 
-   output$download_contr <- downloadHandler( filename="contr.csv", content=function (file){ write.csv(maketable()[[1]], file, row.names=FALSE, sep="\t", quote=FALSE) })
+   output$download_contr <- downloadHandler( filename="contr.csv", content=function (file){ write.table(x=data.frame(colnames(cancer_signatures), proposed_etiology, fit_res()$contribution), file=file, row.names=FALSE, sep="\t", quote=FALSE) })
    
    output$known<- renderDataTable(  { data.frame(colnames(cancer_signatures), divisionRel(as.data.frame(fit_res()$contribution)), known_cancer_signatures[c(-31),] ) } )
 
-   
-   output$download_known <- downloadHandler( filename="known.csv", content=function (file){ write.csv(maketable()[[1]], file, row.names=FALSE, sep="\t", quote=FALSE) })
+   output$download_known <- downloadHandler( filename="known.csv", content=function (file){ write.table(x=data.frame(colnames(cancer_signatures), fit_res()$contribution, known_cancer_signatures[c(-31),]), file=file, row.names=FALSE, sep="\t", quote=FALSE) })
    
    
 })
