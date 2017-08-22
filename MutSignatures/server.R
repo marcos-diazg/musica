@@ -57,11 +57,11 @@ shinyServer(function(input, output) {
       data.frame(colnames(cancer_signatures), proposed_etiology, divisionRel(as.data.frame(fit_res()$contribution)))
    })
 
-   output$download_contr <- downloadHandler( filename="contr.csv", content=function (file){ write.table(x=data.frame(colnames(cancer_signatures), proposed_etiology, fit_res()$contribution), file=file, row.names=FALSE, sep="\t", quote=FALSE) })
+   output$download_contr <- downloadHandler( filename="contr.csv", content=function (file){ write.table(x=data.frame(colnames(cancer_signatures), proposed_etiology, divisionRel(as.data.frame(fit_res()$contribution))), file=file, row.names=FALSE, sep="\t", quote=FALSE) })
    
    output$known<- renderDataTable(  { data.frame(colnames(cancer_signatures), divisionRel(as.data.frame(fit_res()$contribution)), known_cancer_signatures[c(-31),] ) } )
 
-   output$download_known <- downloadHandler( filename="known.csv", content=function (file){ write.table(x=data.frame(colnames(cancer_signatures), fit_res()$contribution, known_cancer_signatures[c(-31),]), file=file, row.names=FALSE, sep="\t", quote=FALSE, na="") })
+   output$download_known <- downloadHandler( filename="known.csv", content=function (file){ write.table(x=data.frame(colnames(cancer_signatures), divisionRel(as.data.frame(fit_res()$contribution)), known_cancer_signatures[c(-31),]), file=file, row.names=FALSE, sep="\t", quote=FALSE, na="") })
    
    output$heatmap_known <- renderPlot({
       a<-t(data.frame(fit_res()$contribution[30:1,], known_cancer_signatures[30:1,]))
@@ -83,10 +83,15 @@ shinyServer(function(input, output) {
          scale_fill_gradientn(colours = colorends, limits = c(0,3)) + labs(x="",y="")
    })
    
-   
-   
-   
-   
+   output$heatmap_signatures <- renderPlot({
+      a<-t(divisionRel(data.frame(fit_res()$contribution[30:1,])))
+      colnames(a)<-colnames(cancer_signatures)[30:1]
+      a.m<-reshape2::melt(as.matrix(a)) 
+      colorends <- c("white","red")
+      ggplot(a.m, aes(x=Var1, y=Var2)) + geom_tile(aes(fill = value),
+       colour = "white") + theme(axis.text.x=element_text(angle=90)) +
+       scale_fill_gradientn(colours = colorends, limits = c(0,max(a))) + labs(x="",y="")
+   })
    
    
 })
