@@ -3,19 +3,20 @@
 Mutational Signatures ShinyApp is an app aimed to ...
 
 
-# Running the app
+## Running the app
 
 There are many ways to download and run Mutational Signatures ShinyApp:
 
 First check the dependencies (you only need to do this once):
 
 ```R
-if(!require(MutationalPatterns)) source("http://www.bioconductor.org/biocLite.R");biocLite("MutationalPatterns")
-if(!require(BSgenome.Hsapiens.NCBI.GRCh38)) source("http://www.bioconductor.org/biocLite.R");biocLite("BSgenome.Hsapiens.NCBI.GRCh38")
-if(!require(BSgenome.Hsapiens.UCSC.hg19)) source("http://www.bioconductor.org/biocLite.R");biocLite("BSgenome.Hsapiens.UCSC.hg19")
-if(!require(BSgenome.Hsapiens.1000genomes.hs37d)) source("http://www.bioconductor.org/biocLite.R");biocLite("BSgenome.Hsapiens.1000genomes.hs37d")
+if(!require(MutationalPatterns)) {source("http://www.bioconductor.org/biocLite.R");biocLite("MutationalPatterns")}
+if(!require(BSgenome.Hsapiens.NCBI.GRCh38)) {source("http://www.bioconductor.org/biocLite.R");biocLite("BSgenome.Hsapiens.NCBI.GRCh38")}
+if(!require(BSgenome.Hsapiens.UCSC.hg19)) {source("http://www.bioconductor.org/biocLite.R");biocLite("BSgenome.Hsapiens.UCSC.hg19")}
+if(!require(BSgenome.Hsapiens.1000genomes.hs37d)) {source("http://www.bioconductor.org/biocLite.R");biocLite("BSgenome.Hsapiens.1000genomes.hs37d")}
 
 if(!require(ggplot2)) install.packages("ggplot2")
+if(!require(reshape2)) install.packages("reshape2")
 if(!require(shiny)) install.packages("shiny")
 ```
 

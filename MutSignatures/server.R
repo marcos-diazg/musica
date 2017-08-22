@@ -10,6 +10,8 @@ shinyServer(function(input, output) {
    library(BSgenome.Hsapiens.NCBI.GRCh38)
    library(BSgenome.Hsapiens.UCSC.hg19)
    library(BSgenome.Hsapiens.1000genomes.hs37d5)
+   library(reshape2)
+   library(ggplot2)
     
    ref_genome<-reactive({
       if (input$genome=="38") return ("BSgenome.Hsapiens.NCBI.GRCh38")
@@ -60,6 +62,31 @@ shinyServer(function(input, output) {
    output$known<- renderDataTable(  { data.frame(colnames(cancer_signatures), divisionRel(as.data.frame(fit_res()$contribution)), known_cancer_signatures[c(-31),] ) } )
 
    output$download_known <- downloadHandler( filename="known.csv", content=function (file){ write.table(x=data.frame(colnames(cancer_signatures), fit_res()$contribution, known_cancer_signatures[c(-31),]), file=file, row.names=FALSE, sep="\t", quote=FALSE, na="") })
+   
+   output$heatmap_known <- renderPlot({
+      a<-t(data.frame(fit_res()$contribution[30:1,], known_cancer_signatures[30:1,]))
+      colnames(a)<-colnames(cancer_signatures)[30:1]
+      
+      for (i in 1:(nrow(a)-40)) {
+         a[i,]<-a[i,]/max(a[i,])
+      }
+      a.m<-reshape2::melt(as.matrix(a)) 
+      a.m$category<-rep(c(rep("Sample",nrow(a)-40),rep("Cancers",40)),30)
+      sel<-which(a.m$category=="Cancers")
+      a.m[sel,"value"]<-a.m[sel,"value"]+2
+      a.m[is.na(a.m)] <- 0
+      
+      colorends <- c("white","red", "white", "blue")
+      
+      ggplot(a.m, aes(x=Var1, y=Var2)) + geom_tile(aes(fill = value),
+         colour = "white") + theme(axis.text.x=element_text(angle=90)) +
+         scale_fill_gradientn(colours = colorends, limits = c(0,3)) + labs(x="",y="")
+   })
+   
+   
+   
+   
+   
    
    
 })
