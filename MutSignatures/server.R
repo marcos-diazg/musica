@@ -39,7 +39,8 @@ shinyServer(function(input, output) {
    
    proposed_etiology <- c("Age","APOBEC","BRCA1 / BRCA2","Smoking","Unknown (all cancers)","Defective DNA MMR","UV light","Unknown (breast cancer and medulloblastoma)","POLH (CLL, BCL)","POLE","Alkylating agents","Unknown (liver cancer)","APOBEC","Unknown (hypermutation)","Defective DNA MMR","Unknown (liver cancer)","Unknown (different cancers)","Unknown (different cancers)","Unknown (pilocytic astrocytoma)","Defective DNA MMR","Unknown (stomach cancer / MSI tumors)","Aristolochic acid","Unknown (liver cancer)","Aflatoxin","Unknown (Hodgkin lynphoma)","Defective DNA MMR","Unknown (kidney clear cell carcinomas)","Unknown (stomach cancer)","Tobacco chewing","Unknown (breast cancer) / NTHL1")
    
-
+   known_cancer_signatures<-read.table("cancermatrix.csv",header=TRUE,sep="\t",row.names=1)
+   
    #divisionRel function creation to print final dataframe
    divisionRel<-function(df){
       sum_df<-sapply(df,sum)
@@ -54,6 +55,11 @@ shinyServer(function(input, output) {
       data.frame(colnames(cancer_signatures), proposed_etiology, divisionRel(as.data.frame(fit_res()$contribution)))
    })
 
+   output$download_contr <- downloadHandler( filename="contr.csv", content=function (file){ write.table(x=data.frame(colnames(cancer_signatures), proposed_etiology, fit_res()$contribution), file=file, row.names=FALSE, sep="\t", quote=FALSE) })
+   
+   output$known<- renderDataTable(  { data.frame(colnames(cancer_signatures), divisionRel(as.data.frame(fit_res()$contribution)), known_cancer_signatures[c(-31),] ) } )
 
+   output$download_known <- downloadHandler( filename="known.csv", content=function (file){ write.table(x=data.frame(colnames(cancer_signatures), fit_res()$contribution, known_cancer_signatures[c(-31),]), file=file, row.names=FALSE, sep="\t", quote=FALSE) })
+   
    
 })
