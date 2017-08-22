@@ -5,20 +5,26 @@ shinyServer(function(input, output) {
    #Changing maximum file size for uploading
    options(shiny.maxRequestSize=300*1024^2)
    
-   
+   #Library loading (according to genome version)
    library(MutationalPatterns)
-   library(BSgenome.Hsapiens.NCBI.GRCh38)
-   library(BSgenome.Hsapiens.UCSC.hg19)
-   library(BSgenome.Hsapiens.1000genomes.hs37d5)
-    
-   ref_genome<-reactive({
-      if (input$genome=="38") return ("BSgenome.Hsapiens.NCBI.GRCh38")
-      if (input$genome=="19") return ("BSgenome.Hsapiens.UCSC.hg19")
-      if (input$genome=="37") return ("BSgenome.Hsapiens.1000genomes.hs37d5")
-   })
 
+   ref_genome<-eventReactive(input$run,{
+      if (input$genome=="38"){
+         library("BSgenome.Hsapiens.NCBI.GRCh38")
+         return ("BSgenome.Hsapiens.NCBI.GRCh38")
+      }
+      if (input$genome=="19"){
+         library("BSgenome.Hsapiens.UCSC.hg19")
+         return ("BSgenome.Hsapiens.UCSC.hg19")
+      }
+      if (input$genome=="37"){
+         library ("BSgenome.Hsapiens.1000genomes.hs37d5")
+         return ("BSgenome.Hsapiens.1000genomes.hs37d5")
+      }
+   })
  
-   vcfs<-reactive({
+   #Reading vcf files as GRanges objects
+   vcfs<-eventReactive(input$run,{
       inFile<-input$fileinput
       if (input$datatype=="vcf")
          return(read_vcfs_as_granges(inFile$datapath,inFile$name,ref_genome()))
@@ -29,6 +35,7 @@ shinyServer(function(input, output) {
    output$prof96 <- renderPlot({
       plot_96_profile(mut_mat())
    })
+
    
    sp_url <- "http://cancer.sanger.ac.uk/cancergenome/assets/signatures_probabilities.txt"
    cancer_signatures <- read.table(sp_url, sep = "\t", header = TRUE)
@@ -45,19 +52,21 @@ shinyServer(function(input, output) {
    divisionRel<-function(df){
       sum_df<-sapply(df,sum)
       for (i in 1:ncol(df)){
-         df[,i]<-df[,i]/sum_df[i]
+         df[,i]<-round((df[,i]/sum_df[i])*100,2)
       }
       return(df)
    }
    
    
    output$contr <- renderDataTable({
-      data.frame(colnames(cancer_signatures), proposed_etiology, divisionRel(as.data.frame(fit_res()$contribution)))
-   })
+      data.frame(Signature = colnames(cancer_signatures), Proposed_Etiology = proposed_etiology, divisionRel(as.data.frame(fit_res()$contribution)))
+   },options = list(lengthChange=FALSE,pageLength=30, paging=FALSE,orderClassses=TRUE))
 
    output$download_contr <- downloadHandler( filename="contr.csv", content=function (file){ write.table(x=data.frame(colnames(cancer_signatures), proposed_etiology, fit_res()$contribution), file=file, row.names=FALSE, sep="\t", quote=FALSE) })
    
-   output$known<- renderDataTable(  { data.frame(colnames(cancer_signatures), divisionRel(as.data.frame(fit_res()$contribution)), known_cancer_signatures[c(-31),] ) } )
+   output$known<- renderDataTable({
+      data.frame(colnames(cancer_signatures), divisionRel(as.data.frame(fit_res()$contribution)), known_cancer_signatures[c(-31),] )
+      })
 
    output$download_known <- downloadHandler( filename="known.csv", content=function (file){ write.table(x=data.frame(colnames(cancer_signatures), fit_res()$contribution, known_cancer_signatures[c(-31),]), file=file, row.names=FALSE, sep="\t", quote=FALSE) })
    
