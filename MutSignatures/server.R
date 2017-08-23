@@ -2,6 +2,7 @@ library(shiny)
 library(shinyBS)
 library(shinysky)
 library(shinyjs)
+library(shinythemes)
 
 shinyServer(function(input, output) {
    
@@ -35,28 +36,31 @@ shinyServer(function(input, output) {
       }
    })
  
-   #Reading vcf files as GRanges objects
+   #Reading input files as GRanges objects
    vcfs<-eventReactive(input$run,{
       inFile<-input$fileinput
 
-#      withProgress(message="Running",value=0,{
-      
+         #VCF
          if (input$datatype=="vcf") return(read_vcfs_as_granges(inFile$datapath,inFile$name,ref_genome(),group = "auto+sex", check_alleles = TRUE))
          
-#         incProgress(0.5,detail="GRanges")
-         
-#      })
-      
+         #TSV
+         if (input$datatype=="tsv"){
+            aux<-read.table(inFile$datapath,header=T,sep="\t")
+            colnames(aux)[1]<-"#CHROM"
+            aux$ID<-"."
+            aux$QUAL<-"."
+            aux$FILTER<-"PASS"
+            aux<-aux[,c("#CHROM","POS","ID","REF","ALT","QUAL","FILTER")]
+            write.table(aux,file="aux.txt",quote=F,sep="\t")
+            
+            return(read_vcfs_as_granges("./aux.txt",inFile$name,ref_genome(),group = "auto+sex", check_alleles = TRUE))
+         }
+
+
    })
       
    mut_mat <- reactive({
-#      withProgress(message="Running",value=0.5, {
          return(mut_matrix(vcfs(),ref_genome()))
-         
-#         incProgress(0.5,detail="mut_matrix")
-#      })
-         
-         
    })
       
       
