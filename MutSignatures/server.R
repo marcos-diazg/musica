@@ -16,6 +16,7 @@ shinyServer(function(input, output) {
    
    #Library loading (according to genome version)
    library(MutationalPatterns)
+   library(xlsx)
 
    ref_genome<-eventReactive(input$run,{
       if (input$genome=="38"){
@@ -51,9 +52,24 @@ shinyServer(function(input, output) {
             aux$QUAL<-"."
             aux$FILTER<-"PASS"
             aux<-aux[,c("#CHROM","POS","ID","REF","ALT","QUAL","FILTER")]
-            write.table(aux,file="aux.txt",quote=F,sep="\t")
+            ff<-tempfile("tp",fileext=".tsv")
+            write.table(aux,file=ff,row.names=F,quote=F,sep="\t")
             
-            return(read_vcfs_as_granges("./aux.txt",inFile$name,ref_genome(),group = "auto+sex", check_alleles = TRUE))
+            return(read_vcfs_as_granges(ff,inFile$name,ref_genome(),group = "auto+sex", check_alleles = TRUE))
+         }
+      
+         #Excel
+         if (input$datatype=="Excel"){
+            aux<-read.xlsx(inFile$datapath,1)
+            colnames(aux)[1]<-"#CHROM"
+            aux$ID<-"."
+            aux$QUAL<-"."
+            aux$FILTER<-"PASS"
+            aux<-aux[,c("#CHROM","POS","ID","REF","ALT","QUAL","FILTER")]
+            ff2<-tempfile("tp",fileext=".tsv")
+            write.table(aux,file=ff,row.names=F,quote=F,sep="\t")
+            
+            return(read_vcfs_as_granges(ff2,inFile$name,ref_genome(),group = "auto+sex", check_alleles = TRUE))
          }
 
 

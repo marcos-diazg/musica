@@ -87,7 +87,7 @@ shinyUI(fluidPage(
             )
          )
       )
-   ),
+   )
 
-   bsTooltip("datatype","Choose the format of the input file")
+#   bsTooltip("datatype","Choose the format of the input file")
 ))
