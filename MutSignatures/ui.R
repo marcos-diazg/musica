@@ -18,8 +18,9 @@ shinyUI(fluidPage(
    sidebarLayout(
       
       sidebarPanel(
-
-         radioButtons("datatype", "Input format", c("vcf","tsv","Excel"),selected = "vcf",inline = TRUE),
+         
+         #Input format
+         radioButtons("datatype", "Input format", c("vcf","maf","tsv","Excel"),selected = "vcf",inline = TRUE),
          
          #Help menu for format of input file
          actionLink("helpformat","Help with input file format"),
@@ -48,15 +49,18 @@ shinyUI(fluidPage(
          
          hr(),
          
+         #File uploading
          fileInput("fileinput","Upload your file/s", multiple=TRUE),
          helpText("Multiple files uploading is allowed"),
          
          hr(),
          
+         #Genome selection
          selectInput("genome","Reference Genome",c("NCBI GRCh38"="38","UCSC hg38"="hg38","UCSC hg19"="19","1000genomes hs37d5"="37"),selected="37"),
          
+         #Run button
          actionButton("run","Run"),
-         busyIndicator("Calculation in progress",wait=0)
+         busyIndicator("Running",wait=0)
          
       ),
       

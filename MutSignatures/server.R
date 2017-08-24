@@ -44,9 +44,20 @@ shinyServer(function(input, output) {
          #VCF
          if (input$datatype=="vcf") return(read_vcfs_as_granges(inFile$datapath,inFile$name,ref_genome(),group = "auto+sex", check_alleles = TRUE))
          
+         #MAF
+         if (input$datatype=="maf"){
+            
+         }
+      
          #TSV
          if (input$datatype=="tsv"){
             aux<-read.table(inFile$datapath,header=T,sep="\t")
+            
+            #Condition in case "chr" prefix is present at CHROM column in input file
+            if (length(grep("chr",aux))>0){
+               aux$CHROM<-sapply(strsplit(aux$CHROM,"chr"),"[",2)
+            }
+            
             colnames(aux)[1]<-"#CHROM"
             aux$ID<-"."
             aux$QUAL<-"."
@@ -61,13 +72,19 @@ shinyServer(function(input, output) {
          #Excel
          if (input$datatype=="Excel"){
             aux<-read.xlsx(inFile$datapath,1)
+            
+            #Condition in case "chr" prefix is present at CHROM column in input file
+            if (length(grep("chr",aux))>0){
+               aux$CHROM<-sapply(strsplit(aux$CHROM,"chr"),"[",2)
+            }
+            
             colnames(aux)[1]<-"#CHROM"
             aux$ID<-"."
             aux$QUAL<-"."
             aux$FILTER<-"PASS"
             aux<-aux[,c("#CHROM","POS","ID","REF","ALT","QUAL","FILTER")]
             ff2<-tempfile("tp",fileext=".tsv")
-            write.table(aux,file=ff,row.names=F,quote=F,sep="\t")
+            write.table(aux,file=ff2,row.names=F,quote=F,sep="\t")
             
             return(read_vcfs_as_granges(ff2,inFile$name,ref_genome(),group = "auto+sex", check_alleles = TRUE))
          }
@@ -80,16 +97,9 @@ shinyServer(function(input, output) {
    })
       
       
-      
+   #Output 96 nucleotide changes profile (samples individually)   
    output$prof96 <- renderPlot({
-#      withProgress(message="Running",value=0,{
-         
-#         incProgress(0.5,detail="a")
-         
          plot_96_profile(mut_mat())
-         
-#         incProgress(0.5,detail="b")
- #     })
    })
 
    
