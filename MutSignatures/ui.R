@@ -77,15 +77,16 @@ shinyUI(fluidPage(
                tabPanel("Cosmic mutational signatures contributions",
                         br(),
                         downloadButton("download_contr",label="Download table"),
+                        plotOutput("heatmap_signatures"),
                         dataTableOutput("contr")
                ),
                
                tabPanel("Comparison with other cancers",
                         br(),
                         downloadButton("download_known",label="Download table"),
-                        dataTableOutput("known")
+                        plotOutput("heatmap_known")
                )
-                               
+                          
             ) 
          )
       )

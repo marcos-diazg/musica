@@ -16,6 +16,8 @@ shinyServer(function(input, output) {
    
    #Library loading (according to genome version)
    library(MutationalPatterns)
+   library(reshape2)
+   library(ggplot2)
 
    ref_genome<-eventReactive(input$run,{
       if (input$genome=="38"){
@@ -128,13 +130,37 @@ shinyServer(function(input, output) {
       data.frame(Signature = 1:30, Proposed_Etiology = proposed_etiology, divisionRel(as.data.frame(fit_res()$contribution)))
    },options = list(lengthChange=FALSE,pageLength=30, paging=FALSE))
 
-   output$download_contr <- downloadHandler( filename="contr.csv", content=function (file){ write.table(x=data.frame(colnames(cancer_signatures), proposed_etiology, fit_res()$contribution), file=file, row.names=FALSE, sep="\t", quote=FALSE) })
+   output$download_contr <- downloadHandler( filename="contr.csv", content=function (file){ write.table(x=data.frame(colnames(cancer_signatures), proposed_etiology, divisionRel(as.data.frame(fit_res()$contribution))), file=file, row.names=FALSE, sep="\t", quote=FALSE) })
+      
+   output$heatmap_known <- renderPlot({
+      a<-t(data.frame(fit_res()$contribution[30:1,], known_cancer_signatures[30:1,]))
+      colnames(a)<-colnames(cancer_signatures)[30:1]
+      
+      for (i in 1:(nrow(a)-40)) {
+         a[i,]<-a[i,]/max(a[i,])
+      }
+      a.m<-reshape2::melt(as.matrix(a)) 
+      a.m$category<-rep(c(rep("Sample",nrow(a)-40),rep("Cancers",40)),30)
+      sel<-which(a.m$category=="Cancers")
+      a.m[sel,"value"]<-a.m[sel,"value"]+2
+      a.m[is.na(a.m)] <- 0
+      
+      colorends <- c("white","red", "white", "blue")
+      
+      ggplot(a.m, aes(x=Var1, y=Var2)) + geom_tile(aes(fill = value),
+         colour = "white") + theme(axis.text.x=element_text(angle=90)) +
+         scale_fill_gradientn(colours = colorends, limits = c(0,3)) + labs(x="",y="")
+   })
    
-   output$known<- renderDataTable({
-      data.frame(Signature = 1:30, divisionRel(as.data.frame(fit_res()$contribution)), known_cancer_signatures[c(-31),] )
-      },options = list(lengthChange=FALSE,pageLength=30, paging=FALSE))
-
-   output$download_known <- downloadHandler( filename="known.csv", content=function (file){ write.table(x=data.frame(colnames(cancer_signatures), fit_res()$contribution, known_cancer_signatures[c(-31),]), file=file, row.names=FALSE, sep="\t", quote=FALSE) })
+   output$heatmap_signatures <- renderPlot({
+      a<-t(divisionRel(data.frame(fit_res()$contribution[30:1,])))
+      colnames(a)<-colnames(cancer_signatures)[30:1]
+      a.m<-reshape2::melt(as.matrix(a)) 
+      colorends <- c("white","red")
+      ggplot(a.m, aes(x=Var1, y=Var2)) + geom_tile(aes(fill = value),
+       colour = "white") + theme(axis.text.x=element_text(angle=90)) +
+       scale_fill_gradientn(colours = colorends, limits = c(0,max(a))) + labs(x="",y="")
+   })
    
    
 })
