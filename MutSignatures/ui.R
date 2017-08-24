@@ -42,9 +42,7 @@ shinyUI(fluidPage(
                      </p>
                      <p>
                      <u>Excel</u>: Excel file (xls and xlsx extensions are both valid) with the same structure of four required fields described above (CHROM, POS, REF and ALT).
-                     </p>
-                     
-                     ")
+                     </p>")
          ),
          
          hr(),
@@ -88,10 +86,10 @@ shinyUI(fluidPage(
                         dataTableOutput("known")
                )
                                
-            )
+            ) 
          )
       )
    )
 
-#   bsTooltip("datatype","Choose the format of the input file")
+#   ,bsTooltip("datatype","Choose the format of the input file")
 ))

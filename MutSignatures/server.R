@@ -16,7 +16,6 @@ shinyServer(function(input, output) {
    
    #Library loading (according to genome version)
    library(MutationalPatterns)
-   library(xlsx)
 
    ref_genome<-eventReactive(input$run,{
       if (input$genome=="38"){
@@ -71,6 +70,7 @@ shinyServer(function(input, output) {
       
          #Excel
          if (input$datatype=="Excel"){
+            library(xlsx)
             aux<-read.xlsx(inFile$datapath,1)
             
             #Condition in case "chr" prefix is present at CHROM column in input file
