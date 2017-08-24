@@ -1,36 +1,109 @@
 library(shiny)
+library(shinyBS)
+library(shinysky)
+library(shinyjs)
+library(shinythemes)
 
 shinyServer(function(input, output) {
+   
+   #Hidding tabs of mainpanel (results)
+   observeEvent(input$run,{
+      shinyjs::show(id="mainpanel",anim=TRUE,animType="slide")
+   })
 
    #Changing maximum file size for uploading
    options(shiny.maxRequestSize=300*1024^2)
    
-   
+   #Library loading (according to genome version)
    library(MutationalPatterns)
-   library(BSgenome.Hsapiens.NCBI.GRCh38)
-   library(BSgenome.Hsapiens.UCSC.hg19)
-   library(BSgenome.Hsapiens.1000genomes.hs37d5)
    library(reshape2)
    library(ggplot2)
-    
-   ref_genome<-reactive({
-      if (input$genome=="38") return ("BSgenome.Hsapiens.NCBI.GRCh38")
-      if (input$genome=="19") return ("BSgenome.Hsapiens.UCSC.hg19")
-      if (input$genome=="37") return ("BSgenome.Hsapiens.1000genomes.hs37d5")
+
+   ref_genome<-eventReactive(input$run,{
+      if (input$genome=="38"){
+         library("BSgenome.Hsapiens.NCBI.GRCh38")
+         return ("BSgenome.Hsapiens.NCBI.GRCh38")
+      }
+      if (input$genome=="19"){
+         library("BSgenome.Hsapiens.UCSC.hg19")
+         return ("BSgenome.Hsapiens.UCSC.hg19")
+      }
+      if (input$genome=="37"){
+         library ("BSgenome.Hsapiens.1000genomes.hs37d5")
+         return ("BSgenome.Hsapiens.1000genomes.hs37d5")
+      }
+      if (input$genome=="hg38"){
+         library("BSgenome.Hsapiens.UCSC.hg38")
+         return("BSgenome.Hsapiens.UCSC.hg38")
+      }
+   })
+ 
+   #Reading input files as GRanges objects
+   vcfs<-eventReactive(input$run,{
+      inFile<-input$fileinput
+
+         #VCF
+         if (input$datatype=="vcf") return(read_vcfs_as_granges(inFile$datapath,inFile$name,ref_genome(),group = "auto+sex", check_alleles = TRUE))
+         
+         #MAF
+         if (input$datatype=="maf"){
+            
+         }
+      
+         #TSV
+         if (input$datatype=="tsv"){
+            aux<-read.table(inFile$datapath,header=T,sep="\t")
+            
+            #Condition in case "chr" prefix is present at CHROM column in input file
+            if (length(grep("chr",aux))>0){
+               aux$CHROM<-sapply(strsplit(aux$CHROM,"chr"),"[",2)
+            }
+            
+            colnames(aux)[1]<-"#CHROM"
+            aux$ID<-"."
+            aux$QUAL<-"."
+            aux$FILTER<-"PASS"
+            aux<-aux[,c("#CHROM","POS","ID","REF","ALT","QUAL","FILTER")]
+            ff<-tempfile("tp",fileext=".tsv")
+            write.table(aux,file=ff,row.names=F,quote=F,sep="\t")
+            
+            return(read_vcfs_as_granges(ff,inFile$name,ref_genome(),group = "auto+sex", check_alleles = TRUE))
+         }
+      
+         #Excel
+         if (input$datatype=="Excel"){
+            library(xlsx)
+            aux<-read.xlsx(inFile$datapath,1)
+            
+            #Condition in case "chr" prefix is present at CHROM column in input file
+            if (length(grep("chr",aux))>0){
+               aux$CHROM<-sapply(strsplit(aux$CHROM,"chr"),"[",2)
+            }
+            
+            colnames(aux)[1]<-"#CHROM"
+            aux$ID<-"."
+            aux$QUAL<-"."
+            aux$FILTER<-"PASS"
+            aux<-aux[,c("#CHROM","POS","ID","REF","ALT","QUAL","FILTER")]
+            ff2<-tempfile("tp",fileext=".tsv")
+            write.table(aux,file=ff2,row.names=F,quote=F,sep="\t")
+            
+            return(read_vcfs_as_granges(ff2,inFile$name,ref_genome(),group = "auto+sex", check_alleles = TRUE))
+         }
+
+
+   })
+      
+   mut_mat <- reactive({
+         return(mut_matrix(vcfs(),ref_genome()))
+   })
+      
+      
+   #Output 96 nucleotide changes profile (samples individually)   
+   output$prof96 <- renderPlot({
+         plot_96_profile(mut_mat())
    })
 
- 
-   vcfs<-reactive({
-      inFile<-input$fileinput
-      if (input$datatype=="vcf")
-         return(read_vcfs_as_granges(inFile$datapath,inFile$name,ref_genome()))
-   })
-   
-   mut_mat <- reactive({ mut_matrix(vcfs(),ref_genome()) })
-   
-   output$prof96 <- renderPlot({
-      plot_96_profile(mut_mat())
-   })
    
    sp_url <- "http://cancer.sanger.ac.uk/cancergenome/assets/signatures_probabilities.txt"
    cancer_signatures <- read.table(sp_url, sep = "\t", header = TRUE)
@@ -47,22 +120,18 @@ shinyServer(function(input, output) {
    divisionRel<-function(df){
       sum_df<-sapply(df,sum)
       for (i in 1:ncol(df)){
-         df[,i]<-df[,i]/sum_df[i]
+         df[,i]<-round((df[,i]/sum_df[i]),3)
       }
       return(df)
    }
    
    
    output$contr <- renderDataTable({
-      data.frame(colnames(cancer_signatures), proposed_etiology, divisionRel(as.data.frame(fit_res()$contribution)))
-   })
+      data.frame(Signature = 1:30, Proposed_Etiology = proposed_etiology, divisionRel(as.data.frame(fit_res()$contribution)))
+   },options = list(lengthChange=FALSE,pageLength=30, paging=FALSE))
 
    output$download_contr <- downloadHandler( filename="contr.csv", content=function (file){ write.table(x=data.frame(colnames(cancer_signatures), proposed_etiology, divisionRel(as.data.frame(fit_res()$contribution))), file=file, row.names=FALSE, sep="\t", quote=FALSE) })
-   
-   output$known<- renderDataTable(  { data.frame(colnames(cancer_signatures), divisionRel(as.data.frame(fit_res()$contribution)), known_cancer_signatures[c(-31),] ) } )
-
-   output$download_known <- downloadHandler( filename="known.csv", content=function (file){ write.table(x=data.frame(colnames(cancer_signatures), divisionRel(as.data.frame(fit_res()$contribution)), known_cancer_signatures[c(-31),]), file=file, row.names=FALSE, sep="\t", quote=FALSE, na="") })
-   
+      
    output$heatmap_known <- renderPlot({
       a<-t(data.frame(fit_res()$contribution[30:1,], known_cancer_signatures[30:1,]))
       colnames(a)<-colnames(cancer_signatures)[30:1]
