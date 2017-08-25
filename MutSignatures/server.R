@@ -40,10 +40,21 @@ shinyServer(function(input, output) {
       inFile<-input$fileinput
 
          #VCF
-         if (input$datatype=="VCF") return(read_vcfs_as_granges(inFile$datapath,inFile$name,ref_genome(),group = "auto+sex", check_alleles = TRUE))
-         
+         if (input$datatype=="VCF"){
+            #Warning for file format
+            validate(
+               need(length(grep(".vcf",inFile$datapath))>0 | length(grep(".txt",inFile$datapath))>0,"File format error, please select the correct input file format before uploading your file/s.")
+            )
+            return(read_vcfs_as_granges(inFile$datapath,inFile$name,ref_genome(),group = "auto+sex", check_alleles = TRUE))
+         }
          #MAF
          if (input$datatype=="MAF"){
+            
+            #Warning for file format
+            validate(
+               need(length(grep(".maf",inFile$datapath))>0 | length(grep(".txt",inFile$datapath))>0,"File format error, please select the correct input file format before uploading your file/s.")
+            )
+            
             aux<-fread(inFile$datapath,header=T,sep="\t",skip="#",data.table=F)
             aux<-aux[,c("Chromosome","Start_Position","Reference_Allele","Tumor_Seq_Allele2","Tumor_Sample_Barcode")]
             colnames(aux)[1:4]<-c("#CHROM","POS","REF","ALT")
@@ -68,6 +79,12 @@ shinyServer(function(input, output) {
       
          #TSV
          if (input$datatype=="TSV"){
+            
+            #Warning for file format
+            validate(
+               need(length(grep(".tsv",inFile$datapath))>0 | length(grep(".txt",inFile$datapath))>0,"File format error, please select the correct input file format before uploading your file/s.")
+            )
+            
             aux<-fread(inFile$datapath,header=T,sep="\t",data.table=F)
             
             #Condition in case "chr" prefix is present at CHROM column in input file
@@ -88,6 +105,12 @@ shinyServer(function(input, output) {
       
          #Excel
          if (input$datatype=="Excel"){
+            
+            #Warning for file format
+            validate(
+               need(length(grep(".xlsx",inFile$datapath))>0 | length(grep(".xls",inFile$datapath))>0,"File format error, please select the correct input file format before uploading your file/s.")
+            )
+            
             library(xlsx)
             aux<-read.xlsx(inFile$datapath,1)
             

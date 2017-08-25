@@ -57,7 +57,7 @@ shinyUI(fluidPage(
          hr(),
          
          #Genome selection
-         selectInput("genome","Reference Genome",c("UCSC hg38"="hg38","UCSC hg19"="19","1000genomes hs37d5"="37"),selected="37"),
+         selectInput("genome","Reference Genome",c("UCSC GRCh38/hg38"="hg38","UCSC GRCh37/hg19"="19","1000genomes hs37d5"="37"),selected="hg38"),
          
          #Run button
          actionButton("run","Run"),
