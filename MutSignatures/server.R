@@ -130,8 +130,6 @@ shinyServer(function(input, output) {
             return(read_vcfs_as_granges(ff2,inFile$name,ref_genome(),group = "auto+sex", check_alleles = TRUE))
          }
 
-
-      
    })
       
    mut_mat <- reactive({
