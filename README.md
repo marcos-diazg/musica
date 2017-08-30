@@ -50,6 +50,6 @@ setwd("~/MutSignatures_ShinyApp/MutSignatures")
 runApp()
 ```
 
-Authors: Marcos Díaz-Gay & Maria Vila-Casadesús
+Authors: Marcos Díaz-Gay, Sebastià Franch-Expósito & Maria Vila-Casadesús
 
 
