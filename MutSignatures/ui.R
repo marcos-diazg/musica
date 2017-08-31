@@ -23,30 +23,8 @@ shinyUI(fluidPage(
          radioButtons("datatype", "Input format", c("VCF","MAF","TSV","Excel"),selected = "VCF",inline = TRUE),
          
          #Help menu for format of input file
-         actionLink("helpformat","Help with input file format"),
-         bsModal("modal","HELP: Input file format","helpformat",
-                 HTML(
-                     "<p>Format of the input file provided to this aplication should be one of the following options (multiple files uploading is allowed in all cases):
-                     </p>
-                     <p>
-                     <u>VCF (Variant Call Format)</u>: Default file format for variant calling and annotation according to the specification provided <a href=https://samtools.github.io/hts-specs/VCFv4.2.pdf>here</a> (optimized for 4.2 version).
-                     </p>
-                     <p>
-                     <u>MAF (Mutation Annotation Format)</u>: File format widely used for variant annotation in TCGA public available data. A complete specification may be consulted <a href=https://wiki.nci.nih.gov/display/TCGA/Mutation+Annotation+Format+%28MAF%29+Specification>here</a>.
-                     </p>
-                     <p>
-                     <u>TSV (Tab-Separated Values)</u>: plain text file with four required fields separated by a tab character. A header line is mandatory and the four headers must be provided as listed below:</p>
-                     <ol>
-                     <li>CHROM - Chromosome, ‘chr’ prefix is optional (e.g. ‘chr10’ and ’10’ are both valid).</li>
-                     <li>POS - Chomosomal coordinate of reference allele.</li>
-                     <li>REF - Reference allele at position given above.</li>
-                     <li>ALT - Observed alternate allele.</li>
-                     </ol>
-                     </p>
-                     <p>
-                     <u>Excel</u>: Excel file (xls and xlsx extensions are both valid) with the same structure of four required fields described above (CHROM, POS, REF and ALT).
-                     </p>")
-         ),
+         actionLink("helpformat","Help with input file format", icon=icon("question-circle-o")),
+         bsModal("modal","HELP: Input file format","helpformat", includeHTML("../aux_files/help_with_input.html")),
          
          hr(),
          
