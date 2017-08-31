@@ -13,7 +13,7 @@ shinyUI(fluidPage(
    useShinyjs(),
   
    #Title
-   titlePanel("Mutational Signatures"),
+   titlePanel("MutSignatures"),
   
    sidebarLayout(
       
@@ -26,7 +26,7 @@ shinyUI(fluidPage(
          actionLink("helpformat","Help with input file format"),
          bsModal("modal","HELP: Input file format","helpformat",
                  HTML(
-                     "<p>Format of the input file provided to this aplication should be one of the following options:
+                     "<p>Format of the input file provided to this aplication should be one of the following options (multiple files uploading is allowed in all cases):
                      </p>
                      <p>
                      <u>VCF (Variant Call Format)</u>: Default file format for variant calling and annotation according to the specification provided <a href=https://samtools.github.io/hts-specs/VCFv4.2.pdf>here</a> (optimized for 4.2 version).
@@ -52,7 +52,7 @@ shinyUI(fluidPage(
          
          #File uploading
          fileInput("fileinput","Upload your file/s", multiple=TRUE),
-         helpText("Multiple files uploading is allowed"),
+#         helpText("Multiple files uploading is allowed"),
          
          hr(),
          

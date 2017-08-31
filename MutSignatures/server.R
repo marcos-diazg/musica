@@ -12,13 +12,14 @@ shinyServer(function(input, output) {
    })
 
    #Changing maximum file size for uploading
-   options(shiny.maxRequestSize=300*1024^2)
+   options(shiny.maxRequestSize=500*1024^2)
    
    #Library loading (according to genome version)
    library(MutationalPatterns)
    library(reshape2)
    library(ggplot2)
    library(data.table)
+   library(VariantAnnotation)
    
    ref_genome<-eventReactive(input$run,{
       if (input$genome=="19"){
@@ -45,6 +46,15 @@ shinyServer(function(input, output) {
             validate(
                need(length(grep(".vcf",inFile$datapath))>0 | length(grep(".txt",inFile$datapath))>0,"File format error, please select the correct input file format before uploading your file/s.")
             )
+            
+            #Filtering steps
+#            vcfilter<-readVcfAsVRanges(inFile$datapath)
+            
+            
+            
+            
+            
+            #Read vcf for MutationalPatterns
             return(read_vcfs_as_granges(inFile$datapath,inFile$name,ref_genome(),group = "auto+sex", check_alleles = TRUE))
          }
          #MAF
