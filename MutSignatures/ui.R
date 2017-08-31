@@ -13,26 +13,29 @@ shinyUI(fluidPage(
    useShinyjs(),
   
    #Title
-   titlePanel("Mutational Signatures"),
+   titlePanel("MutSignatures"),
   
    sidebarLayout(
       
       sidebarPanel(
          
          #Input format
-         radioButtons("datatype", "Input format", c("vcf","maf","tsv","Excel"),selected = "vcf",inline = TRUE),
+         radioButtons("datatype", "Input format", c("VCF","MAF","TSV","Excel"),selected = "VCF",inline = TRUE),
          
          #Help menu for format of input file
          actionLink("helpformat","Help with input file format"),
          bsModal("modal","HELP: Input file format","helpformat",
                  HTML(
-                     "<p>Format of the input file provided to this aplication should be one of the following options:
+                     "<p>Format of the input file provided to this aplication should be one of the following options (multiple files uploading is allowed in all cases):
                      </p>
                      <p>
-                     <u>vcf</u>: Variant Call Format according to the specification provided <a href=https://samtools.github.io/hts-specs/VCFv4.2.pdf>here</a> (optimized for 4.2 version).
+                     <u>VCF (Variant Call Format)</u>: Default file format for variant calling and annotation according to the specification provided <a href=https://samtools.github.io/hts-specs/VCFv4.2.pdf>here</a> (optimized for 4.2 version).
                      </p>
                      <p>
-                     <u>tsv</u>: Tab Separated Values plain text file with four required fields. A header line is mandatory and the four headers must be provided as listed below:</p>
+                     <u>MAF (Mutation Annotation Format)</u>: File format widely used for variant annotation in TCGA public available data. A complete specification may be consulted <a href=https://wiki.nci.nih.gov/display/TCGA/Mutation+Annotation+Format+%28MAF%29+Specification>here</a>.
+                     </p>
+                     <p>
+                     <u>TSV (Tab-Separated Values)</u>: plain text file with four required fields separated by a tab character. A header line is mandatory and the four headers must be provided as listed below:</p>
                      <ol>
                      <li>CHROM - Chromosome, ‘chr’ prefix is optional (e.g. ‘chr10’ and ’10’ are both valid).</li>
                      <li>POS - Chomosomal coordinate of reference allele.</li>
@@ -49,12 +52,12 @@ shinyUI(fluidPage(
          
          #File uploading
          fileInput("fileinput","Upload your file/s", multiple=TRUE),
-         helpText("Multiple files uploading is allowed"),
+#         helpText("Multiple files uploading is allowed"),
          
          hr(),
          
          #Genome selection
-         selectInput("genome","Reference Genome",c("NCBI GRCh38"="38","UCSC hg38"="hg38","UCSC hg19"="19","1000genomes hs37d5"="37"),selected="37"),
+         selectInput("genome","Reference Genome",c("UCSC GRCh38/hg38"="hg38","UCSC GRCh37/hg19"="19","1000genomes hs37d5"="37"),selected="hg38"),
          
          #Run button
          actionButton("run","Run"),

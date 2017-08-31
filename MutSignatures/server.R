@@ -12,18 +12,16 @@ shinyServer(function(input, output) {
    })
 
    #Changing maximum file size for uploading
-   options(shiny.maxRequestSize=300*1024^2)
+   options(shiny.maxRequestSize=500*1024^2)
    
    #Library loading (according to genome version)
    library(MutationalPatterns)
    library(reshape2)
    library(ggplot2)
-
+   library(data.table)
+   library(VariantAnnotation)
+   
    ref_genome<-eventReactive(input$run,{
-      if (input$genome=="38"){
-         library("BSgenome.Hsapiens.NCBI.GRCh38")
-         return ("BSgenome.Hsapiens.NCBI.GRCh38")
-      }
       if (input$genome=="19"){
          library("BSgenome.Hsapiens.UCSC.hg19")
          return ("BSgenome.Hsapiens.UCSC.hg19")
@@ -43,16 +41,61 @@ shinyServer(function(input, output) {
       inFile<-input$fileinput
 
          #VCF
-         if (input$datatype=="vcf") return(read_vcfs_as_granges(inFile$datapath,inFile$name,ref_genome(),group = "auto+sex", check_alleles = TRUE))
-         
-         #MAF
-         if (input$datatype=="maf"){
+         if (input$datatype=="VCF"){
+            #Warning for file format
+            validate(
+               need(length(grep(".vcf",inFile$datapath))>0 | length(grep(".txt",inFile$datapath))>0,"File format error, please select the correct input file format before uploading your file/s.")
+            )
             
+            #Filtering steps
+#            vcfilter<-readVcfAsVRanges(inFile$datapath)
+            
+            
+            
+            
+            
+            #Read vcf for MutationalPatterns
+            return(read_vcfs_as_granges(inFile$datapath,inFile$name,ref_genome(),group = "auto+sex", check_alleles = TRUE))
+         }
+         #MAF
+         if (input$datatype=="MAF"){
+            
+            #Warning for file format
+            validate(
+               need(length(grep(".maf",inFile$datapath))>0 | length(grep(".txt",inFile$datapath))>0,"File format error, please select the correct input file format before uploading your file/s.")
+            )
+            
+            aux<-fread(inFile$datapath,header=T,sep="\t",skip="#",data.table=F)
+            aux<-aux[,c("Chromosome","Start_Position","Reference_Allele","Tumor_Seq_Allele2","Tumor_Sample_Barcode")]
+            colnames(aux)[1:4]<-c("#CHROM","POS","REF","ALT")
+            
+            #Condition in case "chr" prefix is present at CHROM column in input file
+            if (length(grep("chr",aux))>0){
+               aux[,c("#CHROM")]<-sapply(strsplit(aux[,c("#CHROM")],"chr"),"[",2)
+            }
+            
+            aux$ID<-"."
+            aux$QUAL<-"."
+            aux$FILTER<-"PASS"
+            aux<-aux[,c("#CHROM","POS","ID","REF","ALT","QUAL","FILTER","Tumor_Sample_Barcode")]
+            aux_list<-split(aux,f=aux$Tumor_Sample_Barcode)
+            aux_list<-lapply(aux_list,"[",c(1:7))
+            ff<-sapply(aux_list,function(i){tempfile(pattern="tp",fileext=".vcf")})
+            for (i in 1:length(aux_list)){
+               write.table(aux_list[[i]],file=ff[i],row.names=F,quote=F,sep="\t")
+            }
+            return(read_vcfs_as_granges(ff,names(ff),ref_genome(),group = "auto+sex", check_alleles = TRUE))
          }
       
          #TSV
-         if (input$datatype=="tsv"){
-            aux<-read.table(inFile$datapath,header=T,sep="\t")
+         if (input$datatype=="TSV"){
+            
+            #Warning for file format
+            validate(
+               need(length(grep(".tsv",inFile$datapath))>0 | length(grep(".txt",inFile$datapath))>0,"File format error, please select the correct input file format before uploading your file/s.")
+            )
+            
+            aux<-fread(inFile$datapath,header=T,sep="\t",data.table=F)
             
             #Condition in case "chr" prefix is present at CHROM column in input file
             if (length(grep("chr",aux))>0){
@@ -64,7 +107,7 @@ shinyServer(function(input, output) {
             aux$QUAL<-"."
             aux$FILTER<-"PASS"
             aux<-aux[,c("#CHROM","POS","ID","REF","ALT","QUAL","FILTER")]
-            ff<-tempfile("tp",fileext=".tsv")
+            ff<-tempfile("tp",fileext=".vcf")
             write.table(aux,file=ff,row.names=F,quote=F,sep="\t")
             
             return(read_vcfs_as_granges(ff,inFile$name,ref_genome(),group = "auto+sex", check_alleles = TRUE))
@@ -72,6 +115,12 @@ shinyServer(function(input, output) {
       
          #Excel
          if (input$datatype=="Excel"){
+            
+            #Warning for file format
+            validate(
+               need(length(grep(".xlsx",inFile$datapath))>0 | length(grep(".xls",inFile$datapath))>0,"File format error, please select the correct input file format before uploading your file/s.")
+            )
+            
             library(xlsx)
             aux<-read.xlsx(inFile$datapath,1)
             
@@ -85,12 +134,11 @@ shinyServer(function(input, output) {
             aux$QUAL<-"."
             aux$FILTER<-"PASS"
             aux<-aux[,c("#CHROM","POS","ID","REF","ALT","QUAL","FILTER")]
-            ff2<-tempfile("tp",fileext=".tsv")
+            ff2<-tempfile("tp",fileext=".vcf")
             write.table(aux,file=ff2,row.names=F,quote=F,sep="\t")
             
             return(read_vcfs_as_granges(ff2,inFile$name,ref_genome(),group = "auto+sex", check_alleles = TRUE))
          }
-
 
    })
       
