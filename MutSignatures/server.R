@@ -159,6 +159,9 @@ shinyServer(function(input, output) {
    cancer_signatures <- as.matrix(cancer_signatures[,4:33])
    
    fit_res <- reactive({ fit_to_signatures(mut_mat(), cancer_signatures) })
+   ### add mean contribution
+   my_contributions<- reactive({ data.frame( fit_res()$contribution, mean= apply(fit_res()$contribution,1,mean) ) 
+   })
    
    proposed_etiology <- c("Age","APOBEC","BRCA1 / BRCA2","Smoking","Unknown (all cancers)","Defective DNA MMR","UV light","Unknown (breast cancer and medulloblastoma)","POLH (CLL, BCL)","POLE","Alkylating agents","Unknown (liver cancer)","APOBEC","Unknown (hypermutation)","Defective DNA MMR","Unknown (liver cancer)","Unknown (different cancers)","Unknown (different cancers)","Unknown (pilocytic astrocytoma)","Defective DNA MMR","Unknown (stomach cancer / MSI tumors)","Aristolochic acid","Unknown (liver cancer)","Aflatoxin","Unknown (Hodgkin lynphoma)","Defective DNA MMR","Unknown (kidney clear cell carcinomas)","Unknown (stomach cancer)","Tobacco chewing","Unknown (breast cancer) / NTHL1")
    
@@ -173,12 +176,13 @@ shinyServer(function(input, output) {
       return(df)
    }
    
+
    
    output$contr <- renderDataTable({
-      data.frame(Signature = 1:30, Proposed_Etiology = proposed_etiology, divisionRel(as.data.frame(fit_res()$contribution)))
+      data.frame(Signature = 1:30, Proposed_Etiology = proposed_etiology, divisionRel(my_contributions()))
    },options = list(lengthChange=FALSE,pageLength=30, paging=FALSE))
 
-   output$download_contr <- downloadHandler( filename="contr.csv", content=function (file){ write.table(x=data.frame(colnames(cancer_signatures), proposed_etiology, divisionRel(as.data.frame(fit_res()$contribution))), file=file, row.names=FALSE, sep="\t", quote=FALSE) })
+   output$download_contr <- downloadHandler( filename="contr.csv", content=function (file){ write.table(x=data.frame(colnames(cancer_signatures), proposed_etiology, divisionRel(my_contributions())), file=file, row.names=FALSE, sep="\t", quote=FALSE) })
       
    output$heatmap_known <- renderPlot({
       a<-t(data.frame(fit_res()$contribution[30:1,], known_cancer_signatures[30:1,]))
@@ -201,7 +205,7 @@ shinyServer(function(input, output) {
    })
    
    output$heatmap_signatures <- renderPlot({
-      a<-t(divisionRel(data.frame(fit_res()$contribution[30:1,])))
+      a<-t(divisionRel(my_contributions()[30:1,]))
       colnames(a)<-colnames(cancer_signatures)[30:1]
       a.m<-reshape2::melt(as.matrix(a)) 
       colorends <- c("white","red")

@@ -43,6 +43,15 @@ shinyUI(fluidPage(
          
       ),
       
+
+
+    #      sidebarPanel(
+   
+     # ),
+
+
+
+
       #Hidding tabs of mainpanel (results)
       hidden(
     
