@@ -183,23 +183,29 @@ shinyServer(function(input, output) {
    #nnames<-reactive(get(my_contributions))
    
    output$selected_samples<-renderUI({
-      mysamp<-c(colnames(as.data.frame(fit_res()$contribution)),"mean")
-      selectInput("mysamp","Select your samples",mysamp, multiple=TRUE, selectize = FALSE, size=6)
+      mysamp<-c("All",colnames(as.data.frame(fit_res()$contribution)),"mean")
+      selectInput("mysamp","Select your samples",mysamp, multiple=TRUE, selectize = FALSE, size=6, selected="All")
    })
  
       my_contributions<- reactive({ 
-         if("mean" %in% input$mysamp) {      
-            if (length(input$mysamp)>2) {
-            return(data.frame( fit_res()$contribution[,input$mysamp[-length(input$mysamp)]], mean= apply(fit_res()$contribution[,input$mysamp[-length(input$mysamp)]],1,mean) ) )
-            } else {
-               return(data.frame(fit_res()$contribution[,input$mysamp[-length(input$mysamp)]] ))    
-            }
+         if ("All" %in% input$mysamp) {
+            return(data.frame( fit_res()$contribution,mean= apply(fit_res()$contribution,1,mean)))
          } else {
-            if (length(input$mysamp)>2) {
-               return(data.frame( fit_res()$contribution[,input$mysamp] ))   
+         
+           if("mean" %in% input$mysamp) {      
+              if (length(input$mysamp)>2) {
+              return(data.frame( fit_res()$contribution[,input$mysamp[-length(input$mysamp)]], mean= apply(fit_res()$contribution[,input$mysamp[-length(input$mysamp)]],1,mean) ) )
+               } else {
+                 return(data.frame(fit_res()$contribution[,input$mysamp[-length(input$mysamp)]] ))    
+               }
             } else {
-               return(data.frame( fit_res()$contribution[,input$mysamp] ))   
-            }   
+               if (length(input$mysamp)>2) {
+                  return(data.frame( fit_res()$contribution[,input$mysamp] ))   
+               } else {
+                  return(data.frame( fit_res()$contribution[,input$mysamp] ))   
+               }   
+            }
+            
          }
       })
 
@@ -212,7 +218,7 @@ shinyServer(function(input, output) {
    
    
    output$heatmap_signatures <- renderPlot({
-      a<-t(divisionRel(my_contributions()[30:1,]))
+      a<-t(divisionRel(as.data.frame(my_contributions()[30:1,])))
       colnames(a)<-colnames(cancer_signatures)[30:1]
       a.m<-reshape2::melt(as.matrix(a)) 
       colorends <- c("white","red")
@@ -224,7 +230,7 @@ shinyServer(function(input, output) {
    output$download_signatures_plot <- downloadHandler (
       filename = "signatures_plot.pdf", ### search how to download tiff, or options
       content = function(ff) {
-         a<-t(divisionRel(my_contributions()[30:1,]))
+         a<-t(divisionRel(as.data.frame(my_contributions()[30:1,])))
          colnames(a)<-colnames(cancer_signatures)[30:1]
          a.m<-reshape2::melt(as.matrix(a)) 
          colorends <- c("white","red")
