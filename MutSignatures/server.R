@@ -218,13 +218,14 @@ shinyServer(function(input, output) {
    })
    
    output$donwload_signatures_plot <- downloadHandler (
-      filename = "signatures_plot.tiff", ### search how to download tiff, or options
+      filename = "signatures_plot.pdf", ### search how to download tiff, or options
       content = function(ff) {
-         pdf(ff,height=7*ppi,width=7*ppi,res=ppi)
          a<-t(divisionRel(my_contributions()[30:1,]))
          colnames(a)<-colnames(cancer_signatures)[30:1]
          a.m<-reshape2::melt(as.matrix(a)) 
          colorends <- c("white","red")
+   #     tiff(ff,height=7*ppi,width=7*ppi,res=ppi,compression="lzw")
+         pdf(ff)
          ggplot(a.m, aes(x=Var1, y=Var2)) + geom_tile(aes(fill = value),
             colour = "white") + theme(axis.text.x=element_text(angle=90)) +
             scale_fill_gradientn(colours = colorends, limits = c(0,max(a))) + labs(x="",y="")
