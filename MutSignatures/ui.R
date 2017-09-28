@@ -68,7 +68,7 @@ shinyUI(fluidPage(
                         br(),
                         downloadButton("download_contr",label="Download table"),
                         plotOutput("heatmap_signatures"),
-                        downloadButton("download_signatures_plot",label="Download plot"),
+                       # downloadButton("download_signatures_plot",label="Download plot"),
                         dataTableOutput("contr")
                ),
                
