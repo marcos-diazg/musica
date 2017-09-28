@@ -64,7 +64,11 @@ shinyUI(fluidPage(
                         br(),
                         downloadButton("download_contr",label="Download table"),
                         plotOutput("heatmap_signatures"),
-                        downloadButton("download_signatures_plot",label="Download plot"),
+                        downloadButton("download_signatures_plot_ID",label="Download plot"),
+                        bsModal("modal_signatures","Download plot","download_signatures_plot_ID", 
+                                radioButtons("type_signatures_plot","Format",c("pdf","png","tiff")),
+                                downloadButton("download_signatures_plot","OK")),
+                  
                         dataTableOutput("contr")
                ),
                
@@ -72,8 +76,10 @@ shinyUI(fluidPage(
                         br(),
                         downloadButton("download_known",label="Download table"),
                         plotOutput("heatmap_known"),
-                        downloadButton("download_known_plot_tiff",label="Download plot (tiff)"),
-                        downloadButton("download_known_plot",label="Download plot")
+                        downloadButton("download_known_plot_ID",label="Download plot"),
+                        bsModal("modal_known","Download plot","download_known_plot_ID", 
+                                radioButtons("type_known_plot","Format",c("pdf","png","tiff")),
+                                downloadButton("download_known_plot","OK"))
                         )
                           
             ) 

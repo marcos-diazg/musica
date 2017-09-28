@@ -179,14 +179,14 @@ shinyServer(function(input, output) {
    }
    
 
-   
-   #nnames<-reactive(get(my_contributions))
-   
+   ## Plot selectize to select samples to plot.
    output$selected_samples<-renderUI({
       mysamp<-c("All",colnames(as.data.frame(fit_res()$contribution)),"mean")
       selectInput("mysamp","Select your samples",mysamp, multiple=TRUE, selectize = FALSE, size=6, selected="All")
    })
  
+   
+   ### Select which samples use to plot.
       my_contributions<- reactive({ 
          if ("All" %in% input$mysamp) {
             return(data.frame( fit_res()$contribution,mean= apply(fit_res()$contribution,1,mean)))
@@ -228,7 +228,7 @@ shinyServer(function(input, output) {
    })
    
    output$download_signatures_plot <- downloadHandler (
-      filename = "signatures_plot.pdf", ### search how to download tiff, or options
+      filename = function(){paste("signatures_plot",input$type_signatures_plot, sep=".")}, 
       content = function(ff) {
          a<-t(divisionRel(as.data.frame(my_contributions()[30:1,])))
          colnames(a)<-colnames(cancer_signatures)[30:1]
@@ -239,8 +239,9 @@ shinyServer(function(input, output) {
          ggplot(a.m, aes(x=Var1, y=Var2)) + geom_tile(aes(fill = value),
                                                       colour = "white") + theme(axis.text.x=element_text(angle=90)) +
             scale_fill_gradientn(colours = colorends, limits = c(0,max(a))) + labs(x="",y="")
-         ggsave(ff)
-         #dev.off()
+         if (input$type_signatures_plot=="pdf") ggsave(ff)
+         if (input$type_signatures_plot=="png") ggsave(ff)
+         if (input$type_signatures_plot=="tiff") ggsave(ff,compression="lzw")
       })
    
    
@@ -267,7 +268,7 @@ shinyServer(function(input, output) {
    })
    
   
-   output$download_known_plot <- downloadHandler(filename = "comparison_with_other.pdf", content=function (ff) {
+   output$download_known_plot <- downloadHandler(filename = function(){paste("comparison_with_other",input$type_known_plot, sep=".")}, content=function (ff) {
       
       a<-t(data.frame(my_contributions()[30:1,], known_cancer_signatures[30:1,]))
       colnames(a)<-colnames(cancer_signatures)[30:1]
@@ -286,37 +287,11 @@ shinyServer(function(input, output) {
       ggplot(a.m, aes(x=Var1, y=Var2)) + geom_tile(aes(fill = value),
                                                    colour = "white") + theme(axis.text.x=element_text(angle=90)) +
          scale_fill_gradientn(colours = colorends, limits = c(0,3)) + labs(x="",y="")
-      ggsave(ff)
+      if (input$type_known_plot=="pdf") ggsave(ff)
+      if (input$type_known_plot=="png") ggsave(ff)
+      if (input$type_known_plot=="tiff") ggsave(ff,compression="lzw")
       
    })
-   
-   output$download_known_plot_tiff <- downloadHandler(filename = "comparison_with_other.tiff", content=function (ff) {
-      
-      a<-t(data.frame(my_contributions()[30:1,], known_cancer_signatures[30:1,]))
-      colnames(a)<-colnames(cancer_signatures)[30:1]
-      
-      for (i in 1:(nrow(a)-40)) {
-         a[i,]<-a[i,]/max(a[i,])
-      }
-      a.m<-reshape2::melt(as.matrix(a)) 
-      a.m$category<-rep(c(rep("Sample",nrow(a)-40),rep("Cancers",40)),30)
-      sel<-which(a.m$category=="Cancers")
-      a.m[sel,"value"]<-a.m[sel,"value"]+2
-      a.m[is.na(a.m)] <- 0
-      
-      colorends <- c("white","red", "white", "blue")
-      
-      ggplot(a.m, aes(x=Var1, y=Var2)) + geom_tile(aes(fill = value),
-                                                   colour = "white") + theme(axis.text.x=element_text(angle=90)) +
-         scale_fill_gradientn(colours = colorends, limits = c(0,3)) + labs(x="",y="")
-      ggsave(ff,dpi=ppi,compression="lzw")
-      
-   })
-   
-   
-   
-
-   
    
    
    
