@@ -205,7 +205,7 @@ shinyServer(function(input, output) {
 
    
    output$contr <- renderDataTable({
-      data.frame(Signature = 1:30, Proposed_Etiology = proposed_etiology, divisionRel(my_contributions()[,as.character(input$mysamp)]))
+      data.frame(Signature = 1:30, Proposed_Etiology = proposed_etiology, divisionRel(my_contributions()))
    },options = list(lengthChange=FALSE,pageLength=30, paging=FALSE))
    
    output$download_contr <- downloadHandler( filename="contr.csv", content=function (file){ write.table(x=data.frame(colnames(cancer_signatures), proposed_etiology, divisionRel(my_contributions())), file=file, row.names=FALSE, sep="\t", quote=FALSE) })
@@ -241,7 +241,7 @@ shinyServer(function(input, output) {
    ### Comparison with other cancers
             
    output$heatmap_known <- renderPlot({
-      a<-t(data.frame(fit_res()$contribution[30:1,], known_cancer_signatures[30:1,]))
+      a<-t(data.frame(my_contributions()[30:1,], known_cancer_signatures[30:1,]))
       colnames(a)<-colnames(cancer_signatures)[30:1]
       
       for (i in 1:(nrow(a)-40)) {
@@ -263,7 +263,7 @@ shinyServer(function(input, output) {
   
    output$download_known_plot <- downloadHandler(filename = "comparison_with_other.pdf", content=function (ff) {
       
-      a<-t(data.frame(fit_res()$contribution[30:1,], known_cancer_signatures[30:1,]))
+      a<-t(data.frame(my_contributions()[30:1,], known_cancer_signatures[30:1,]))
       colnames(a)<-colnames(cancer_signatures)[30:1]
   
       for (i in 1:(nrow(a)-40)) {
@@ -286,7 +286,7 @@ shinyServer(function(input, output) {
    
    output$download_known_plot_tiff <- downloadHandler(filename = "comparison_with_other.tiff", content=function (ff) {
       
-      a<-t(data.frame(fit_res()$contribution[30:1,], known_cancer_signatures[30:1,]))
+      a<-t(data.frame(my_contributions()[30:1,], known_cancer_signatures[30:1,]))
       colnames(a)<-colnames(cancer_signatures)[30:1]
       
       for (i in 1:(nrow(a)-40)) {
