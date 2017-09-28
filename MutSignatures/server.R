@@ -180,13 +180,47 @@ shinyServer(function(input, output) {
    }
    
 
+
+   
+   
+   ### Cosmic mutational signatures contributions
    
    output$contr <- renderDataTable({
       data.frame(Signature = 1:30, Proposed_Etiology = proposed_etiology, divisionRel(my_contributions()))
    },options = list(lengthChange=FALSE,pageLength=30, paging=FALSE))
-
+   
    output$download_contr <- downloadHandler( filename="contr.csv", content=function (file){ write.table(x=data.frame(colnames(cancer_signatures), proposed_etiology, divisionRel(my_contributions())), file=file, row.names=FALSE, sep="\t", quote=FALSE) })
-      
+   
+   
+   output$heatmap_signatures <- renderPlot({
+      a<-t(divisionRel(my_contributions()[30:1,]))
+      colnames(a)<-colnames(cancer_signatures)[30:1]
+      a.m<-reshape2::melt(as.matrix(a)) 
+      colorends <- c("white","red")
+      ggplot(a.m, aes(x=Var1, y=Var2)) + geom_tile(aes(fill = value),
+                                                   colour = "white") + theme(axis.text.x=element_text(angle=90)) +
+         scale_fill_gradientn(colours = colorends, limits = c(0,max(a))) + labs(x="",y="")
+   })
+   
+   output$download_signatures_plot <- downloadHandler (
+      filename = "signatures_plot.pdf", ### search how to download tiff, or options
+      content = function(ff) {
+         a<-t(divisionRel(my_contributions()[30:1,]))
+         colnames(a)<-colnames(cancer_signatures)[30:1]
+         a.m<-reshape2::melt(as.matrix(a)) 
+         colorends <- c("white","red")
+         #     tiff(ff,height=7*ppi,width=7*ppi,res=ppi,compression="lzw")
+         #     pdf(ff)
+         ggplot(a.m, aes(x=Var1, y=Var2)) + geom_tile(aes(fill = value),
+                                                      colour = "white") + theme(axis.text.x=element_text(angle=90)) +
+            scale_fill_gradientn(colours = colorends, limits = c(0,max(a))) + labs(x="",y="")
+         ggsave(ff)
+         #dev.off()
+      })
+   
+   
+   ### Comparison with other cancers
+            
    output$heatmap_known <- renderPlot({
       a<-t(data.frame(fit_res()$contribution[30:1,], known_cancer_signatures[30:1,]))
       colnames(a)<-colnames(cancer_signatures)[30:1]
@@ -207,33 +241,35 @@ shinyServer(function(input, output) {
          scale_fill_gradientn(colours = colorends, limits = c(0,3)) + labs(x="",y="")
    })
    
-   output$heatmap_signatures <- renderPlot({
-      a<-t(divisionRel(my_contributions()[30:1,]))
+  
+   output$download_known_plot <- downloadHandler(filename = "comparison_with_other.pdf", content=function (ff) {
+      
+      a<-t(data.frame(fit_res()$contribution[30:1,], known_cancer_signatures[30:1,]))
       colnames(a)<-colnames(cancer_signatures)[30:1]
+  
+      for (i in 1:(nrow(a)-40)) {
+         a[i,]<-a[i,]/max(a[i,])
+      }
       a.m<-reshape2::melt(as.matrix(a)) 
-      colorends <- c("white","red")
+      a.m$category<-rep(c(rep("Sample",nrow(a)-40),rep("Cancers",40)),30)
+      sel<-which(a.m$category=="Cancers")
+      a.m[sel,"value"]<-a.m[sel,"value"]+2
+      a.m[is.na(a.m)] <- 0
+      
+      colorends <- c("white","red", "white", "blue")
+      
       ggplot(a.m, aes(x=Var1, y=Var2)) + geom_tile(aes(fill = value),
-       colour = "white") + theme(axis.text.x=element_text(angle=90)) +
-       scale_fill_gradientn(colours = colorends, limits = c(0,max(a))) + labs(x="",y="")
+                                                   colour = "white") + theme(axis.text.x=element_text(angle=90)) +
+         scale_fill_gradientn(colours = colorends, limits = c(0,3)) + labs(x="",y="")
+      ggsave(ff)
+      
    })
    
-   output$download_known_plot <- downloadHandler (
-      filename = "signatures_plot.pdf", ### search how to download tiff, or options
-      content = function(ff) {
-         a<-t(divisionRel(my_contributions()[30:1,]))
-         colnames(a)<-colnames(cancer_signatures)[30:1]
-         a.m<-reshape2::melt(as.matrix(a)) 
-         colorends <- c("white","red")
-   #     tiff(ff,height=7*ppi,width=7*ppi,res=ppi,compression="lzw")
-         pdf(ff)
-         a<- ggplot(a.m, aes(x=Var1, y=Var2)) + geom_tile(aes(fill = value),
-            colour = "white") + theme(axis.text.x=element_text(angle=90)) +
-            scale_fill_gradientn(colours = colorends, limits = c(0,max(a))) + labs(x="",y="")
-         a
-         dev.off()
-   })
    
-   #downloadButton("download_known_plot",label="Download plot")
+   
+   
+
+   
    
    
    
