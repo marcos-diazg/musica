@@ -68,14 +68,16 @@ shinyUI(fluidPage(
                         br(),
                         downloadButton("download_contr",label="Download table"),
                         plotOutput("heatmap_signatures"),
+                        downloadButton("download_signatures_plot",label="Download plot"),
                         dataTableOutput("contr")
                ),
                
                tabPanel("Comparison with other cancers",
                         br(),
                         downloadButton("download_known",label="Download table"),
-                        plotOutput("heatmap_known")
-               )
+                        plotOutput("heatmap_known"),
+                        downloadButton("download_known_plot",label="Download plot")
+                        )
                           
             ) 
          )
