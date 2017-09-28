@@ -39,6 +39,7 @@ shinyServer(function(input, output) {
       }
    })
  
+   
    #Reading input files as GRanges objects
    vcfs<-eventReactive(input$run,{
       inFile<-input$fileinput
@@ -163,8 +164,6 @@ shinyServer(function(input, output) {
    
    fit_res <- reactive({ fit_to_signatures(mut_mat(), cancer_signatures) })
    ### add mean contribution
-   my_contributions<- reactive({ data.frame( fit_res()$contribution, mean= apply(fit_res()$contribution,1,mean) ) 
-   })
    
    proposed_etiology <- c("Age","APOBEC","BRCA1 / BRCA2","Smoking","Unknown (all cancers)","Defective DNA MMR","UV light","Unknown (breast cancer and medulloblastoma)","POLH (CLL, BCL)","POLE","Alkylating agents","Unknown (liver cancer)","APOBEC","Unknown (hypermutation)","Defective DNA MMR","Unknown (liver cancer)","Unknown (different cancers)","Unknown (different cancers)","Unknown (pilocytic astrocytoma)","Defective DNA MMR","Unknown (stomach cancer / MSI tumors)","Aristolochic acid","Unknown (liver cancer)","Aflatoxin","Unknown (Hodgkin lynphoma)","Defective DNA MMR","Unknown (kidney clear cell carcinomas)","Unknown (stomach cancer)","Tobacco chewing","Unknown (breast cancer) / NTHL1")
    
@@ -180,13 +179,33 @@ shinyServer(function(input, output) {
    }
    
 
+   
+   #nnames<-reactive(get(my_contributions))
+   
+   output$selected_samples<-renderUI({
+      mysamp<-c(colnames(as.data.frame(fit_res()$contribution)),"mean")
+      selectInput("mysamp","Select your samples",mysamp, multiple=TRUE, selectize = FALSE, size=6)
+   })
+ 
+      my_contributions<- reactive({ 
+         if("mean" %in% input$mysamp) {      
+            if (length(input$mysamp)>2) {
+            return(data.frame( fit_res()$contribution[,input$mysamp[-length(input$mysamp)]], mean= apply(fit_res()$contribution[,input$mysamp[-length(input$mysamp)]],1,mean) ) )
+            } else {
+               return(data.frame(fit_res()$contribution[,input$mysamp[-length(input$mysamp)]] ))    
+            }
+         } else {
+            if (length(input$mysamp)>2) {
+               return(data.frame( fit_res()$contribution[,input$mysamp] ))   
+            } else {
+               return(data.frame( fit_res()$contribution[,input$mysamp] ))   
+            }   
+         }
+      })
 
    
-   
-   ### Cosmic mutational signatures contributions
-   
    output$contr <- renderDataTable({
-      data.frame(Signature = 1:30, Proposed_Etiology = proposed_etiology, divisionRel(my_contributions()))
+      data.frame(Signature = 1:30, Proposed_Etiology = proposed_etiology, divisionRel(my_contributions()[,as.character(input$mysamp)]))
    },options = list(lengthChange=FALSE,pageLength=30, paging=FALSE))
    
    output$download_contr <- downloadHandler( filename="contr.csv", content=function (file){ write.table(x=data.frame(colnames(cancer_signatures), proposed_etiology, divisionRel(my_contributions())), file=file, row.names=FALSE, sep="\t", quote=FALSE) })
@@ -265,6 +284,28 @@ shinyServer(function(input, output) {
       
    })
    
+   output$download_known_plot_tiff <- downloadHandler(filename = "comparison_with_other.tiff", content=function (ff) {
+      
+      a<-t(data.frame(fit_res()$contribution[30:1,], known_cancer_signatures[30:1,]))
+      colnames(a)<-colnames(cancer_signatures)[30:1]
+      
+      for (i in 1:(nrow(a)-40)) {
+         a[i,]<-a[i,]/max(a[i,])
+      }
+      a.m<-reshape2::melt(as.matrix(a)) 
+      a.m$category<-rep(c(rep("Sample",nrow(a)-40),rep("Cancers",40)),30)
+      sel<-which(a.m$category=="Cancers")
+      a.m[sel,"value"]<-a.m[sel,"value"]+2
+      a.m[is.na(a.m)] <- 0
+      
+      colorends <- c("white","red", "white", "blue")
+      
+      ggplot(a.m, aes(x=Var1, y=Var2)) + geom_tile(aes(fill = value),
+                                                   colour = "white") + theme(axis.text.x=element_text(angle=90)) +
+         scale_fill_gradientn(colours = colorends, limits = c(0,3)) + labs(x="",y="")
+      ggsave(ff,dpi=ppi,compression="lzw")
+      
+   })
    
    
    

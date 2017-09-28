@@ -36,19 +36,15 @@ shinyUI(fluidPage(
          
          #Genome selection
          selectInput("genome","Reference Genome",c("UCSC GRCh38/hg38"="hg38","UCSC GRCh37/hg19"="19","1000genomes hs37d5"="37"),selected="hg38"),
-         
+
+         uiOutput("selected_samples"),
+
          #Run button
          actionButton("run","Run"),
          busyIndicator("Running",wait=0)
          
       ),
       
-
-
-    #      sidebarPanel(
-   
-     # ),
-
 
 
 
@@ -76,6 +72,7 @@ shinyUI(fluidPage(
                         br(),
                         downloadButton("download_known",label="Download table"),
                         plotOutput("heatmap_known"),
+                        downloadButton("download_known_plot_tiff",label="Download plot (tiff)"),
                         downloadButton("download_known_plot",label="Download plot")
                         )
                           
