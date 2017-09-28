@@ -248,14 +248,18 @@ shinyServer(function(input, output) {
    ### Comparison with other cancers
             
    output$heatmap_known <- renderPlot({
-      a<-t(data.frame(my_contributions()[30:1,], known_cancer_signatures[30:1,]))
+      
+      if ("All" %in% input$mycancers) my.sel.cancers<-colnames(known_cancer_signatures)
+      else my.sel.cancers<-intersect(input$mycancers,colnames(known_cancer_signatures))
+      
+      a<-t(data.frame(my_contributions()[30:1,], known_cancer_signatures[30:1,my.sel.cancers]))
       colnames(a)<-colnames(cancer_signatures)[30:1]
       
-      for (i in 1:(nrow(a)-40)) {
+      for (i in 1:(nrow(a)-length(my.sel.cancers))) {
          a[i,]<-a[i,]/max(a[i,])
       }
       a.m<-reshape2::melt(as.matrix(a)) 
-      a.m$category<-rep(c(rep("Sample",nrow(a)-40),rep("Cancers",40)),30)
+      a.m$category<-rep(c(rep("Sample",nrow(a)-length(my.sel.cancers)),rep("Cancers",length(my.sel.cancers))),30)
       sel<-which(a.m$category=="Cancers")
       a.m[sel,"value"]<-a.m[sel,"value"]+2
       a.m[is.na(a.m)] <- 0
@@ -270,14 +274,18 @@ shinyServer(function(input, output) {
   
    output$download_known_plot <- downloadHandler(filename = function(){paste("comparison_with_other",input$type_known_plot, sep=".")}, content=function (ff) {
       
-      a<-t(data.frame(my_contributions()[30:1,], known_cancer_signatures[30:1,]))
+      if ("All" %in% input$mycancers) my.sel.cancers<-colnames(known_cancer_signatures)
+      else my.sel.cancers<-intersect(input$mycancers,colnames(known_cancer_signatures))
+      
+      
+      a<-t(data.frame(my_contributions()[30:1,], known_cancer_signatures[30:1,my.sel.cancers]))
       colnames(a)<-colnames(cancer_signatures)[30:1]
   
-      for (i in 1:(nrow(a)-40)) {
+      for (i in 1:(nrow(a)-length(my.sel.cancers))) {
          a[i,]<-a[i,]/max(a[i,])
       }
       a.m<-reshape2::melt(as.matrix(a)) 
-      a.m$category<-rep(c(rep("Sample",nrow(a)-40),rep("Cancers",40)),30)
+      a.m$category<-rep(c(rep("Sample",nrow(a)-length(my.sel.cancers)),rep("Cancers",length(my.sel.cancers))),30)
       sel<-which(a.m$category=="Cancers")
       a.m[sel,"value"]<-a.m[sel,"value"]+2
       a.m[is.na(a.m)] <- 0
