@@ -335,7 +335,7 @@ shinyServer(function(input, output) {
       } else {
          par(mar = c(0,0,0,0))
          plot(c(0, 1), c(0, 1), ann = F, bty = 'n', type = 'n', xaxt = 'n', yaxt = 'n')
-         text(x = 0.5, y = 0.5, paste("The plot only works with >=3 samples"), 
+         text(x = 0.5, y = 0.5, paste("PCA analysis works only with >=3 samples"), 
               cex = 1.6, col = "black")
       }
 
@@ -365,7 +365,7 @@ shinyServer(function(input, output) {
          } else {
             par(mar = c(0,0,0,0))
             plot(c(0, 1), c(0, 1), ann = F, bty = 'n', type = 'n', xaxt = 'n', yaxt = 'n')
-            text(x = 0.5, y = 0.5, paste("The plot only works with >=3 samples"), 
+            text(x = 0.5, y = 0.5, paste("PCA analysis works only with >=3 samples"), 
                  cex = 1.6, col = "black")
          }
          dev.off()
