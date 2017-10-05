@@ -150,12 +150,6 @@ shinyServer(function(input, output) {
          return(mut_matrix(vcfs(),ref_genome()))
    })
       
-      
-   #Output 96 nucleotide changes profile (samples individually)   
-   output$prof96 <- renderPlot({
-         plot_96_profile(mut_mat())
-   })
-
    
    sp_url <- "http://cancer.sanger.ac.uk/cancergenome/assets/signatures_probabilities.txt"
    cancer_signatures <- read.table(sp_url, sep = "\t", header = TRUE)
@@ -188,28 +182,43 @@ shinyServer(function(input, output) {
    
    ### Select which samples use to plot.
       my_contributions<- reactive({ 
+         
          if ("All" %in% input$mysamp) {
-            return(data.frame( fit_res()$contribution,mean= apply(fit_res()$contribution,1,mean)))
+            con<-data.frame( fit_res()$contribution,mean= apply(fit_res()$contribution,1,mean))
          } else {
          
            if("mean" %in% input$mysamp) {      
               if (length(input$mysamp)>2) {
-              return(data.frame( fit_res()$contribution[,input$mysamp[-length(input$mysamp)]], mean= apply(fit_res()$contribution[,input$mysamp[-length(input$mysamp)]],1,mean) ) )
+                 con<-data.frame( fit_res()$contribution[,input$mysamp[-length(input$mysamp)]], mean= apply(fit_res()$contribution[,input$mysamp[-length(input$mysamp)]],1,mean) ) 
                } else {
-                 return(data.frame(fit_res()$contribution[,input$mysamp[-length(input$mysamp)]] ))    
+                  con<-data.frame(fit_res()$contribution[,input$mysamp[-length(input$mysamp)]] )    
                }
             } else {
                if (length(input$mysamp)>2) {
-                  return(data.frame( fit_res()$contribution[,input$mysamp] ))   
+                  con<-data.frame( fit_res()$contribution[,input$mysamp] )   
                } else {
-                  return(data.frame( fit_res()$contribution[,input$mysamp] ))   
+                  con<-data.frame( fit_res()$contribution[,input$mysamp] )   
                }   
             }
             
          }
+         if (ncol(con)==1) colnames(con)<-setdiff(input$mysamp,c("All","mean"))
+         return(con)
+         
       })
 
+      
+      #colnames(my_contributions())<-gsub("")
    
+      ### Plot sample profiles
+      
+      #Output 96 nucleotide changes profile (samples individually)   
+      output$prof96 <- renderPlot({
+         plot_96_profile(mut_mat()[,setdiff(colnames(my_contributions()),c("mean","All"))])
+      })
+      
+      
+      
    output$contr <- renderDataTable({
       data.frame(Signature = 1:30, Proposed_Etiology = proposed_etiology, divisionRel(my_contributions()))
    },options = list(lengthChange=FALSE,pageLength=30, paging=FALSE))
@@ -254,14 +263,15 @@ shinyServer(function(input, output) {
       
       a<-t(data.frame(my_contributions()[30:1,], known_cancer_signatures[30:1,my.sel.cancers]))
       colnames(a)<-colnames(cancer_signatures)[30:1]
-      
-      for (i in 1:(nrow(a)-length(my.sel.cancers))) {
-         a[i,]<-a[i,]/max(a[i,])
+
+      for (i in 1:(nrow(a)-length(my.sel.cancers))) { 
+         #a[i,]<-a[i,]/max(a[i,])  # don't do a rescaling
+         a[i,]<-a[i,]/sum(a[i,])   # put the proportions
       }
       a.m<-reshape2::melt(as.matrix(a)) 
       a.m$category<-rep(c(rep("Sample",nrow(a)-length(my.sel.cancers)),rep("Cancers",length(my.sel.cancers))),30)
       sel<-which(a.m$category=="Cancers")
-      a.m[sel,"value"]<-a.m[sel,"value"]+2
+      a.m[sel,"value"]<-a.m[sel,"value"]+1.5
       a.m[is.na(a.m)] <- 0
       
       colorends <- c("white","red", "white", "blue")
@@ -281,13 +291,15 @@ shinyServer(function(input, output) {
       a<-t(data.frame(my_contributions()[30:1,], known_cancer_signatures[30:1,my.sel.cancers]))
       colnames(a)<-colnames(cancer_signatures)[30:1]
   
-      for (i in 1:(nrow(a)-length(my.sel.cancers))) {
-         a[i,]<-a[i,]/max(a[i,])
-      }
+      #for (i in 1:(nrow(a)-length(my.sel.cancers))) { 
+      #   a[i,]<-a[i,]/max(a[i,])   # don't do a rescaling
+          a[i,]<-a[i,]/sum(a[i,])   # put the proportions
+      
+      #}
       a.m<-reshape2::melt(as.matrix(a)) 
       a.m$category<-rep(c(rep("Sample",nrow(a)-length(my.sel.cancers)),rep("Cancers",length(my.sel.cancers))),30)
       sel<-which(a.m$category=="Cancers")
-      a.m[sel,"value"]<-a.m[sel,"value"]+2
+      a.m[sel,"value"]<-a.m[sel,"value"]+1.5
       a.m[is.na(a.m)] <- 0
       
       colorends <- c("white","red", "white", "blue")
