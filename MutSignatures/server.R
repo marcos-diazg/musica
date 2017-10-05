@@ -345,36 +345,31 @@ shinyServer(function(input, output) {
    output$download_pca_plot <- downloadHandler (
       filename = function(){paste("pca_plot",input$type_pca_plot, sep=".")}, 
       content = function(ff) {
-          if (ncol(as.data.frame(my_contributions()))>=3) {
-            
+         if (input$type_pca_plot=="pdf") pdf(ff,height=7,width=7)
+         if (input$type_pca_plot=="png") png(ff,height=7*ppi,width=7*ppi,res=ppi)
+         if (input$type_pca_plot=="tiff") tiff(ff,height=7*ppi,width=7*ppi,res=ppi,compression="lzw")
+         
+         if (ncol(as.data.frame(my_contributions()))>=3) {
             a<-t(divisionRel(as.data.frame(my_contributions()[30:1,])))
             for (i in 1:nrow(a)) { 
                a[i,]<-a[i,]/sum(a[i,])   # put the proportions
             }
             a<-a[,which(apply(a,2,sd)>0)] # remove signatures without variation
             pca <- prcomp(a, scale=T)
-            if (input$type_pca_plot=="pdf") pdf(ff,height=7,width=7)
-            if (input$type_pca_plot=="png") png(ff,height=7*ppi,width=7*ppi,res=ppi)
-            if (input$type_pca_plot=="tiff") tiff(ff,height=7*ppi,width=7*ppi,res=ppi,compression="lzw")
             plot(pca$x[,1], pca$x[,2],        # x y and z axis
                  col="red", pch=19,  
                  xlab=paste("Comp 1: ",round(pca$sdev[1]^2/sum(pca$sdev^2)*100,1),"%",sep=""),
                  ylab=paste("Comp 2: ",round(pca$sdev[2]^2/sum(pca$sdev^2)*100,1),"%",sep=""),
                  main="PCA")
-          text(pca$x[,1], pca$x[,2], rownames(a))
-          dev.off()
-            
+            text(pca$x[,1], pca$x[,2], rownames(a))
          } else {
-            if (input$type_pca_plot=="pdf") pdf(ff,height=7,width=7)
-            if (input$type_pca_plot=="png") png(ff,height=7*ppi,width=7*ppi,res=ppi)
-            if (input$type_pca_plot=="tiff") tiff(ff,height=7*ppi,width=7*ppi,res=ppi,compression="lzw")
             par(mar = c(0,0,0,0))
             plot(c(0, 1), c(0, 1), ann = F, bty = 'n', type = 'n', xaxt = 'n', yaxt = 'n')
             text(x = 0.5, y = 0.5, paste("The plot only works with >=3 samples"), 
                  cex = 1.6, col = "black")
-            dev.off()
-            
          }
+         dev.off()
+         
          
       })
    
