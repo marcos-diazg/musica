@@ -291,11 +291,10 @@ shinyServer(function(input, output) {
       a<-t(data.frame(my_contributions()[30:1,], known_cancer_signatures[30:1,my.sel.cancers]))
       colnames(a)<-colnames(cancer_signatures)[30:1]
   
-      #for (i in 1:(nrow(a)-length(my.sel.cancers))) { 
+      for (i in 1:(nrow(a)-length(my.sel.cancers))) { 
       #   a[i,]<-a[i,]/max(a[i,])   # don't do a rescaling
           a[i,]<-a[i,]/sum(a[i,])   # put the proportions
-      
-      #}
+      }
       a.m<-reshape2::melt(as.matrix(a)) 
       a.m$category<-rep(c(rep("Sample",nrow(a)-length(my.sel.cancers)),rep("Cancers",length(my.sel.cancers))),30)
       sel<-which(a.m$category=="Cancers")
@@ -313,6 +312,71 @@ shinyServer(function(input, output) {
       
    })
    
+   
+   ###### Clustering of samples ## only if there are 3 or more samples
+   
+   output$pca_plot <- renderPlot({
+      
+      if (ncol(as.data.frame(my_contributions()))>=3) {
+         
+      a<-t(divisionRel(as.data.frame(my_contributions()[30:1,])))
+      for (i in 1:nrow(a)) { 
+         a[i,]<-a[i,]/sum(a[i,])   # put the proportions
+      }
+      a<-a[,which(apply(a,2,sd)>0)] # remove signatures without variation
+      pca <- prcomp(a, scale=T)
+      plot(pca$x[,1], pca$x[,2],        # x y and z axis
+           col="red", pch=19,  
+           xlab=paste("Comp 1: ",round(pca$sdev[1]^2/sum(pca$sdev^2)*100,1),"%",sep=""),
+           ylab=paste("Comp 2: ",round(pca$sdev[2]^2/sum(pca$sdev^2)*100,1),"%",sep=""),
+           main="PCA")
+      text(pca$x[,1], pca$x[,2], rownames(a))
+      
+      } else {
+         par(mar = c(0,0,0,0))
+         plot(c(0, 1), c(0, 1), ann = F, bty = 'n', type = 'n', xaxt = 'n', yaxt = 'n')
+         text(x = 0.5, y = 0.5, paste("The plot only works with >=3 samples"), 
+              cex = 1.6, col = "black")
+      }
+
+   })
+   
+   
+   output$download_pca_plot <- downloadHandler (
+      filename = function(){paste("pca_plot",input$type_pca_plot, sep=".")}, 
+      content = function(ff) {
+          if (ncol(as.data.frame(my_contributions()))>=3) {
+            
+            a<-t(divisionRel(as.data.frame(my_contributions()[30:1,])))
+            for (i in 1:nrow(a)) { 
+               a[i,]<-a[i,]/sum(a[i,])   # put the proportions
+            }
+            a<-a[,which(apply(a,2,sd)>0)] # remove signatures without variation
+            pca <- prcomp(a, scale=T)
+            if (input$type_pca_plot=="pdf") pdf(ff,height=7,width=7)
+            if (input$type_pca_plot=="png") png(ff,height=7*ppi,width=7*ppi,res=ppi)
+            if (input$type_pca_plot=="tiff") tiff(ff,height=7*ppi,width=7*ppi,res=ppi,compression="lzw")
+            plot(pca$x[,1], pca$x[,2],        # x y and z axis
+                 col="red", pch=19,  
+                 xlab=paste("Comp 1: ",round(pca$sdev[1]^2/sum(pca$sdev^2)*100,1),"%",sep=""),
+                 ylab=paste("Comp 2: ",round(pca$sdev[2]^2/sum(pca$sdev^2)*100,1),"%",sep=""),
+                 main="PCA")
+          text(pca$x[,1], pca$x[,2], rownames(a))
+          dev.off()
+            
+         } else {
+            if (input$type_pca_plot=="pdf") pdf(ff,height=7,width=7)
+            if (input$type_pca_plot=="png") png(ff,height=7*ppi,width=7*ppi,res=ppi)
+            if (input$type_pca_plot=="tiff") tiff(ff,height=7*ppi,width=7*ppi,res=ppi,compression="lzw")
+            par(mar = c(0,0,0,0))
+            plot(c(0, 1), c(0, 1), ann = F, bty = 'n', type = 'n', xaxt = 'n', yaxt = 'n')
+            text(x = 0.5, y = 0.5, paste("The plot only works with >=3 samples"), 
+                 cex = 1.6, col = "black")
+            dev.off()
+            
+         }
+         
+      })
    
    
    
