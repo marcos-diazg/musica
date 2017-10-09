@@ -67,7 +67,7 @@ shinyUI(fluidPage(
                         uiOutput("row_dendro_heatmap"),
                         downloadButton("download_contr",label="Download table"),
                         #plotOutput("heatmap_signatures"),
-                        fluidRow(plotlyOutput("heatmap_signatures"), style="display:inline;width:100%;height:1500px;"),
+                        fluidRow(plotlyOutput("heatmap_signatures",width="100%", height="500px")),
                         downloadButton("download_signatures_plot_ID",label="Download plot"),
                         bsModal("modal_signatures","Download plot","download_signatures_plot_ID", 
                                 radioButtons("type_signatures_plot","Format",c("pdf","png","tiff")),
