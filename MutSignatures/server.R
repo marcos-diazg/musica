@@ -219,6 +219,9 @@ shinyServer(function(input, output) {
       
       
       
+      ### Plot heatmap with contributions
+      
+      
    output$contr <- renderDataTable({
       data.frame(Signature = 1:30, Proposed_Etiology = proposed_etiology, divisionRel(my_contributions()))
    },options = list(lengthChange=FALSE,pageLength=30, paging=FALSE))
@@ -226,9 +229,11 @@ shinyServer(function(input, output) {
    output$download_contr <- downloadHandler( filename="contr.csv", content=function (file){ write.table(x=data.frame(colnames(cancer_signatures), proposed_etiology, divisionRel(my_contributions())), file=file, row.names=FALSE, sep="\t", quote=FALSE) })
    
    
+   
    output$heatmap_signatures <- renderPlot({
       a<-t(divisionRel(as.data.frame(my_contributions()[30:1,])))
-      colnames(a)<-colnames(cancer_signatures)[30:1]
+      if (nrow(a)==1) rownames(a)<-colnames(my_contributions())
+      colnames(a)<-colnames(cancer_signatures)[30:1] ## fix colnames when there is only one sample
       a.m<-reshape2::melt(as.matrix(a)) 
       colorends <- c("white","red")
       ggplot(a.m, aes(x=Var1, y=Var2)) + geom_tile(aes(fill = value),
@@ -240,6 +245,7 @@ shinyServer(function(input, output) {
       filename = function(){paste("signatures_plot",input$type_signatures_plot, sep=".")}, 
       content = function(ff) {
          a<-t(divisionRel(as.data.frame(my_contributions()[30:1,])))
+         if (nrow(a)==1) rownames(a)<-colnames(my_contributions()) ## fix colnames when there is only one sample
          colnames(a)<-colnames(cancer_signatures)[30:1]
          a.m<-reshape2::melt(as.matrix(a)) 
          colorends <- c("white","red")
@@ -263,7 +269,8 @@ shinyServer(function(input, output) {
       
       a<-t(data.frame(my_contributions()[30:1,], known_cancer_signatures[30:1,my.sel.cancers]))
       colnames(a)<-colnames(cancer_signatures)[30:1]
-
+      if (ncol(my_contributions())==1) rownames(a)[1]<-colnames(my_contributions()) ## fix colnames when there is only one sample
+ 
       for (i in 1:(nrow(a)-length(my.sel.cancers))) { 
          #a[i,]<-a[i,]/max(a[i,])  # don't do a rescaling
          a[i,]<-a[i,]/sum(a[i,])   # put the proportions
@@ -290,6 +297,7 @@ shinyServer(function(input, output) {
       
       a<-t(data.frame(my_contributions()[30:1,], known_cancer_signatures[30:1,my.sel.cancers]))
       colnames(a)<-colnames(cancer_signatures)[30:1]
+      if (ncol(my_contributions())==1) rownames(a)[1]<-colnames(my_contributions()) ## fix colnames when there is only one sample
   
       for (i in 1:(nrow(a)-length(my.sel.cancers))) { 
       #   a[i,]<-a[i,]/max(a[i,])   # don't do a rescaling
