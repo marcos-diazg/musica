@@ -62,6 +62,8 @@ shinyUI(fluidPage(
                
                tabPanel("Cosmic mutational signatures contributions",
                         br(),
+                        uiOutput("col_dendro_heatmap"),
+                        uiOutput("row_dendro_heatmap"),
                         downloadButton("download_contr",label="Download table"),
                         plotOutput("heatmap_signatures"),
                         downloadButton("download_signatures_plot_ID",label="Download plot"),

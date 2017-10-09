@@ -229,6 +229,15 @@ shinyServer(function(input, output) {
    output$download_contr <- downloadHandler( filename="contr.csv", content=function (file){ write.table(x=data.frame(colnames(cancer_signatures), proposed_etiology, divisionRel(my_contributions())), file=file, row.names=FALSE, sep="\t", quote=FALSE) })
    
    
+   #check if column or row dendogram is needed
+   output$row_dendro_heatmap<-renderUI({
+      radioButtons("row_d_heatmap", "Row dendrogram", c("yes","no"),selected = "no",inline = TRUE)
+   })
+   output$col_dendro_heatmap<-renderUI({
+      radioButtons("col_d_heatmap", "Column dendrogram", c("yes","no"),selected = "no",inline = TRUE)
+   })
+   
+   
    
    output$heatmap_signatures <- renderPlot({
       a<-t(divisionRel(as.data.frame(my_contributions()[30:1,])))
