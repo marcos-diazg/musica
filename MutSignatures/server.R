@@ -23,7 +23,9 @@ shinyServer(function(input, output) {
    library(ggplot2)
    library(data.table)
    library(VariantAnnotation)
-   
+   library(plotly)
+   library(heatmaply)
+
    ref_genome<-eventReactive(input$run,{
       if (input$genome=="19"){
          library("BSgenome.Hsapiens.UCSC.hg19")
@@ -239,17 +241,25 @@ shinyServer(function(input, output) {
    
    
    
-   output$heatmap_signatures <- renderPlot({
+   output$heatmap_signatures <- renderPlotly({
       a<-t(divisionRel(as.data.frame(my_contributions()[30:1,])))
       if (nrow(a)==1) rownames(a)<-colnames(my_contributions())
       colnames(a)<-colnames(cancer_signatures)[30:1] ## fix colnames when there is only one sample
       a.m<-reshape2::melt(as.matrix(a)) 
       colorends <- c("white","red")
-      ggplot(a.m, aes(x=Var1, y=Var2)) + geom_tile(aes(fill = value),
-                                                   colour = "white") + theme(axis.text.x=element_text(angle=90)) +
-         scale_fill_gradientn(colours = colorends, limits = c(0,max(a))) + labs(x="",y="")
+      dendro <- "none"
+      if (input$row_d_heatmap=="yes") dendro<-"row"
+      if (input$col_d_heatmap=="yes") dendro<-"column" 
+      if (input$row_d_heatmap=="yes" & input$col_d_heatmap=="yes") dendro<-"both"
+   
+      heatmaply(t(a), scale_fill_gradient_fun = scale_fill_gradientn(colours = colorends, limits = c(0,1)),
+                dendrogram = dendro, k_row = 1, k_col = 1)
+      #      ggplot(a.m, aes(x=Var1, y=Var2)) + geom_tile(aes(fill = value),
+      #                                             colour = "white") + theme(axis.text.x=element_text(angle=90)) +
+      #   scale_fill_gradientn(colours = colorends, limits = c(0,max(a))) + labs(x="",y="")
    })
    
+    
    output$download_signatures_plot <- downloadHandler (
       filename = function(){paste("signatures_plot",input$type_signatures_plot, sep=".")}, 
       content = function(ff) {

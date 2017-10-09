@@ -3,6 +3,7 @@ library(shinyBS)
 library(shinysky)
 library(shinyjs)
 library(shinythemes)
+library(shinyHeatmaply)
 
 shinyUI(fluidPage(
    
@@ -65,7 +66,8 @@ shinyUI(fluidPage(
                         uiOutput("col_dendro_heatmap"),
                         uiOutput("row_dendro_heatmap"),
                         downloadButton("download_contr",label="Download table"),
-                        plotOutput("heatmap_signatures"),
+                        #plotOutput("heatmap_signatures"),
+                        fluidRow(plotlyOutput("heatmap_signatures"), style="display:inline;width:100%;height:1500px;"),
                         downloadButton("download_signatures_plot_ID",label="Download plot"),
                         bsModal("modal_signatures","Download plot","download_signatures_plot_ID", 
                                 radioButtons("type_signatures_plot","Format",c("pdf","png","tiff")),
