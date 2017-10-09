@@ -14,6 +14,9 @@ shinyServer(function(input, output) {
    #Changing maximum file size for uploading
    options(shiny.maxRequestSize=500*1024^2)
    
+   #Resolution of the tiff images
+   ppi<-600
+   
    #Library loading (according to genome version)
    library(MutationalPatterns)
    library(reshape2)
@@ -36,6 +39,7 @@ shinyServer(function(input, output) {
       }
    })
  
+   
    #Reading input files as GRanges objects
    vcfs<-eventReactive(input$run,{
       inFile<-input$fileinput
@@ -146,12 +150,6 @@ shinyServer(function(input, output) {
          return(mut_matrix(vcfs(),ref_genome()))
    })
       
-      
-   #Output 96 nucleotide changes profile (samples individually)   
-   output$prof96 <- renderPlot({
-         plot_96_profile(mut_mat())
-   })
-
    
    sp_url <- "http://cancer.sanger.ac.uk/cancergenome/assets/signatures_probabilities.txt"
    cancer_signatures <- read.table(sp_url, sep = "\t", header = TRUE)
@@ -159,10 +157,11 @@ shinyServer(function(input, output) {
    cancer_signatures <- as.matrix(cancer_signatures[,4:33])
    
    fit_res <- reactive({ fit_to_signatures(mut_mat(), cancer_signatures) })
+   ### add mean contribution
    
    proposed_etiology <- c("Age","APOBEC","BRCA1 / BRCA2","Smoking","Unknown (all cancers)","Defective DNA MMR","UV light","Unknown (breast cancer and medulloblastoma)","POLH (CLL, BCL)","POLE","Alkylating agents","Unknown (liver cancer)","APOBEC","Unknown (hypermutation)","Defective DNA MMR","Unknown (liver cancer)","Unknown (different cancers)","Unknown (different cancers)","Unknown (pilocytic astrocytoma)","Defective DNA MMR","Unknown (stomach cancer / MSI tumors)","Aristolochic acid","Unknown (liver cancer)","Aflatoxin","Unknown (Hodgkin lynphoma)","Defective DNA MMR","Unknown (kidney clear cell carcinomas)","Unknown (stomach cancer)","Tobacco chewing","Unknown (breast cancer) / NTHL1")
    
-   known_cancer_signatures<-read.table("cancermatrix.csv",header=TRUE,sep="\t",row.names=1)
+   known_cancer_signatures<-read.table("cancermatrix.tsv",header=TRUE,sep="\t",row.names=1)
    
    #divisionRel function creation to print final dataframe
    divisionRel<-function(df){
@@ -173,24 +172,106 @@ shinyServer(function(input, output) {
       return(df)
    }
    
-   
-   output$contr <- renderDataTable({
-      data.frame(Signature = 1:30, Proposed_Etiology = proposed_etiology, divisionRel(as.data.frame(fit_res()$contribution)))
-   },options = list(lengthChange=FALSE,pageLength=30, paging=FALSE))
 
-   output$download_contr <- downloadHandler( filename="contr.csv", content=function (file){ write.table(x=data.frame(colnames(cancer_signatures), proposed_etiology, divisionRel(as.data.frame(fit_res()$contribution))), file=file, row.names=FALSE, sep="\t", quote=FALSE) })
+   ## Plot selectize to select samples to plot.
+   output$selected_samples<-renderUI({
+      mysamp<-c("All",colnames(as.data.frame(fit_res()$contribution)),"mean")
+      selectInput("mysamp","Select your samples",mysamp, multiple=TRUE, selectize = FALSE, size=6, selected="All")
+   })
+ 
+   
+   ### Select which samples use to plot.
+      my_contributions<- reactive({ 
+         
+         if ("All" %in% input$mysamp) {
+            con<-data.frame( fit_res()$contribution,mean= apply(fit_res()$contribution,1,mean))
+         } else {
+         
+           if("mean" %in% input$mysamp) {      
+              if (length(input$mysamp)>2) {
+                 con<-data.frame( fit_res()$contribution[,input$mysamp[-length(input$mysamp)]], mean= apply(fit_res()$contribution[,input$mysamp[-length(input$mysamp)]],1,mean) ) 
+               } else {
+                  con<-data.frame(fit_res()$contribution[,input$mysamp[-length(input$mysamp)]] )    
+               }
+            } else {
+               if (length(input$mysamp)>2) {
+                  con<-data.frame( fit_res()$contribution[,input$mysamp] )   
+               } else {
+                  con<-data.frame( fit_res()$contribution[,input$mysamp] )   
+               }   
+            }
+            
+         }
+         if (ncol(con)==1) colnames(con)<-setdiff(input$mysamp,c("All","mean"))
+         return(con)
+         
+      })
+
       
-   output$heatmap_known <- renderPlot({
-      a<-t(data.frame(fit_res()$contribution[30:1,], known_cancer_signatures[30:1,]))
+      #colnames(my_contributions())<-gsub("")
+   
+      ### Plot sample profiles
+      
+      #Output 96 nucleotide changes profile (samples individually)   
+      output$prof96 <- renderPlot({
+         plot_96_profile(mut_mat()[,setdiff(colnames(my_contributions()),c("mean","All"))])
+      })
+      
+      
+      
+   output$contr <- renderDataTable({
+      data.frame(Signature = 1:30, Proposed_Etiology = proposed_etiology, divisionRel(my_contributions()))
+   },options = list(lengthChange=FALSE,pageLength=30, paging=FALSE))
+   
+   output$download_contr <- downloadHandler( filename="contr.csv", content=function (file){ write.table(x=data.frame(colnames(cancer_signatures), proposed_etiology, divisionRel(my_contributions())), file=file, row.names=FALSE, sep="\t", quote=FALSE) })
+   
+   
+   output$heatmap_signatures <- renderPlot({
+      a<-t(divisionRel(as.data.frame(my_contributions()[30:1,])))
       colnames(a)<-colnames(cancer_signatures)[30:1]
+      a.m<-reshape2::melt(as.matrix(a)) 
+      colorends <- c("white","red")
+      ggplot(a.m, aes(x=Var1, y=Var2)) + geom_tile(aes(fill = value),
+                                                   colour = "white") + theme(axis.text.x=element_text(angle=90)) +
+         scale_fill_gradientn(colours = colorends, limits = c(0,max(a))) + labs(x="",y="")
+   })
+   
+   output$download_signatures_plot <- downloadHandler (
+      filename = function(){paste("signatures_plot",input$type_signatures_plot, sep=".")}, 
+      content = function(ff) {
+         a<-t(divisionRel(as.data.frame(my_contributions()[30:1,])))
+         colnames(a)<-colnames(cancer_signatures)[30:1]
+         a.m<-reshape2::melt(as.matrix(a)) 
+         colorends <- c("white","red")
+         #     tiff(ff,height=7*ppi,width=7*ppi,res=ppi,compression="lzw")
+         #     pdf(ff)
+         ggplot(a.m, aes(x=Var1, y=Var2)) + geom_tile(aes(fill = value),
+                                                      colour = "white") + theme(axis.text.x=element_text(angle=90)) +
+            scale_fill_gradientn(colours = colorends, limits = c(0,max(a))) + labs(x="",y="")
+         if (input$type_signatures_plot=="pdf") ggsave(ff)
+         if (input$type_signatures_plot=="png") ggsave(ff)
+         if (input$type_signatures_plot=="tiff") ggsave(ff,compression="lzw")
+      })
+   
+   
+   ### Comparison with other cancers
+            
+   output$heatmap_known <- renderPlot({
       
-      for (i in 1:(nrow(a)-40)) {
-         a[i,]<-a[i,]/max(a[i,])
+      if ("All" %in% input$mycancers) my.sel.cancers<-colnames(known_cancer_signatures)
+      else my.sel.cancers<-intersect(input$mycancers,colnames(known_cancer_signatures))
+      
+      a<-t(data.frame(my_contributions()[30:1,], known_cancer_signatures[30:1,my.sel.cancers]))
+      colnames(a)<-colnames(cancer_signatures)[30:1]
+
+      for (i in 1:(nrow(a)-length(my.sel.cancers))) { 
+         #a[i,]<-a[i,]/max(a[i,])  # don't do a rescaling
+         a[i,]<-a[i,]/sum(a[i,])   # put the proportions
       }
       a.m<-reshape2::melt(as.matrix(a)) 
-      a.m$category<-rep(c(rep("Sample",nrow(a)-40),rep("Cancers",40)),30)
+      a.m$category<-rep(c(rep("Sample",nrow(a)-length(my.sel.cancers)),rep("Cancers",length(my.sel.cancers))),30)
       sel<-which(a.m$category=="Cancers")
-      a.m[sel,"value"]<-a.m[sel,"value"]+2
+      a.m[sel,"value"]<-a.m[sel,"value"]+1.5
       a.m[is.na(a.m)] <- 0
       
       colorends <- c("white","red", "white", "blue")
@@ -200,15 +281,98 @@ shinyServer(function(input, output) {
          scale_fill_gradientn(colours = colorends, limits = c(0,3)) + labs(x="",y="")
    })
    
-   output$heatmap_signatures <- renderPlot({
-      a<-t(divisionRel(data.frame(fit_res()$contribution[30:1,])))
+  
+   output$download_known_plot <- downloadHandler(filename = function(){paste("comparison_with_other",input$type_known_plot, sep=".")}, content=function (ff) {
+      
+      if ("All" %in% input$mycancers) my.sel.cancers<-colnames(known_cancer_signatures)
+      else my.sel.cancers<-intersect(input$mycancers,colnames(known_cancer_signatures))
+      
+      
+      a<-t(data.frame(my_contributions()[30:1,], known_cancer_signatures[30:1,my.sel.cancers]))
       colnames(a)<-colnames(cancer_signatures)[30:1]
+  
+      for (i in 1:(nrow(a)-length(my.sel.cancers))) { 
+      #   a[i,]<-a[i,]/max(a[i,])   # don't do a rescaling
+          a[i,]<-a[i,]/sum(a[i,])   # put the proportions
+      }
       a.m<-reshape2::melt(as.matrix(a)) 
-      colorends <- c("white","red")
+      a.m$category<-rep(c(rep("Sample",nrow(a)-length(my.sel.cancers)),rep("Cancers",length(my.sel.cancers))),30)
+      sel<-which(a.m$category=="Cancers")
+      a.m[sel,"value"]<-a.m[sel,"value"]+1.5
+      a.m[is.na(a.m)] <- 0
+      
+      colorends <- c("white","red", "white", "blue")
+      
       ggplot(a.m, aes(x=Var1, y=Var2)) + geom_tile(aes(fill = value),
-       colour = "white") + theme(axis.text.x=element_text(angle=90)) +
-       scale_fill_gradientn(colours = colorends, limits = c(0,max(a))) + labs(x="",y="")
+                                                   colour = "white") + theme(axis.text.x=element_text(angle=90)) +
+         scale_fill_gradientn(colours = colorends, limits = c(0,3)) + labs(x="",y="")
+      if (input$type_known_plot=="pdf") ggsave(ff)
+      if (input$type_known_plot=="png") ggsave(ff)
+      if (input$type_known_plot=="tiff") ggsave(ff,compression="lzw")
+      
    })
+   
+   
+   ###### Clustering of samples ## only if there are 3 or more samples
+   
+   output$pca_plot <- renderPlot({
+      
+      if (ncol(as.data.frame(my_contributions()))>=3) {
+         
+      a<-t(divisionRel(as.data.frame(my_contributions()[30:1,])))
+      for (i in 1:nrow(a)) { 
+         a[i,]<-a[i,]/sum(a[i,])   # put the proportions
+      }
+      a<-a[,which(apply(a,2,sd)>0)] # remove signatures without variation
+      pca <- prcomp(a, scale=T)
+      plot(pca$x[,1], pca$x[,2],        # x y and z axis
+           col="red", pch=19,  
+           xlab=paste("Comp 1: ",round(pca$sdev[1]^2/sum(pca$sdev^2)*100,1),"%",sep=""),
+           ylab=paste("Comp 2: ",round(pca$sdev[2]^2/sum(pca$sdev^2)*100,1),"%",sep=""),
+           main="PCA")
+      text(pca$x[,1], pca$x[,2], rownames(a))
+      
+      } else {
+         par(mar = c(0,0,0,0))
+         plot(c(0, 1), c(0, 1), ann = F, bty = 'n', type = 'n', xaxt = 'n', yaxt = 'n')
+         text(x = 0.5, y = 0.5, paste("PCA analysis works only with >=3 samples"), 
+              cex = 1.6, col = "black")
+      }
+
+   })
+   
+   
+   output$download_pca_plot <- downloadHandler (
+      filename = function(){paste("pca_plot",input$type_pca_plot, sep=".")}, 
+      content = function(ff) {
+         if (input$type_pca_plot=="pdf") pdf(ff,height=7,width=7)
+         if (input$type_pca_plot=="png") png(ff,height=7*ppi,width=7*ppi,res=ppi)
+         if (input$type_pca_plot=="tiff") tiff(ff,height=7*ppi,width=7*ppi,res=ppi,compression="lzw")
+         
+         if (ncol(as.data.frame(my_contributions()))>=3) {
+            a<-t(divisionRel(as.data.frame(my_contributions()[30:1,])))
+            for (i in 1:nrow(a)) { 
+               a[i,]<-a[i,]/sum(a[i,])   # put the proportions
+            }
+            a<-a[,which(apply(a,2,sd)>0)] # remove signatures without variation
+            pca <- prcomp(a, scale=T)
+            plot(pca$x[,1], pca$x[,2],        # x y and z axis
+                 col="red", pch=19,  
+                 xlab=paste("Comp 1: ",round(pca$sdev[1]^2/sum(pca$sdev^2)*100,1),"%",sep=""),
+                 ylab=paste("Comp 2: ",round(pca$sdev[2]^2/sum(pca$sdev^2)*100,1),"%",sep=""),
+                 main="PCA")
+            text(pca$x[,1], pca$x[,2], rownames(a))
+         } else {
+            par(mar = c(0,0,0,0))
+            plot(c(0, 1), c(0, 1), ann = F, bty = 'n', type = 'n', xaxt = 'n', yaxt = 'n')
+            text(x = 0.5, y = 0.5, paste("PCA analysis works only with >=3 samples"), 
+                 cex = 1.6, col = "black")
+         }
+         dev.off()
+         
+         
+      })
+   
    
    
 })

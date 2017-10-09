@@ -36,13 +36,18 @@ shinyUI(fluidPage(
          
          #Genome selection
          selectInput("genome","Reference Genome",c("UCSC GRCh38/hg38"="hg38","UCSC GRCh37/hg19"="19","1000genomes hs37d5"="37"),selected="hg38"),
-         
+
+         uiOutput("selected_samples"),
+
          #Run button
          actionButton("run","Run"),
          busyIndicator("Running",wait=0)
          
       ),
       
+
+
+
       #Hidding tabs of mainpanel (results)
       hidden(
     
@@ -59,15 +64,33 @@ shinyUI(fluidPage(
                         br(),
                         downloadButton("download_contr",label="Download table"),
                         plotOutput("heatmap_signatures"),
+                        downloadButton("download_signatures_plot_ID",label="Download plot"),
+                        bsModal("modal_signatures","Download plot","download_signatures_plot_ID", 
+                                radioButtons("type_signatures_plot","Format",c("pdf","png","tiff")),
+                                downloadButton("download_signatures_plot","OK")),
+                  
                         dataTableOutput("contr")
                ),
                
                tabPanel("Comparison with other cancers",
                         br(),
                         downloadButton("download_known",label="Download table"),
-                        plotOutput("heatmap_known")
+                        plotOutput("heatmap_known"),
+                        downloadButton("download_known_plot_ID",label="Download plot"),
+                        bsModal("modal_known","Download plot","download_known_plot_ID", 
+                                radioButtons("type_known_plot","Format",c("pdf","png","tiff")),
+                                downloadButton("download_known_plot","OK")),
+                        selectInput("mycancers","Select the cancers to compare", c("All","Adrenocortical.carcinoma","ALL","AML","Bladder","Breast","Cervix","Chondrosarcoma","CLL","Colorectum","Glioblastoma","Glioma.Low.Grade","Head.and.Neck","Kidney.Chromophobe","Kidney.Clear.Cell","Kidney.Papillary","Liver","Lung.Adeno","Lung.Small.Cell","Lung.Squamous","Lymphoma.B.cell","Lymphoma.Hodgkin","Medulloblastoma","Melanoma","Myeloma","Nasopharyngeal.Carcinoma","Neuroblastoma","Oesophagus","Oral.gingivo.buccal.squamous","Osteosarcoma","Ovary","Pancreas","Paraganglioma","Pilocytic.Astrocytoma","Prostate","Stomach","Thyroid","Urothelial.Carcinoma","Uterine.Carcinoma","Uterine.Carcinosarcoma","Uveal.Melanoma"), multiple=TRUE, selectize = FALSE, size=15, selected="All")
+               ),
+               tabPanel("Principal Components Analysis",
+                        br(),
+                        plotOutput("pca_plot"),
+                        downloadButton("download_pca_ID",label="Download plot"),
+                        bsModal("modal_pca","Download plot","download_pca_ID", 
+                                radioButtons("type_pca_plot","Format",c("pdf","png","tiff")),
+                                downloadButton("download_pca_plot","OK"))
                )
-                          
+
             ) 
          )
       )
