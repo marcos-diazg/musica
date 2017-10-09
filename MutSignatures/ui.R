@@ -30,7 +30,7 @@ shinyUI(fluidPage(
          
          #File uploading
          fileInput("fileinput","Upload your file/s", multiple=TRUE),
-#         helpText("Multiple files uploading is allowed"),
+         helpText("Multiple files uploading is allowed"),
          
          hr(),
          
@@ -40,7 +40,7 @@ shinyUI(fluidPage(
          uiOutput("selected_samples"),
 
          #Run button
-         actionButton("run","Run"),
+         actionButton("run","Run",class = "btn-primary"),
          busyIndicator("Running",wait=0)
          
       ),
