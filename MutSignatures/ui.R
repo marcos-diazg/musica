@@ -30,12 +30,12 @@ shinyUI(fluidPage(
          
          #File uploading
          fileInput("fileinput","Upload your file/s", multiple=TRUE),
-         helpText("Multiple files uploading is allowed"),
          
          hr(),
          
          #Genome selection
          selectInput("genome","Reference Genome",c("UCSC GRCh38/hg38"="hg38","UCSC GRCh37/hg19"="19","1000genomes hs37d5"="37"),selected="hg38"),
+         br(),
 
          #Run button
          actionButton("run","Run",class = "btn-primary"),

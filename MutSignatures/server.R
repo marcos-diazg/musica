@@ -9,7 +9,12 @@ shinyServer(function(input, output,session){
    #Setting maximum file size for uploading (500 MB)
    options(shiny.maxRequestSize=500*1024^2)
    
-   #Hidding tabs of mainpanel (results)
+   
+   #Resolution of the tiff images
+   ppi<-600
+   
+   
+   #Hidding/Showing tabs of mainpanel, run and clear buttons, ...
    observeEvent(input$run,{
       shinyjs::show(id="mainpanel")
       shinyjs::hide(id="run")
@@ -17,16 +22,12 @@ shinyServer(function(input, output,session){
    })
    
    observeEvent(input$clear,{
+      shinyjs::hide(id="mainpanel")
       shinyjs::show(id="run")
       shinyjs::hide(id="after_run")
       session$sendCustomMessage(type="resetFileInputHandler","fileinput")
    })
-
-
-
    
-   #Resolution of the tiff images
-   ppi<-600
    
    #Library loading (according to genome version)
    library(MutationalPatterns)
@@ -62,22 +63,25 @@ shinyServer(function(input, output,session){
                need(length(grep(".vcf",inFile$datapath))>0 | length(grep(".txt",inFile$datapath))>0,"File format error, please select the correct input file format before uploading your file/s.")
             )
             
+            
+            ########################################################################
             #Filtering steps
-#            vcfilter<-readVcfAsVRanges(inFile$datapath)
-            
-            
-            
+            #vcfilter<-readVcfAsVRanges(inFile$datapath)
+            ########################################################################
             
             
             #Read vcf for MutationalPatterns
             return(read_vcfs_as_granges(inFile$datapath,inFile$name,ref_genome(),group = "auto+sex", check_alleles = TRUE))
          }
+      
+      
          #MAF
          if (input$datatype=="MAF"){
             
             #Warning for file format
             validate(
-               need(length(grep(".maf",inFile$datapath))>0 | length(grep(".txt",inFile$datapath))>0,"File format error, please select the correct input file format before uploading your file/s.")
+               need(length(grep(".maf",inFile$datapath))>0 | length(grep(".txt",inFile$datapath))>0,"File format error, please select the correct input file format before uploading your file/s."),
+               need(length(inFile$datapath)==1, "Only one multi-sample MAF file is allowed")
             )
             
             aux<-fread(inFile$datapath,header=T,sep="\t",skip="#",data.table=F)
@@ -110,20 +114,27 @@ shinyServer(function(input, output,session){
                need(length(grep(".tsv",inFile$datapath))>0 | length(grep(".txt",inFile$datapath))>0,"File format error, please select the correct input file format before uploading your file/s.")
             )
             
-            aux<-fread(inFile$datapath,header=T,sep="\t",data.table=F)
+            aux_list<-list()
+            ff_list<-list()
+            for (w in 1:length(inFile$datapath)){
+               aux<-fread(inFile$datapath[w],header=T,sep="\t",data.table=F)
+               
             
-            #Condition in case "chr" prefix is present at CHROM column in input file
-            if (length(grep("chr",aux))>0){
-               aux$CHROM<-sapply(strsplit(aux$CHROM,"chr"),"[",2)
+               #Condition in case "chr" prefix is present at CHROM column in input file
+               if (length(grep("chr",aux))>0){
+                  aux$CHROM<-sapply(strsplit(aux$CHROM,"chr"),"[",2)
+               }
+            
+               colnames(aux)[1]<-"#CHROM"
+               aux$ID<-"."
+               aux$QUAL<-"."
+               aux$FILTER<-"PASS"
+               aux<-aux[,c("#CHROM","POS","ID","REF","ALT","QUAL","FILTER")]
+               ff_list[[w]]<-tempfile("tp",fileext=".vcf")
+               write.table(aux,file=ff_list[[w]],row.names=F,quote=F,sep="\t")
             }
             
-            colnames(aux)[1]<-"#CHROM"
-            aux$ID<-"."
-            aux$QUAL<-"."
-            aux$FILTER<-"PASS"
-            aux<-aux[,c("#CHROM","POS","ID","REF","ALT","QUAL","FILTER")]
-            ff<-tempfile("tp",fileext=".vcf")
-            write.table(aux,file=ff,row.names=F,quote=F,sep="\t")
+            ff<-do.call("c",ff_list)
             
             return(read_vcfs_as_granges(ff,inFile$name,ref_genome(),group = "auto+sex", check_alleles = TRUE))
          }
