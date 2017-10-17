@@ -4,15 +4,26 @@ library(shinysky)
 library(shinyjs)
 library(shinythemes)
 
-shinyServer(function(input, output) {
+shinyServer(function(input, output,session){
+   
+   #Setting maximum file size for uploading (500 MB)
+   options(shiny.maxRequestSize=500*1024^2)
    
    #Hidding tabs of mainpanel (results)
    observeEvent(input$run,{
-      shinyjs::show(id="mainpanel",anim=TRUE,animType="slide")
+      shinyjs::show(id="mainpanel")
+      shinyjs::hide(id="run")
+      shinyjs::show(id="after_run")
+   })
+   
+   observeEvent(input$clear,{
+      shinyjs::show(id="run")
+      shinyjs::hide(id="after_run")
+      session$sendCustomMessage(type="resetFileInputHandler","fileinput")
    })
 
-   #Changing maximum file size for uploading
-   options(shiny.maxRequestSize=500*1024^2)
+
+
    
    #Resolution of the tiff images
    ppi<-600

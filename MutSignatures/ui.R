@@ -40,19 +40,32 @@ shinyUI(fluidPage(
          #Run button
          actionButton("run","Run",class = "btn-primary"),
          
-         br(),
-         br(),
-         br(),
-         br(),
-         br(),
-         br(),
-
-         #Sample selection for plots (post push run)         
-         uiOutput("selected_samples"),
          
-         #BusyIndicator (post push run)
-         busyIndicator("Running",wait=2)
-         
+         #Stuff only showed when run button is pressed
+         hidden(
+            div(id="after_run",
+              #Adding space between run button and sample selector
+              hr(),
+              
+              #Sample selection for plots (post push run)         
+              uiOutput("selected_samples"),
+              
+              #Clear button and script to hide input file
+              actionButton("clear","Clear"),
+              
+               tags$script('
+                 Shiny.addCustomMessageHandler("resetFileInputHandler", function(x) {
+                 var id = "#" + x + "_progress";
+                 var idBar = id + " .bar";
+                 $(id).css("visibility", "hidden");
+                 $(idBar).css("width", "0%");
+                 });
+               '), 
+              
+              #BusyIndicator (post push run)
+              busyIndicator("Running",wait=2)
+            )
+         )
       ),
       
 
