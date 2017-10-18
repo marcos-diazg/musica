@@ -153,7 +153,7 @@ shinyServer(function(input, output,session){
             library(xlsx)
             ff_list<-list()
             for (w in 1:length(inFile$datapath)){
-               aux<-read.xlsx(inFile$datapath,1)
+               aux<-read.xlsx(inFile$datapath[w],1)
                
                #Condition in case "chr" prefix is present at CHROM column in input file
                if (length(grep("chr",aux))>0){
@@ -169,7 +169,7 @@ shinyServer(function(input, output,session){
                write.table(aux,file=ff_list[[w]],row.names=F,quote=F,sep="\t")
             }
             
-            ff<-do.call("C",ff_list)
+            ff<-do.call("c",ff_list)
                
             return(read_vcfs_as_granges(ff,inFile$name,ref_genome(),group = "auto+sex", check_alleles = TRUE))
          }
