@@ -35,8 +35,10 @@ shinyServer(function(input, output,session){
    library(ggplot2)
    library(data.table)
    library(VariantAnnotation)
-   
-   
+   library(plotly)
+   library(heatmaply)
+   library(gplots)
+
    #######################################
    #Reference genome definition and loading [ref_genome]
    #######################################
@@ -266,6 +268,9 @@ shinyServer(function(input, output,session){
       
       
       
+      ### Plot heatmap with contributions
+      
+      
    output$contr <- renderDataTable({
       data.frame(Signature = 1:30, Proposed_Etiology = proposed_etiology, divisionRel(my_contributions()))
    },options = list(lengthChange=FALSE,pageLength=30, paging=FALSE))
@@ -273,62 +278,142 @@ shinyServer(function(input, output,session){
    output$download_contr <- downloadHandler( filename="contr.csv", content=function (file){ write.table(x=data.frame(colnames(cancer_signatures), proposed_etiology, divisionRel(my_contributions())), file=file, row.names=FALSE, sep="\t", quote=FALSE) })
    
    
-   output$heatmap_signatures <- renderPlot({
-      a<-t(divisionRel(as.data.frame(my_contributions()[30:1,])))
-      colnames(a)<-colnames(cancer_signatures)[30:1]
-      a.m<-reshape2::melt(as.matrix(a)) 
-      colorends <- c("white","red")
-      ggplot(a.m, aes(x=Var1, y=Var2)) + geom_tile(aes(fill = value),
-                                                   colour = "white") + theme(axis.text.x=element_text(angle=90)) +
-         scale_fill_gradientn(colours = colorends, limits = c(0,max(a))) + labs(x="",y="")
+   #check if column or row dendogram is needed
+   output$row_dendro_heatmap<-renderUI({
+      radioButtons("row_d_heatmap", "Row dendrogram", c("yes","no"),selected = "no",inline = TRUE)
+   })
+   output$col_dendro_heatmap<-renderUI({
+      radioButtons("col_d_heatmap", "Column dendrogram", c("yes","no"),selected = "no",inline = TRUE)
    })
    
+   
+   
+   output$heatmap_signatures <- renderPlotly({
+      a<-divisionRel(as.data.frame(my_contributions()))
+      if (ncol(a)==1) colnames(a)<-colnames(my_contributions()) ## fix colnames when there is only one sample
+      rownames(a)<-colnames(cancer_signatures)[1:30] 
+      colorends <- c("white","red")
+      dendro <- "none"
+      if (input$row_d_heatmap=="yes") dendro<-"row"
+      if (input$col_d_heatmap=="yes") dendro<-"column" 
+      if (input$row_d_heatmap=="yes" & input$col_d_heatmap=="yes") dendro<-"both"
+   
+      heatmaply(a, scale_fill_gradient_fun = scale_fill_gradientn(colours = colorends, limits = c(0,1)),
+                dendrogram = dendro, k_row = 1, k_col = 1, column_text_angle = 90)
+   })
+   
+    
    output$download_signatures_plot <- downloadHandler (
       filename = function(){paste("signatures_plot",input$type_signatures_plot, sep=".")}, 
       content = function(ff) {
-         a<-t(divisionRel(as.data.frame(my_contributions()[30:1,])))
-         colnames(a)<-colnames(cancer_signatures)[30:1]
-         a.m<-reshape2::melt(as.matrix(a)) 
+         
+         a<-divisionRel(as.data.frame(my_contributions()))
+         a<-as.matrix(a)
+         if (ncol(a)==1) colnames(a)<-colnames(my_contributions()) ## fix colnames when there is only one sample
+         rownames(a)<-colnames(cancer_signatures)[1:30] 
          colorends <- c("white","red")
+         dendro <- "none"
+         if (input$row_d_heatmap=="yes") dendro<-"row"
+         if (input$col_d_heatmap=="yes") dendro<-"column" 
+         if (input$row_d_heatmap=="yes" & input$col_d_heatmap=="yes") dendro<-"both"
+         
+         if (input$type_signatures_plot=="pdf") pdf(ff,height=7,width=7)
+         if (input$type_signatures_plot=="png") png(ff,height=7*ppi,width=7*ppi,res=ppi)
+         if (input$type_signatures_plot=="tiff") tiff(ff,height=7*ppi,width=7*ppi,res=ppi,compression="lzw")
+
+          heatmap.2(
+            a,
+            trace = "none",
+            Rowv = input$row_d_heatmap=="yes" , 
+            Colv = input$col_d_heatmap=="yes" , 
+            col = colorpanel (256, low = "white", high = "red")
+         )
+ 
+    #     heatmaply(a, scale_fill_gradient_fun = scale_fill_gradientn(colours = colorends, limits = c(0,1)),
+    #               dendrogram = dendro, k_row = 1, k_col = 1, column_text_angle = 90)
+         
+         dev.off()
+         
+      #   a<-t(divisionRel(as.data.frame(my_contributions()[30:1,])))
+      #   if (nrow(a)==1) rownames(a)<-colnames(my_contributions()) ## fix colnames when there is only one sample
+      #   colnames(a)<-colnames(cancer_signatures)[30:1]
+      #   a.m<-reshape2::melt(as.matrix(a)) 
+      #   colorends <- c("white","red")
          #     tiff(ff,height=7*ppi,width=7*ppi,res=ppi,compression="lzw")
          #     pdf(ff)
-         ggplot(a.m, aes(x=Var1, y=Var2)) + geom_tile(aes(fill = value),
-                                                      colour = "white") + theme(axis.text.x=element_text(angle=90)) +
-            scale_fill_gradientn(colours = colorends, limits = c(0,max(a))) + labs(x="",y="")
-         if (input$type_signatures_plot=="pdf") ggsave(ff)
-         if (input$type_signatures_plot=="png") ggsave(ff)
-         if (input$type_signatures_plot=="tiff") ggsave(ff,compression="lzw")
+      #   ggplot(a.m, aes(x=Var1, y=Var2)) + geom_tile(aes(fill = value),
+      #                                                colour = "white") + theme(axis.text.x=element_text(angle=90)) +
+      #      scale_fill_gradientn(colours = colorends, limits = c(0,max(a))) + labs(x="",y="")
+      #   if (input$type_signatures_plot=="pdf") ggsave(ff)
+      #   if (input$type_signatures_plot=="png") ggsave(ff)
+      #   if (input$type_signatures_plot=="tiff") ggsave(ff,compression="lzw")
       })
    
    
    ### Comparison with other cancers
-            
-   output$heatmap_known <- renderPlot({
+
+      #check if column or row dendogram is needed
+   output$row_dendro_cancers<-renderUI({
+      radioButtons("row_c_heatmap", "Row dendrogram", c("yes","no"),selected = "no",inline = TRUE)
+   })
+   output$col_dendro_cancers<-renderUI({
+      radioButtons("col_c_heatmap", "Column dendrogram", c("yes","no"),selected = "no",inline = TRUE)
+   })
+   
+ 
+   output$heatmap_known <- renderPlotly({
       
       if ("All" %in% input$mycancers) my.sel.cancers<-colnames(known_cancer_signatures)
       else my.sel.cancers<-intersect(input$mycancers,colnames(known_cancer_signatures))
       
-      a<-t(data.frame(my_contributions()[30:1,], known_cancer_signatures[30:1,my.sel.cancers]))
-      colnames(a)<-colnames(cancer_signatures)[30:1]
-
-      for (i in 1:(nrow(a)-length(my.sel.cancers))) { 
+      #      a<-t(data.frame(my_contributions()[30:1,], known_cancer_signatures[30:1,my.sel.cancers]))
+      #      colnames(a)<-colnames(cancer_signatures)[30:1]
+      #      if (ncol(my_contributions())==1) rownames(a)[1]<-colnames(my_contributions()) ## fix colnames when there is only one sample
+ 
+      #for (i in 1:(nrow(a)-length(my.sel.cancers))) { 
          #a[i,]<-a[i,]/max(a[i,])  # don't do a rescaling
-         a[i,]<-a[i,]/sum(a[i,])   # put the proportions
+         #a[i,]<-a[i,]/sum(a[i,])   # put the proportions
+         #      }
+      #      a.m<-reshape2::melt(as.matrix(a)) 
+      #      a.m$category<-rep(c(rep("Sample",nrow(a)-length(my.sel.cancers)),rep("Cancers",length(my.sel.cancers))),30)
+      #      sel<-which(a.m$category=="Cancers")
+      #      a.m[sel,"value"]<-a.m[sel,"value"]+1.5
+      #      a.m[is.na(a.m)] <- 0
+      
+#     colorends <- c("white","red", "white", "blue")
+      
+ #     ggplot(a.m, aes(x=Var1, y=Var2)) + geom_tile(aes(fill = value),
+ #        colour = "white") + theme(axis.text.x=element_text(angle=90)) +
+ #        scale_fill_gradientn(colours = colorends, limits = c(0,3)) + labs(x="",y="")
+      
+ 
+      a<-data.frame(my_contributions()[1:30,], known_cancer_signatures[1:30,my.sel.cancers])
+      rownames(a)<-colnames(cancer_signatures)[1:30]
+      if (ncol(my_contributions())==1) colnames(a)[1]<-colnames(my_contributions()) ## fix colnames when there is only one sample
+      
+
+      for (i in 1:(ncol(a)-length(my.sel.cancers))) { 
+         #a[,i]<-a[,i]/max(a[,i])  # don't do a rescaling
+         a[,i]<-a[,i]/sum(a[,i])   # put the proportions
       }
-      a.m<-reshape2::melt(as.matrix(a)) 
-      a.m$category<-rep(c(rep("Sample",nrow(a)-length(my.sel.cancers)),rep("Cancers",length(my.sel.cancers))),30)
-      sel<-which(a.m$category=="Cancers")
-      a.m[sel,"value"]<-a.m[sel,"value"]+1.5
-      a.m[is.na(a.m)] <- 0
-      
+      for (i in (ncol(a)-length(my.sel.cancers)+1):ncol(a)) { 
+         a[,i]<-a[,i]+1.5   # put the proportions   # add 1.5 to cancers
+      }
+
+      rownames(a)<-colnames(cancer_signatures)[1:30] 
       colorends <- c("white","red", "white", "blue")
+      dendro <- "none"
+      if (input$row_c_heatmap=="yes") dendro<-"row"
+      if (input$col_c_heatmap=="yes") dendro<-"column" 
+      if (input$row_c_heatmap=="yes" & input$col_c_heatmap=="yes") dendro<-"both"
+
+            heatmaply(a, scale_fill_gradient_fun = scale_fill_gradientn(colours = colorends, limits = c(0,3)),
+                dendrogram = dendro, k_row = 1, k_col = 1, column_text_angle = 90)
       
-      ggplot(a.m, aes(x=Var1, y=Var2)) + geom_tile(aes(fill = value),
-         colour = "white") + theme(axis.text.x=element_text(angle=90)) +
-         scale_fill_gradientn(colours = colorends, limits = c(0,3)) + labs(x="",y="")
    })
    
-  
+
+   
    output$download_known_plot <- downloadHandler(filename = function(){paste("comparison_with_other",input$type_known_plot, sep=".")}, content=function (ff) {
       
       if ("All" %in% input$mycancers) my.sel.cancers<-colnames(known_cancer_signatures)
@@ -337,6 +422,7 @@ shinyServer(function(input, output,session){
       
       a<-t(data.frame(my_contributions()[30:1,], known_cancer_signatures[30:1,my.sel.cancers]))
       colnames(a)<-colnames(cancer_signatures)[30:1]
+      if (ncol(my_contributions())==1) rownames(a)[1]<-colnames(my_contributions()) ## fix colnames when there is only one sample
   
       for (i in 1:(nrow(a)-length(my.sel.cancers))) { 
       #   a[i,]<-a[i,]/max(a[i,])   # don't do a rescaling
