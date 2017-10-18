@@ -219,7 +219,7 @@ shinyServer(function(input, output,session){
 
    #Plot selectize to select samples to plot.
    output$selected_samples<-renderUI({
-      mysamp<-c("All",colnames(as.data.frame(fit_res()$contribution)),"Mean")
+      mysamp<-c("All",colnames(as.data.frame(fit_res()$contribution)),"mean")
       selectInput("mysamp","Select your samples",mysamp, multiple=TRUE, selectize = FALSE, size=6, selected="All")
    })
  
@@ -228,7 +228,7 @@ shinyServer(function(input, output,session){
       my_contributions<- reactive({ 
          
          if ("All" %in% input$mysamp) {
-            con<-data.frame( fit_res()$contribution,mean= apply(fit_res()$contribution,1,mean))
+            con<-data.frame( fit_res()$contribution, mean = apply(fit_res()$contribution,1,mean))
          } else {
          
            if("mean" %in% input$mysamp) {      
