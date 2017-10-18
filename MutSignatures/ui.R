@@ -40,7 +40,7 @@ shinyUI(fluidPage(
          actionButton("run","Run",class = "btn-primary"),
 
          #Busy indicator
-         busyIndicator("Running",wait=0)
+         busyIndicator("Running",wait=0),
 
          
          #Stuff only showed when run button is pressed
@@ -62,7 +62,7 @@ shinyUI(fluidPage(
                  $(id).css("visibility", "hidden");
                  $(idBar).css("width", "0%");
                  });
-               '), 
+               ') 
             )
          )
       ),
