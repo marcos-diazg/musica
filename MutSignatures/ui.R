@@ -78,8 +78,11 @@ shinyUI(fluidPage(
                
                tabPanel("Comparison with other cancers",
                         br(),
+                        uiOutput("col_dendro_cancers"),
+                        uiOutput("row_dendro_cancers"),
                         downloadButton("download_known",label="Download table"),
-                        plotOutput("heatmap_known"),
+                        #plotOutput("heatmap_known"),
+                        fluidRow(plotlyOutput("heatmap_known",width="100%", height="500px")),
                         downloadButton("download_known_plot_ID",label="Download plot"),
                         bsModal("modal_known","Download plot","download_known_plot_ID", 
                                 radioButtons("type_known_plot","Format",c("pdf","png","tiff")),
