@@ -3,6 +3,7 @@ library(shinyBS)
 library(shinysky)
 library(shinyjs)
 library(shinythemes)
+library(shinyHeatmaply)
 
 shinyUI(fluidPage(
    
@@ -62,8 +63,11 @@ shinyUI(fluidPage(
                
                tabPanel("Cosmic mutational signatures contributions",
                         br(),
+                        uiOutput("col_dendro_heatmap"),
+                        uiOutput("row_dendro_heatmap"),
                         downloadButton("download_contr",label="Download table"),
-                        plotOutput("heatmap_signatures"),
+                        #plotOutput("heatmap_signatures"),
+                        fluidRow(plotlyOutput("heatmap_signatures",width="100%", height="500px")),
                         downloadButton("download_signatures_plot_ID",label="Download plot"),
                         bsModal("modal_signatures","Download plot","download_signatures_plot_ID", 
                                 radioButtons("type_signatures_plot","Format",c("pdf","png","tiff")),
@@ -74,8 +78,11 @@ shinyUI(fluidPage(
                
                tabPanel("Comparison with other cancers",
                         br(),
+                        uiOutput("col_dendro_cancers"),
+                        uiOutput("row_dendro_cancers"),
                         downloadButton("download_known",label="Download table"),
-                        plotOutput("heatmap_known"),
+                        #plotOutput("heatmap_known"),
+                        fluidRow(plotlyOutput("heatmap_known",width="100%", height="500px")),
                         downloadButton("download_known_plot_ID",label="Download plot"),
                         bsModal("modal_known","Download plot","download_known_plot_ID", 
                                 radioButtons("type_known_plot","Format",c("pdf","png","tiff")),

@@ -11,11 +11,15 @@ First check the dependencies (you only need to do this once):
 
 ```R
 if(!require(MutationalPatterns)) {source("http://www.bioconductor.org/biocLite.R");biocLite("MutationalPatterns")}
+if(!require(VariantAnnotation)) {source("http://www.bioconductor.org/biocLite.R");biocLite("VariantAnnotation")}
 if(!require(BSgenome.Hsapiens.UCSC.hg38)) {source("http://www.bioconductor.org/biocLite.R");biocLite("BSgenome.Hsapiens.UCSC.hg38")}
 if(!require(BSgenome.Hsapiens.UCSC.hg19)) {source("http://www.bioconductor.org/biocLite.R");biocLite("BSgenome.Hsapiens.UCSC.hg19")}
 if(!require(BSgenome.Hsapiens.1000genomes.hs37d)) {source("http://www.bioconductor.org/biocLite.R");biocLite("BSgenome.Hsapiens.1000genomes.hs37d")}
 
 if(!require(ggplot2)) install.packages("ggplot2")
+if(!require(plotly)) install.packages("plotly")
+if(!require(heatmaply)) install.packages("heatmaply")
+if(!require(gplots)) install.packages("gplots")
 if(!require(reshape2)) install.packages("reshape2")
 if(!require(data.table)) install.packages("data.table")
 if(!require(xlsx)) install.packages("xlsx")
