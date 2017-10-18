@@ -4,20 +4,32 @@ library(shinysky)
 library(shinyjs)
 library(shinythemes)
 
-shinyServer(function(input, output) {
+shinyServer(function(input, output,session){
    
-   #Hidding tabs of mainpanel (results)
-   observeEvent(input$run,{
-      shinyjs::show(id="mainpanel",anim=TRUE,animType="slide")
-   })
-
-   #Changing maximum file size for uploading
+   #Setting maximum file size for uploading (500 MB)
    options(shiny.maxRequestSize=500*1024^2)
+   
    
    #Resolution of the tiff images
    ppi<-600
    
-   #Library loading (according to genome version)
+   
+   #Hidding/Showing tabs of mainpanel, run and clear buttons, ...
+   observeEvent(input$run,{
+      shinyjs::show(id="mainpanel")
+      shinyjs::hide(id="run")
+      shinyjs::show(id="after_run")
+   })
+   
+   observeEvent(input$clear,{
+      shinyjs::hide(id="mainpanel")
+      shinyjs::show(id="run")
+      shinyjs::hide(id="after_run")
+      session$sendCustomMessage(type="resetFileInputHandler","fileinput")
+   })
+   
+   
+   #Library loading
    library(MutationalPatterns)
    library(reshape2)
    library(ggplot2)
@@ -27,6 +39,9 @@ shinyServer(function(input, output) {
    library(heatmaply)
    library(gplots)
 
+   #######################################
+   #Reference genome definition and loading [ref_genome]
+   #######################################
    ref_genome<-eventReactive(input$run,{
       if (input$genome=="19"){
          library("BSgenome.Hsapiens.UCSC.hg19")
@@ -42,8 +57,9 @@ shinyServer(function(input, output) {
       }
    })
  
-   
-   #Reading input files as GRanges objects
+   #######################################
+   #Reading input files as GRanges objects [vcfs]
+   #######################################
    vcfs<-eventReactive(input$run,{
       inFile<-input$fileinput
 
@@ -54,22 +70,25 @@ shinyServer(function(input, output) {
                need(length(grep(".vcf",inFile$datapath))>0 | length(grep(".txt",inFile$datapath))>0,"File format error, please select the correct input file format before uploading your file/s.")
             )
             
+            
+            ########################################################################
             #Filtering steps
-#            vcfilter<-readVcfAsVRanges(inFile$datapath)
-            
-            
-            
+            #vcfilter<-readVcfAsVRanges(inFile$datapath)
+            ########################################################################
             
             
             #Read vcf for MutationalPatterns
             return(read_vcfs_as_granges(inFile$datapath,inFile$name,ref_genome(),group = "auto+sex", check_alleles = TRUE))
          }
+      
+      
          #MAF
          if (input$datatype=="MAF"){
             
             #Warning for file format
             validate(
-               need(length(grep(".maf",inFile$datapath))>0 | length(grep(".txt",inFile$datapath))>0,"File format error, please select the correct input file format before uploading your file/s.")
+               need(length(grep(".maf",inFile$datapath))>0 | length(grep(".txt",inFile$datapath))>0,"File format error, please select the correct input file format before uploading your file/s."),
+               need(length(inFile$datapath)==1, "Only one multi-sample MAF file is allowed")
             )
             
             aux<-fread(inFile$datapath,header=T,sep="\t",skip="#",data.table=F)
@@ -102,20 +121,25 @@ shinyServer(function(input, output) {
                need(length(grep(".tsv",inFile$datapath))>0 | length(grep(".txt",inFile$datapath))>0,"File format error, please select the correct input file format before uploading your file/s.")
             )
             
-            aux<-fread(inFile$datapath,header=T,sep="\t",data.table=F)
+            ff_list<-list()
+            for (w in 1:length(inFile$datapath)){
+               aux<-fread(inFile$datapath[w],header=T,sep="\t",data.table=F)
+               
+               #Condition in case "chr" prefix is present at CHROM column in input file
+               if (length(grep("chr",aux))>0){
+                  aux$CHROM<-sapply(strsplit(aux$CHROM,"chr"),"[",2)
+               }
             
-            #Condition in case "chr" prefix is present at CHROM column in input file
-            if (length(grep("chr",aux))>0){
-               aux$CHROM<-sapply(strsplit(aux$CHROM,"chr"),"[",2)
+               colnames(aux)[1]<-"#CHROM"
+               aux$ID<-"."
+               aux$QUAL<-"."
+               aux$FILTER<-"PASS"
+               aux<-aux[,c("#CHROM","POS","ID","REF","ALT","QUAL","FILTER")]
+               ff_list[[w]]<-tempfile("tp",fileext=".vcf")
+               write.table(aux,file=ff_list[[w]],row.names=F,quote=F,sep="\t")
             }
             
-            colnames(aux)[1]<-"#CHROM"
-            aux$ID<-"."
-            aux$QUAL<-"."
-            aux$FILTER<-"PASS"
-            aux<-aux[,c("#CHROM","POS","ID","REF","ALT","QUAL","FILTER")]
-            ff<-tempfile("tp",fileext=".vcf")
-            write.table(aux,file=ff,row.names=F,quote=F,sep="\t")
+            ff<-do.call("c",ff_list)
             
             return(read_vcfs_as_granges(ff,inFile$name,ref_genome(),group = "auto+sex", check_alleles = TRUE))
          }
@@ -129,42 +153,61 @@ shinyServer(function(input, output) {
             )
             
             library(xlsx)
-            aux<-read.xlsx(inFile$datapath,1)
-            
-            #Condition in case "chr" prefix is present at CHROM column in input file
-            if (length(grep("chr",aux))>0){
-               aux$CHROM<-sapply(strsplit(aux$CHROM,"chr"),"[",2)
+            ff_list<-list()
+            for (w in 1:length(inFile$datapath)){
+               aux<-read.xlsx(inFile$datapath[w],1)
+               
+               #Condition in case "chr" prefix is present at CHROM column in input file
+               if (length(grep("chr",aux))>0){
+                  aux$CHROM<-sapply(strsplit(aux$CHROM,"chr"),"[",2)
+               }
+               
+               colnames(aux)[1]<-"#CHROM"
+               aux$ID<-"."
+               aux$QUAL<-"."
+               aux$FILTER<-"PASS"
+               aux<-aux[,c("#CHROM","POS","ID","REF","ALT","QUAL","FILTER")]
+               ff_list[[w]]<-tempfile("tp",fileext=".vcf")
+               write.table(aux,file=ff_list[[w]],row.names=F,quote=F,sep="\t")
             }
             
-            colnames(aux)[1]<-"#CHROM"
-            aux$ID<-"."
-            aux$QUAL<-"."
-            aux$FILTER<-"PASS"
-            aux<-aux[,c("#CHROM","POS","ID","REF","ALT","QUAL","FILTER")]
-            ff2<-tempfile("tp",fileext=".vcf")
-            write.table(aux,file=ff2,row.names=F,quote=F,sep="\t")
-            
-            return(read_vcfs_as_granges(ff2,inFile$name,ref_genome(),group = "auto+sex", check_alleles = TRUE))
+            ff<-do.call("c",ff_list)
+               
+            return(read_vcfs_as_granges(ff,inFile$name,ref_genome(),group = "auto+sex", check_alleles = TRUE))
          }
 
    })
-      
+   
+   
+   #######################################
+   #Mutation Matrix creation [mut_mat]
+   #######################################
    mut_mat <- reactive({
          return(mut_matrix(vcfs(),ref_genome()))
    })
       
    
+   #######################################
+   #COSMIC Mutational Signatures loading (and adjustment) from COSMIC website [cancer_signatures]
+   #######################################
    sp_url <- "http://cancer.sanger.ac.uk/cancergenome/assets/signatures_probabilities.txt"
    cancer_signatures <- read.table(sp_url, sep = "\t", header = TRUE)
    cancer_signatures <- cancer_signatures[order(cancer_signatures[,1]),]
    cancer_signatures <- as.matrix(cancer_signatures[,4:33])
    
+   
+   #######################################
+   #Fitting mutations in samples (mut_mat) to COSMIC signatures [fit_res]
+   #######################################
    fit_res <- reactive({ fit_to_signatures(mut_mat(), cancer_signatures) })
-   ### add mean contribution
+         
+         ### add mean contribution
    
-   proposed_etiology <- c("Age","APOBEC","BRCA1 / BRCA2","Smoking","Unknown (all cancers)","Defective DNA MMR","UV light","Unknown (breast cancer and medulloblastoma)","POLH (CLL, BCL)","POLE","Alkylating agents","Unknown (liver cancer)","APOBEC","Unknown (hypermutation)","Defective DNA MMR","Unknown (liver cancer)","Unknown (different cancers)","Unknown (different cancers)","Unknown (pilocytic astrocytoma)","Defective DNA MMR","Unknown (stomach cancer / MSI tumors)","Aristolochic acid","Unknown (liver cancer)","Aflatoxin","Unknown (Hodgkin lynphoma)","Defective DNA MMR","Unknown (kidney clear cell carcinomas)","Unknown (stomach cancer)","Tobacco chewing","Unknown (breast cancer) / NTHL1")
    
-   known_cancer_signatures<-read.table("cancermatrix.tsv",header=TRUE,sep="\t",row.names=1)
+   #Auxiliar files of aetiology and known signatures by cancer type (from COSMIC)
+   proposed_etiology <- fread("../aux_files/proposed_etiology_COSMIC_signatures.txt",sep="\t",header=F,data.table=F)[,2]
+   known_cancer_signatures<-read.table("../aux_files/cancermatrix.tsv",header=TRUE,sep="\t",row.names=1)
+   
    
    #divisionRel function creation to print final dataframe
    divisionRel<-function(df){
@@ -176,18 +219,18 @@ shinyServer(function(input, output) {
    }
    
 
-   ## Plot selectize to select samples to plot.
+   #Plot selectize to select samples to plot.
    output$selected_samples<-renderUI({
       mysamp<-c("All",colnames(as.data.frame(fit_res()$contribution)),"mean")
       selectInput("mysamp","Select your samples",mysamp, multiple=TRUE, selectize = FALSE, size=6, selected="All")
    })
  
    
-   ### Select which samples use to plot.
+   #Select which samples use to plot.
       my_contributions<- reactive({ 
          
          if ("All" %in% input$mysamp) {
-            con<-data.frame( fit_res()$contribution,mean= apply(fit_res()$contribution,1,mean))
+            con<-data.frame( fit_res()$contribution, mean = apply(fit_res()$contribution,1,mean))
          } else {
          
            if("mean" %in% input$mysamp) {      
@@ -213,9 +256,12 @@ shinyServer(function(input, output) {
       
       #colnames(my_contributions())<-gsub("")
    
-      ### Plot sample profiles
       
-      #Output 96 nucleotide changes profile (samples individually)   
+      
+
+      #######################################
+      #PLOT 96 nucleotide changes profile (samples individually)
+      #######################################
       output$prof96 <- renderPlot({
          plot_96_profile(mut_mat()[,setdiff(colnames(my_contributions()),c("mean","All"))])
       })
