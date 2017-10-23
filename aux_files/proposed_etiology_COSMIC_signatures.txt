@@ -1,0 +1,30 @@
+Signature 1	Age
+Signature 2	APOBEC
+Signature 3	BRCA1 / BRCA2 (failure of DNA DSBR / large INDELs)
+Signature 4	Smoking
+Signature 5	Unknown (all cancer types)
+Signature 6	Defective DNA MMR / MSI (small INDELs)
+Signature 7	UV light
+Signature 8	Unknown (breast cancer and medulloblastoma)
+Signature 9	POLH (CLL, BCL)
+Signature 10	POLE (ultra-hypermutation)
+Signature 11	Alkylating agents
+Signature 12	Unknown (liver cancer)
+Signature 13	APOBEC
+Signature 14	Unknown (uterine cancer and glioma / hypermutation)
+Signature 15	Defective DNA MMR (small INDELs)
+Signature 16	Unknown (liver cancer)
+Signature 17	Unknown (different cancers)
+Signature 18	Unknown (different cancers)
+Signature 19	Unknown (pilocytic astrocytoma)
+Signature 20	Defective DNA MMR (small INDELs)
+Signature 21	Unknown (stomach cancer / MSI)
+Signature 22	Aristolochic acid
+Signature 23	Unknown (liver cancer)
+Signature 24	Aflatoxin
+Signature 25	Unknown (Hodgkin lymphoma)
+Signature 26	Defective DNA MMR (small INDELs)
+Signature 27	Unknown (kidney clear cell carcinomas / small INDELs)
+Signature 28	Unknown (stomach cancer)
+Signature 29	Tobacco chewing
+Signature 30	Unknown (breast cancer)
