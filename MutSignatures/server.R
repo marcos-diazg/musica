@@ -398,6 +398,7 @@ shinyServer(function(input, output,session){
       a<-data.frame(my_contributions()[1:30,], known_cancer_signatures[1:30,my.sel.cancers])
       rownames(a)<-colnames(cancer_signatures)[1:30]
       if (ncol(my_contributions())==1) colnames(a)[1]<-colnames(my_contributions()) ## fix colnames when there is only one sample
+      if (length(my.sel.cancers)==1) colnames(a)[length(colnames(a))]<-my.sel.cancers ## fix colnames when there is only one cancer type
       
       for (i in 1:(ncol(a)-length(my.sel.cancers))) { 
          #a[,i]<-a[,i]/max(a[,i])  # don't do a rescaling
