@@ -2,6 +2,7 @@ library(shiny)
 library(shinyBS)
 library(shinysky)
 library(shinyjs)
+library(V8)
 library(shinythemes)
 
 shinyServer(function(input, output,session){
@@ -21,12 +22,11 @@ shinyServer(function(input, output,session){
       shinyjs::show(id="after_run")
    })
    
-   observeEvent(input$clear,{
-      shinyjs::hide(id="mainpanel")
-      shinyjs::show(id="run")
-      shinyjs::hide(id="after_run")
-      session$sendCustomMessage(type="resetFileInputHandler","fileinput")
+   
+   observeEvent(input$clear, {
+      shinyjs::js$refresh()
    })
+   
    
    
    #Library loading
@@ -229,8 +229,19 @@ shinyServer(function(input, output,session){
       
          mysamp<-c("All",colnames(as.data.frame(fit_res()$contribution)),"mean")
          selectInput("mysamp","Select your samples",mysamp, multiple=TRUE, selectize = FALSE, size=6, selected="All")
+         
+      }
+      
+   })
+   
+   output$selected_cancer_types<-renderUI({
+      
+      if (input$tab=="comp_canc_sign"){
+         
+         selectInput("mycancers","Select the cancers to compare", c("All",colnames(read.table("../aux_files/cancermatrix.tsv",header=TRUE,sep="\t",row.names=1))), multiple=TRUE, selectize=FALSE, size=10, selected="All")
       
       }
+      
    })
  
    
@@ -317,7 +328,7 @@ shinyServer(function(input, output,session){
    
    #HeatMap
    output$heatmap_signatures <- renderPlotly({
-      a<-as.data.frame(my_contributions())
+      a<-my_contributions()
       if (ncol(a)==1) colnames(a)<-colnames(my_contributions()) ## fix colnames when there is only one sample
       rownames(a)<-colnames(cancer_signatures)[1:30] 
       colorends <- c("white","red")
@@ -332,42 +343,42 @@ shinyServer(function(input, output,session){
    
    
    #Download HeatMap 
-   output$download_signatures_plot <- downloadHandler (
-      filename = function(){paste("signatures_plot",input$type_signatures_plot, sep=".")}, 
-      content = function(ff) {
-         
-         a<-as.data.frame(my_contributions())
-         a<-as.matrix(a)
-         if (ncol(a)==1) colnames(a)<-colnames(my_contributions()) ## fix colnames when there is only one sample
-         rownames(a)<-colnames(cancer_signatures)[1:30] 
-         colorends <- c("white","red")
-         dendro <- "none"
-         if (input$row_d_heatmap=="yes") dendro<-"row"
-         if (input$col_d_heatmap=="yes") dendro<-"column" 
-         if (input$row_d_heatmap=="yes" & input$col_d_heatmap=="yes") dendro<-"both"
-         
-         if (input$type_signatures_plot=="pdf") pdf(ff,height=7,width=7)
-         if (input$type_signatures_plot=="png") png(ff,height=7*ppi,width=7*ppi,res=ppi)
-         if (input$type_signatures_plot=="tiff") tiff(ff,height=7*ppi,width=7*ppi,res=ppi,compression="lzw")
-
-          heatmap.2(
-            a,
-            trace = "none",
-            Rowv = input$row_d_heatmap=="yes" , 
-            Colv = input$col_d_heatmap=="yes" ,
-            dendrogram = dendro,
-            col = colorpanel (256, low = "white", high = "red")
-         )
-          
-         dev.off()
-         
-         
-         
-      })
+   # output$download_signatures_plot <- downloadHandler (
+   #    filename = function(){paste("signatures_plot",input$type_signatures_plot, sep=".")}, 
+   #    content = function(ff) {
+   #       
+   #       a<-my_contributions()
+   #       if (ncol(a)==1) colnames(a)<-colnames(my_contributions()) ## fix colnames when there is only one sample
+   #       rownames(a)<-colnames(cancer_signatures)[1:30] 
+   #       colorends <- c("white","red")
+   #       dendro <- "none"
+   #       if (input$row_d_heatmap=="yes") dendro<-"row"
+   #       if (input$col_d_heatmap=="yes") dendro<-"column" 
+   #       if (input$row_d_heatmap=="yes" & input$col_d_heatmap=="yes") dendro<-"both"
+   #       
+   #       if (input$type_signatures_plot=="pdf") pdf(ff,height=7,width=7)
+   #       if (input$type_signatures_plot=="png") png(ff,height=7*ppi,width=7*ppi,res=ppi)
+   #       if (input$type_signatures_plot=="tiff") tiff(ff,height=7*ppi,width=7*ppi,res=ppi,compression="lzw")
+   # 
+   #        heatmap.2(
+   #          as.matrix(a),
+   #          trace = "none",
+   #          Rowv = input$row_d_heatmap=="yes" , 
+   #          Colv = input$col_d_heatmap=="yes" ,
+   #          col = colorpanel (256, low = "white", high = "red"),
+   #          xlab = FALSE
+   #       )
+   #        
+   #       dev.off()
+   #       
+   #    })
    
    
-   ### Comparison with other cancers
-
+   
+   #######################################
+   ### Plot - Comparison with other cancers
+   #######################################
+   
       #check if column or row dendogram is needed
    output$row_dendro_cancers<-renderUI({
       radioButtons("row_c_heatmap", "Row dendrogram", c("yes","no"),selected = "no",inline = TRUE)
@@ -382,27 +393,7 @@ shinyServer(function(input, output,session){
       if ("All" %in% input$mycancers) my.sel.cancers<-colnames(known_cancer_signatures)
       else my.sel.cancers<-intersect(input$mycancers,colnames(known_cancer_signatures))
       
-      #      a<-t(data.frame(my_contributions()[30:1,], known_cancer_signatures[30:1,my.sel.cancers]))
-      #      colnames(a)<-colnames(cancer_signatures)[30:1]
-      #      if (ncol(my_contributions())==1) rownames(a)[1]<-colnames(my_contributions()) ## fix colnames when there is only one sample
- 
-      #for (i in 1:(nrow(a)-length(my.sel.cancers))) { 
-         #a[i,]<-a[i,]/max(a[i,])  # don't do a rescaling
-         #a[i,]<-a[i,]/sum(a[i,])   # put the proportions
-         #      }
-      #      a.m<-reshape2::melt(as.matrix(a)) 
-      #      a.m$category<-rep(c(rep("Sample",nrow(a)-length(my.sel.cancers)),rep("Cancers",length(my.sel.cancers))),30)
-      #      sel<-which(a.m$category=="Cancers")
-      #      a.m[sel,"value"]<-a.m[sel,"value"]+1.5
-      #      a.m[is.na(a.m)] <- 0
-      
-#     colorends <- c("white","red", "white", "blue")
-      
- #     ggplot(a.m, aes(x=Var1, y=Var2)) + geom_tile(aes(fill = value),
- #        colour = "white") + theme(axis.text.x=element_text(angle=90)) +
- #        scale_fill_gradientn(colours = colorends, limits = c(0,3)) + labs(x="",y="")
-      
- 
+
       a<-data.frame(my_contributions()[1:30,], known_cancer_signatures[1:30,my.sel.cancers])
       rownames(a)<-colnames(cancer_signatures)[1:30]
       if (ncol(my_contributions())==1) colnames(a)[1]<-colnames(my_contributions()) ## fix colnames when there is only one sample
@@ -468,7 +459,7 @@ shinyServer(function(input, output,session){
       
       if (ncol(as.data.frame(my_contributions()))>=3) {
          
-      a<-t(divisionRel(as.data.frame(my_contributions()[30:1,])))
+      a<-t(as.data.frame(my_contributions()[30:1,]))
       for (i in 1:nrow(a)) { 
          a[i,]<-a[i,]/sum(a[i,])   # put the proportions
       }
@@ -499,7 +490,7 @@ shinyServer(function(input, output,session){
          if (input$type_pca_plot=="tiff") tiff(ff,height=7*ppi,width=7*ppi,res=ppi,compression="lzw")
          
          if (ncol(as.data.frame(my_contributions()))>=3) {
-            a<-t(divisionRel(as.data.frame(my_contributions()[30:1,])))
+            a<-t(as.data.frame(my_contributions()[30:1,]))
             for (i in 1:nrow(a)) { 
                a[i,]<-a[i,]/sum(a[i,])   # put the proportions
             }
