@@ -92,8 +92,11 @@ shinyUI(fluidPage(
                                 radioButtons("type_signatures_plot","Format",c("pdf","png","tiff")),
                                 downloadButton("download_signatures_plot","OK")),
                         #plotOutput("heatmap_signatures"),
+                        p(),
                         fluidRow(plotlyOutput("heatmap_signatures",width="100%", height="500px")),
+                        p(),
                         downloadButton("download_contr",label="Download table"),
+                        br(),
                         dataTableOutput("contr")
                ),
                
@@ -107,9 +110,10 @@ shinyUI(fluidPage(
                                 radioButtons("type_known_plot","Format",c("pdf","png","tiff")),
                                 downloadButton("download_known_plot","OK")),
                         #plotOutput("heatmap_known"),
+                        p(),
                         fluidRow(plotlyOutput("heatmap_known",width="100%", height="500px")),
                         downloadButton("download_known",label="Download table"),
-                        br(),
+                        p(),
                         br(),
                         selectInput("mycancers","Select the cancers to compare", c("All","Adrenocortical.carcinoma","ALL","AML","Bladder","Breast","Cervix","Chondrosarcoma","CLL","Colorectum","Glioblastoma","Glioma.Low.Grade","Head.and.Neck","Kidney.Chromophobe","Kidney.Clear.Cell","Kidney.Papillary","Liver","Lung.Adeno","Lung.Small.Cell","Lung.Squamous","Lymphoma.B.cell","Lymphoma.Hodgkin","Medulloblastoma","Melanoma","Myeloma","Nasopharyngeal.Carcinoma","Neuroblastoma","Oesophagus","Oral.gingivo.buccal.squamous","Osteosarcoma","Ovary","Pancreas","Paraganglioma","Pilocytic.Astrocytoma","Prostate","Stomach","Thyroid","Urothelial.Carcinoma","Uterine.Carcinoma","Uterine.Carcinosarcoma","Uveal.Melanoma"), multiple=TRUE, selectize=FALSE, size=10, selected="All")
                ),

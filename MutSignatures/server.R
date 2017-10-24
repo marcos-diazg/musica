@@ -38,6 +38,7 @@ shinyServer(function(input, output,session){
    library(plotly)
    library(heatmaply)
    library(gplots)
+   library(xlsx)
 
    #######################################
    #Reference genome definition and loading [ref_genome]
@@ -152,7 +153,6 @@ shinyServer(function(input, output,session){
                need(length(grep(".xlsx",inFile$datapath))>0 | length(grep(".xls",inFile$datapath))>0,"File format error, please select the correct input file format before uploading your file/s.")
             )
             
-            library(xlsx)
             ff_list<-list()
             for (w in 1:length(inFile$datapath)){
                aux<-read.xlsx(inFile$datapath[w],1)
@@ -201,8 +201,6 @@ shinyServer(function(input, output,session){
    #######################################
    fit_res <- reactive({ fit_to_signatures(mut_mat(), cancer_signatures) })
          
-         ### add mean contribution
-   
    
    #Auxiliar files of aetiology and known signatures by cancer type (from COSMIC)
    proposed_etiology <- fread("../aux_files/proposed_etiology_COSMIC_signatures.txt",sep="\t",header=F,data.table=F)[,2]
@@ -224,7 +222,7 @@ shinyServer(function(input, output,session){
       
       if (input$tab == "96prof"){
         
-          mysamp<-c("All",colnames(as.data.frame(fit_res()$contribution)))
+         mysamp<-c("All",colnames(as.data.frame(fit_res()$contribution)))
          selectInput("mysamp","Select your samples",mysamp, multiple=TRUE, selectize = FALSE, size=6, selected="All")
          
       } else {
@@ -256,47 +254,56 @@ shinyServer(function(input, output,session){
             }
               
          } else {
-                  con<-data.frame(divisionRel(as.data.frame(fit_res()$contribution[,input$mysamp])))  
-            }
+            con<-data.frame(divisionRel(as.data.frame(fit_res()$contribution[,input$mysamp])))  
          }
+      }
          
-         #Fixing colname of one sample (without mean)
-         if (ncol(con)==1 & colnames(con)[1]!="mean"){
-            colnames(con)<-setdiff(input$mysamp,c("All","mean"))
-         }
-         
-         #Fixing colname of one sample (with mean)
-         if (ncol(con)==2 & colnames(con)[2]=="mean"){
-            colnames(con)[1]<-setdiff(input$mysamp,c("All","mean"))
-         }
-         
-         #Fixing colname of just mean of samples
-         if (ncol(con)==1 & colnames(con)[1]=="mean"){
-            colnames(con)<-"mean"
-         }
-         
-         return(con)
       
-      })
+      #Fixing colname of one sample (without mean)
+      if (ncol(con)==1 & colnames(con)[1]!="mean"){
+         colnames(con)[1]<-setdiff(input$mysamp,c("All","mean"))
+      }
+         
+      #Fixing colname of one sample (with mean)
+      if (ncol(con)==2 & colnames(con)[2]=="mean" & setdiff(input$mysamp,c("mean"))!="All"){
+         colnames(con)[1]<-setdiff(input$mysamp,c("All","mean"))
+      }
+         
+      #Fixing colname of just mean of samples
+      if (ncol(con)==1 & colnames(con)[1]=="mean"){
+         colnames(con)<-"mean"
+      }
+         
+      return(con)
+      
+   })
 
 
-      #######################################
-      #PLOT 96 nucleotide changes profile (samples individually)
-      #######################################
-      output$prof96 <- renderPlot({
-         plot_96_profile(as.matrix(mut_mat()[,setdiff(colnames(my_contributions()),c("mean"))]))
-      })
+   #######################################
+   #PLOT 96 nucleotide changes profile (samples individually)
+   #######################################
+   output$prof96 <- renderPlot({
+      aux_96_profile<-as.matrix(mut_mat()[,setdiff(colnames(my_contributions()),c("mean"))])
+      colnames(aux_96_profile)<-setdiff(colnames(my_contributions()),c("mean"))
+      plot_96_profile(aux_96_profile)
+   })
       
       
-      
-      ### Plot heatmap with contributions
-      
-      
-   output$contr <- renderDataTable({
-      data.frame(Signature = 1:30, Proposed_Etiology = proposed_etiology, my_contributions())
-   },options = list(lengthChange=FALSE,pageLength=30, paging=FALSE))
+   #######################################
+   ### Plot heatmap with contributions
+   #######################################
    
-   output$download_contr <- downloadHandler( filename="contr.csv", content=function (file){ write.table(x=data.frame(colnames(cancer_signatures), proposed_etiology, divisionRel(my_contributions())), file=file, row.names=FALSE, sep="\t", quote=FALSE) })
+   
+   #DataTable
+   output$contr <- renderDataTable({
+         data.frame(Signature = 1:30, Proposed_Etiology = proposed_etiology, my_contributions())
+      },
+      options = list(lengthChange=FALSE,pageLength=30, paging=FALSE, searching=FALSE, info=FALSE)
+   )
+   
+   
+   #Download Table
+   output$download_contr <- downloadHandler( filename="COSMIC_sign_contributions.txt", content=function (file){ write.table(x = data.frame(Signature = 1:30, Proposed_Etiology = proposed_etiology, my_contributions()), file = file, sep = "\t", quote=F, row.names=F) })
    
    
    #check if column or row dendogram is needed
@@ -308,9 +315,9 @@ shinyServer(function(input, output,session){
    })
    
    
-   
+   #HeatMap
    output$heatmap_signatures <- renderPlotly({
-      a<-divisionRel(as.data.frame(my_contributions()))
+      a<-as.data.frame(my_contributions())
       if (ncol(a)==1) colnames(a)<-colnames(my_contributions()) ## fix colnames when there is only one sample
       rownames(a)<-colnames(cancer_signatures)[1:30] 
       colorends <- c("white","red")
@@ -323,12 +330,13 @@ shinyServer(function(input, output,session){
                 dendrogram = dendro, k_row = 1, k_col = 1, column_text_angle = 90)
    })
    
-    
+   
+   #Download HeatMap 
    output$download_signatures_plot <- downloadHandler (
       filename = function(){paste("signatures_plot",input$type_signatures_plot, sep=".")}, 
       content = function(ff) {
          
-         a<-divisionRel(as.data.frame(my_contributions()))
+         a<-as.data.frame(my_contributions())
          a<-as.matrix(a)
          if (ncol(a)==1) colnames(a)<-colnames(my_contributions()) ## fix colnames when there is only one sample
          rownames(a)<-colnames(cancer_signatures)[1:30] 
@@ -346,28 +354,15 @@ shinyServer(function(input, output,session){
             a,
             trace = "none",
             Rowv = input$row_d_heatmap=="yes" , 
-            Colv = input$col_d_heatmap=="yes" , 
+            Colv = input$col_d_heatmap=="yes" ,
+            dendrogram = dendro,
             col = colorpanel (256, low = "white", high = "red")
          )
- 
-    #     heatmaply(a, scale_fill_gradient_fun = scale_fill_gradientn(colours = colorends, limits = c(0,1)),
-    #               dendrogram = dendro, k_row = 1, k_col = 1, column_text_angle = 90)
-         
+          
          dev.off()
          
-      #   a<-t(divisionRel(as.data.frame(my_contributions()[30:1,])))
-      #   if (nrow(a)==1) rownames(a)<-colnames(my_contributions()) ## fix colnames when there is only one sample
-      #   colnames(a)<-colnames(cancer_signatures)[30:1]
-      #   a.m<-reshape2::melt(as.matrix(a)) 
-      #   colorends <- c("white","red")
-         #     tiff(ff,height=7*ppi,width=7*ppi,res=ppi,compression="lzw")
-         #     pdf(ff)
-      #   ggplot(a.m, aes(x=Var1, y=Var2)) + geom_tile(aes(fill = value),
-      #                                                colour = "white") + theme(axis.text.x=element_text(angle=90)) +
-      #      scale_fill_gradientn(colours = colorends, limits = c(0,max(a))) + labs(x="",y="")
-      #   if (input$type_signatures_plot=="pdf") ggsave(ff)
-      #   if (input$type_signatures_plot=="png") ggsave(ff)
-      #   if (input$type_signatures_plot=="tiff") ggsave(ff,compression="lzw")
+         
+         
       })
    
    
