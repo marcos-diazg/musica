@@ -107,9 +107,7 @@ shinyUI(fluidPage(
                         #         downloadButton("download_known_plot","OK")),
                         #plotOutput("heatmap_known"),
                         p(),
-                        fluidRow(plotlyOutput("heatmap_known",width="100%", height="500px")),
-                        p(),
-                        downloadButton("download_known",label="Download table")
+                        fluidRow(plotlyOutput("heatmap_known",width="100%", height="500px"))
                ),
                
                #Principal Component Analysis (PCA)

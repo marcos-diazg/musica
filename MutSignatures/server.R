@@ -379,7 +379,7 @@ shinyServer(function(input, output,session){
    ### Plot - Comparison with other cancers
    #######################################
    
-      #check if column or row dendogram is needed
+   #check if column or row dendogram is needed
    output$row_dendro_cancers<-renderUI({
       radioButtons("row_c_heatmap", "Row dendrogram", c("yes","no"),selected = "no",inline = TRUE)
    })
@@ -387,7 +387,8 @@ shinyServer(function(input, output,session){
       radioButtons("col_c_heatmap", "Column dendrogram", c("yes","no"),selected = "no",inline = TRUE)
    })
    
- 
+   
+   #HeatMap
    output$heatmap_known <- renderPlotly({
       
       if ("All" %in% input$mycancers) my.sel.cancers<-colnames(known_cancer_signatures)
@@ -398,7 +399,6 @@ shinyServer(function(input, output,session){
       rownames(a)<-colnames(cancer_signatures)[1:30]
       if (ncol(my_contributions())==1) colnames(a)[1]<-colnames(my_contributions()) ## fix colnames when there is only one sample
       
-
       for (i in 1:(ncol(a)-length(my.sel.cancers))) { 
          #a[,i]<-a[,i]/max(a[,i])  # don't do a rescaling
          a[,i]<-a[,i]/sum(a[,i])   # put the proportions
@@ -420,37 +420,37 @@ shinyServer(function(input, output,session){
    })
    
 
-   
-   output$download_known_plot <- downloadHandler(filename = function(){paste("comparison_with_other",input$type_known_plot, sep=".")}, content=function (ff) {
-      
-      if ("All" %in% input$mycancers) my.sel.cancers<-colnames(known_cancer_signatures)
-      else my.sel.cancers<-intersect(input$mycancers,colnames(known_cancer_signatures))
-      
-      
-      a<-t(data.frame(my_contributions()[30:1,], known_cancer_signatures[30:1,my.sel.cancers]))
-      colnames(a)<-colnames(cancer_signatures)[30:1]
-      if (ncol(my_contributions())==1) rownames(a)[1]<-colnames(my_contributions()) ## fix colnames when there is only one sample
-  
-      for (i in 1:(nrow(a)-length(my.sel.cancers))) { 
-      #   a[i,]<-a[i,]/max(a[i,])   # don't do a rescaling
-          a[i,]<-a[i,]/sum(a[i,])   # put the proportions
-      }
-      a.m<-reshape2::melt(as.matrix(a)) 
-      a.m$category<-rep(c(rep("Sample",nrow(a)-length(my.sel.cancers)),rep("Cancers",length(my.sel.cancers))),30)
-      sel<-which(a.m$category=="Cancers")
-      a.m[sel,"value"]<-a.m[sel,"value"]+1.5
-      a.m[is.na(a.m)] <- 0
-      
-      colorends <- c("white","red", "white", "blue")
-      
-      ggplot(a.m, aes(x=Var1, y=Var2)) + geom_tile(aes(fill = value),
-                                                   colour = "white") + theme(axis.text.x=element_text(angle=90)) +
-         scale_fill_gradientn(colours = colorends, limits = c(0,3)) + labs(x="",y="")
-      if (input$type_known_plot=="pdf") ggsave(ff)
-      if (input$type_known_plot=="png") ggsave(ff)
-      if (input$type_known_plot=="tiff") ggsave(ff,compression="lzw")
-      
-   })
+   #  Download HeatMap 
+   #  output$download_known_plot <- downloadHandler(filename = function(){paste("comparison_with_other",input$type_known_plot, sep=".")}, content=function (ff) {
+   #    
+   #    if ("All" %in% input$mycancers) my.sel.cancers<-colnames(known_cancer_signatures)
+   #    else my.sel.cancers<-intersect(input$mycancers,colnames(known_cancer_signatures))
+   #    
+   #    
+   #    a<-t(data.frame(my_contributions()[30:1,], known_cancer_signatures[30:1,my.sel.cancers]))
+   #    colnames(a)<-colnames(cancer_signatures)[30:1]
+   #    if (ncol(my_contributions())==1) rownames(a)[1]<-colnames(my_contributions()) ## fix colnames when there is only one sample
+   # 
+   #    for (i in 1:(nrow(a)-length(my.sel.cancers))) { 
+   #    #   a[i,]<-a[i,]/max(a[i,])   # don't do a rescaling
+   #        a[i,]<-a[i,]/sum(a[i,])   # put the proportions
+   #    }
+   #    a.m<-reshape2::melt(as.matrix(a)) 
+   #    a.m$category<-rep(c(rep("Sample",nrow(a)-length(my.sel.cancers)),rep("Cancers",length(my.sel.cancers))),30)
+   #    sel<-which(a.m$category=="Cancers")
+   #    a.m[sel,"value"]<-a.m[sel,"value"]+1.5
+   #    a.m[is.na(a.m)] <- 0
+   #    
+   #    colorends <- c("white","red", "white", "blue")
+   #    
+   #    ggplot(a.m, aes(x=Var1, y=Var2)) + geom_tile(aes(fill = value),
+   #                                                 colour = "white") + theme(axis.text.x=element_text(angle=90)) +
+   #       scale_fill_gradientn(colours = colorends, limits = c(0,3)) + labs(x="",y="")
+   #    if (input$type_known_plot=="pdf") ggsave(ff)
+   #    if (input$type_known_plot=="png") ggsave(ff)
+   #    if (input$type_known_plot=="tiff") ggsave(ff,compression="lzw")
+   #    
+   # })
    
    
    ###### PCA - Clustering of samples ## only if there are 3 or more samples
