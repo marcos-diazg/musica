@@ -14,8 +14,7 @@ shinyUI(fluidPage(
    useShinyjs(),
   
    #Title
-   titlePanel("MutSignatures"),
-  
+   titlePanel("MuSiC   -   Mutational Signatures in Cancer"),
    sidebarLayout(
       
       sidebarPanel(
@@ -75,10 +74,10 @@ shinyUI(fluidPage(
     
          mainPanel(id="mainpanel",
                    
-            tabsetPanel(type="pills",
+            tabsetPanel(id="tab", type="pills",
                
                #Plot profile 96 changes                  
-               tabPanel("Mutational profile of provided sample/s",
+               tabPanel("Mutational profile of provided sample/s",value="96prof",
                         br(),
                         plotOutput("prof96")
                ),

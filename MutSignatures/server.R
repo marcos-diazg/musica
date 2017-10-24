@@ -221,49 +221,70 @@ shinyServer(function(input, output,session){
 
    #Plot selectize to select samples to plot.
    output$selected_samples<-renderUI({
-      mysamp<-c("All",colnames(as.data.frame(fit_res()$contribution)),"mean")
-      selectInput("mysamp","Select your samples",mysamp, multiple=TRUE, selectize = FALSE, size=6, selected="All")
+      
+      if (input$tab == "96prof"){
+        
+          mysamp<-c("All",colnames(as.data.frame(fit_res()$contribution)))
+         selectInput("mysamp","Select your samples",mysamp, multiple=TRUE, selectize = FALSE, size=6, selected="All")
+         
+      } else {
+      
+         mysamp<-c("All",colnames(as.data.frame(fit_res()$contribution)),"mean")
+         selectInput("mysamp","Select your samples",mysamp, multiple=TRUE, selectize = FALSE, size=6, selected="All")
+      
+      }
    })
  
    
    #Select which samples use to plot.
-      my_contributions<- reactive({ 
+   my_contributions<- reactive({ 
          
-         if ("All" %in% input$mysamp) {
-            con<-data.frame( fit_res()$contribution, mean = apply(fit_res()$contribution,1,mean))
-         } else {
-         
-           if("mean" %in% input$mysamp) {      
-              if (length(input$mysamp)>2) {
-                 con<-data.frame( fit_res()$contribution[,input$mysamp[-length(input$mysamp)]], mean= apply(fit_res()$contribution[,input$mysamp[-length(input$mysamp)]],1,mean) ) 
-               } else {
-                  con<-data.frame(fit_res()$contribution[,input$mysamp[-length(input$mysamp)]] )    
-               }
-            } else {
-               if (length(input$mysamp)>2) {
-                  con<-data.frame( fit_res()$contribution[,input$mysamp] )   
-               } else {
-                  con<-data.frame( fit_res()$contribution[,input$mysamp] )   
-               }   
-            }
+      if ("All" %in% input$mysamp) {
+         aux<-divisionRel(as.data.frame(fit_res()$contribution))
+         con<-data.frame(aux, mean = apply(aux,1,mean))
             
+      } else {
+            
+         if("mean" %in% input$mysamp) {      
+            if (length(input$mysamp)>1) {
+               aux<-divisionRel(as.data.frame(fit_res()$contribution[,input$mysamp[-length(input$mysamp)]]))
+               con<-data.frame(aux, mean = apply(aux,1,mean)) 
+               
+            } else {
+               aux<-divisionRel(as.data.frame(fit_res()$contribution))
+               con<-data.frame(mean = apply(aux,1,mean))    
+            }
+              
+         } else {
+                  con<-data.frame(divisionRel(as.data.frame(fit_res()$contribution[,input$mysamp])))  
+            }
          }
-         if (ncol(con)==1) colnames(con)<-setdiff(input$mysamp,c("All","mean"))
-         return(con)
          
+         #Fixing colname of one sample (without mean)
+         if (ncol(con)==1 & colnames(con)[1]!="mean"){
+            colnames(con)<-setdiff(input$mysamp,c("All","mean"))
+         }
+         
+         #Fixing colname of one sample (with mean)
+         if (ncol(con)==2 & colnames(con)[2]=="mean"){
+            colnames(con)[1]<-setdiff(input$mysamp,c("All","mean"))
+         }
+         
+         #Fixing colname of just mean of samples
+         if (ncol(con)==1 & colnames(con)[1]=="mean"){
+            colnames(con)<-"mean"
+         }
+         
+         return(con)
+      
       })
 
-      
-      #colnames(my_contributions())<-gsub("")
-   
-      
-      
 
       #######################################
       #PLOT 96 nucleotide changes profile (samples individually)
       #######################################
       output$prof96 <- renderPlot({
-         plot_96_profile(mut_mat()[,setdiff(colnames(my_contributions()),c("mean","All"))])
+         plot_96_profile(as.matrix(mut_mat()[,setdiff(colnames(my_contributions()),c("mean"))]))
       })
       
       
@@ -272,7 +293,7 @@ shinyServer(function(input, output,session){
       
       
    output$contr <- renderDataTable({
-      data.frame(Signature = 1:30, Proposed_Etiology = proposed_etiology, divisionRel(my_contributions()))
+      data.frame(Signature = 1:30, Proposed_Etiology = proposed_etiology, my_contributions())
    },options = list(lengthChange=FALSE,pageLength=30, paging=FALSE))
    
    output$download_contr <- downloadHandler( filename="contr.csv", content=function (file){ write.table(x=data.frame(colnames(cancer_signatures), proposed_etiology, divisionRel(my_contributions())), file=file, row.names=FALSE, sep="\t", quote=FALSE) })
@@ -446,7 +467,7 @@ shinyServer(function(input, output,session){
    })
    
    
-   ###### Clustering of samples ## only if there are 3 or more samples
+   ###### PCA - Clustering of samples ## only if there are 3 or more samples
    
    output$pca_plot <- renderPlot({
       
