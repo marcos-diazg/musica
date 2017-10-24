@@ -261,11 +261,11 @@ shinyServer(function(input, output,session){
       
       #Fixing colname of one sample (without mean)
       if (ncol(con)==1 & colnames(con)[1]!="mean"){
-         colnames(con)[1]<-setdiff(input$mysamp,c("All","mean"))
+         colnames(con)<-setdiff(input$mysamp,c("All","mean"))
       }
          
       #Fixing colname of one sample (with mean)
-      if (ncol(con)==2 & colnames(con)[2]=="mean" & setdiff(input$mysamp,c("mean"))!="All"){
+      if (ncol(con)==2 & colnames(con)[2]=="mean" & input$mysamp!="All"){
          colnames(con)[1]<-setdiff(input$mysamp,c("All","mean"))
       }
          
