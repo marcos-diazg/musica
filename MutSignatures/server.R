@@ -469,20 +469,25 @@ shinyServer(function(input, output,session){
    #######################################
    output$pca_plot <- renderPlot({
       
-      if (ncol(as.data.frame(my_contributions()))>=3) {
-         
-      a<-t(as.data.frame(my_contributions()[30:1,]))
-      for (i in 1:nrow(a)) { 
-         a[i,]<-a[i,]/sum(a[i,])   # put the proportions
+      if (input$mysamp=="All"){
+         my_contributions_mod <- my_contributions()[,-ncol(my_contributions())]
+      } else {
+         my_contributions_mod <- my_contributions()
       }
-      a<-a[,which(apply(a,2,sd)>0)] # remove signatures without variation
-      pca <- prcomp(a, scale=T)
-      plot(pca$x[,1], pca$x[,2],        # x y and z axis
-           col="red", pch=19,  
-           xlab=paste("Comp 1: ",round(pca$sdev[1]^2/sum(pca$sdev^2)*100,1),"%",sep=""),
-           ylab=paste("Comp 2: ",round(pca$sdev[2]^2/sum(pca$sdev^2)*100,1),"%",sep=""),
-           main="PCA")
-      text(pca$x[,1], pca$x[,2], rownames(a))
+      
+      if (ncol(as.data.frame(my_contributions_mod))>=3) {
+         a<-t(as.data.frame(my_contributions_mod[30:1,]))
+         for (i in 1:nrow(a)) { 
+            a[i,]<-a[i,]/sum(a[i,])   # put the proportions
+         }
+         a<-a[,which(apply(a,2,sd)>0)] # remove signatures without variation
+         pca <- prcomp(a, scale=T)
+         plot(pca$x[,1], pca$x[,2],        # x y and z axis
+              col="red", pch=19,  
+              xlab=paste("Comp 1: ",round(pca$sdev[1]^2/sum(pca$sdev^2)*100,1),"%",sep=""),
+              ylab=paste("Comp 2: ",round(pca$sdev[2]^2/sum(pca$sdev^2)*100,1),"%",sep=""),
+              main="PCA")
+         text(pca$x[,1], pca$x[,2], rownames(a))
       
       } else {
          par(mar = c(0,0,0,0))
@@ -501,8 +506,15 @@ shinyServer(function(input, output,session){
          if (input$type_pca_plot=="png") png(ff,height=7*ppi,width=7*ppi,res=ppi)
          if (input$type_pca_plot=="tiff") tiff(ff,height=7*ppi,width=7*ppi,res=ppi,compression="lzw")
 
-         if (ncol(as.data.frame(my_contributions()))>=3) {
-             a<-t(as.data.frame(my_contributions()[30:1,]))
+         
+         if (input$mysamp=="All"){
+            my_contributions_mod <- my_contributions()[,-ncol(my_contributions())]
+         } else {
+            my_contributions_mod <- my_contributions()
+         }
+         
+         if (ncol(as.data.frame(my_contributions_mod))>=3) {
+             a<-t(as.data.frame(my_contributions_mod[30:1,]))
              for (i in 1:nrow(a)) {
                 a[i,]<-a[i,]/sum(a[i,])   # put the proportions
              }
