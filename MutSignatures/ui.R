@@ -16,7 +16,7 @@ shinyUI(fluidPage(
    shinyjs::extendShinyjs(text = "shinyjs.refresh = function() { location.reload(); }"),
   
    #Title
-   titlePanel("MuSiC   -   Mutational Signatures in Cancer"),
+   titlePanel("MuSiC     -     Mutational Signatures in Cancer"),
    sidebarLayout(
       
       sidebarPanel(
@@ -116,7 +116,7 @@ shinyUI(fluidPage(
                ),
                
                #Principal Component Analysis (PCA)
-               tabPanel("Principal Components Analysis",
+               tabPanel("Principal Components Analysis", value="pca",
                         br(),
                         downloadButton("download_pca_ID",label="Download plot"),
                         bsModal("modal_pca","Download plot","download_pca_ID", 

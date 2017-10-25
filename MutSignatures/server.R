@@ -220,7 +220,7 @@ shinyServer(function(input, output,session){
    #Plot selectize to select samples to plot.
    output$selected_samples<-renderUI({
       
-      if (input$tab == "96prof"){
+      if (input$tab == "96prof" | input$tab == "pca"){
         
          mysamp<-c("All",colnames(as.data.frame(fit_res()$contribution)))
          selectInput("mysamp","Select your samples",mysamp, multiple=TRUE, selectize = FALSE, size=6, selected="All")
@@ -462,9 +462,11 @@ shinyServer(function(input, output,session){
         
       })
    
-   
+      
+      
+   #######################################
    ###### PCA - Clustering of samples ## only if there are 3 or more samples
-   
+   #######################################
    output$pca_plot <- renderPlot({
       
       if (ncol(as.data.frame(my_contributions()))>=3) {
