@@ -4,6 +4,7 @@ library(shinysky)
 library(shinyjs)
 library(V8)
 library(shinythemes)
+#webshot::install_phantomjs()  #To plot into pdf Heatmaply
 
 shinyServer(function(input, output,session){
    
@@ -12,7 +13,7 @@ shinyServer(function(input, output,session){
    
    
    #Resolution of the tiff images
-   ppi<-600
+   ppi<-200
    
    
    #Hidding/Showing tabs of mainpanel, run and clear buttons, ...
@@ -21,7 +22,6 @@ shinyServer(function(input, output,session){
       shinyjs::hide(id="run")
       shinyjs::show(id="after_run")
    })
-   
    
    observeEvent(input$clear, {
       shinyjs::js$refresh()
@@ -293,11 +293,26 @@ shinyServer(function(input, output,session){
    #######################################
    #PLOT 96 nucleotide changes profile (samples individually)
    #######################################
+   
+   #Plot 96 profile
    output$prof96 <- renderPlot({
       aux_96_profile<-as.matrix(mut_mat()[,setdiff(colnames(my_contributions()),c("mean"))])
       colnames(aux_96_profile)<-setdiff(colnames(my_contributions()),c("mean"))
       plot_96_profile(aux_96_profile)
    })
+   
+   #Download Plot 96 profile 
+   output$download_prof96_plot <- downloadHandler (
+      filename = function(){
+         paste("prof96_plot",input$type_prof96_plot, sep=".")
+      },
+      content = function(ff) {
+         aux_96_profile<-as.matrix(mut_mat()[,setdiff(colnames(my_contributions()),c("mean"))])
+         colnames(aux_96_profile)<-setdiff(colnames(my_contributions()),c("mean"))
+         plot_96_profile(aux_96_profile)
+         ggsave(ff,height=7,width=7,dpi=ppi)
+      }
+   )
       
       
    #######################################
@@ -489,28 +504,28 @@ shinyServer(function(input, output,session){
          if (input$type_pca_plot=="pdf") pdf(ff,height=7,width=7)
          if (input$type_pca_plot=="png") png(ff,height=7*ppi,width=7*ppi,res=ppi)
          if (input$type_pca_plot=="tiff") tiff(ff,height=7*ppi,width=7*ppi,res=ppi,compression="lzw")
-         
+
          if (ncol(as.data.frame(my_contributions()))>=3) {
-            a<-t(as.data.frame(my_contributions()[30:1,]))
-            for (i in 1:nrow(a)) { 
-               a[i,]<-a[i,]/sum(a[i,])   # put the proportions
-            }
-            a<-a[,which(apply(a,2,sd)>0)] # remove signatures without variation
-            pca <- prcomp(a, scale=T)
-            plot(pca$x[,1], pca$x[,2],        # x y and z axis
-                 col="red", pch=19,  
-                 xlab=paste("Comp 1: ",round(pca$sdev[1]^2/sum(pca$sdev^2)*100,1),"%",sep=""),
-                 ylab=paste("Comp 2: ",round(pca$sdev[2]^2/sum(pca$sdev^2)*100,1),"%",sep=""),
-                 main="PCA")
-            text(pca$x[,1], pca$x[,2], rownames(a))
+             a<-t(as.data.frame(my_contributions()[30:1,]))
+             for (i in 1:nrow(a)) {
+                a[i,]<-a[i,]/sum(a[i,])   # put the proportions
+             }
+             a<-a[,which(apply(a,2,sd)>0)] # remove signatures without variation
+             pca <- prcomp(a, scale=T)
+             plot(pca$x[,1], pca$x[,2],        # x y and z axis
+                  col="red", pch=19,
+                  xlab=paste("Comp 1: ",round(pca$sdev[1]^2/sum(pca$sdev^2)*100,1),"%",sep=""),
+                  ylab=paste("Comp 2: ",round(pca$sdev[2]^2/sum(pca$sdev^2)*100,1),"%",sep=""),
+                  main="PCA")
+             text(pca$x[,1], pca$x[,2], rownames(a))
          } else {
-            par(mar = c(0,0,0,0))
-            plot(c(0, 1), c(0, 1), ann = F, bty = 'n', type = 'n', xaxt = 'n', yaxt = 'n')
-            text(x = 0.5, y = 0.5, paste("PCA analysis works only with >=3 samples"), 
-                 cex = 1.6, col = "black")
+             par(mar = c(0,0,0,0))
+             plot(c(0, 1), c(0, 1), ann = F, bty = 'n', type = 'n', xaxt = 'n', yaxt = 'n')
+             text(x = 0.5, y = 0.5, paste("PCA analysis works only with >=3 samples"),
+                  cex = 1.6, col = "black")
          }
+
          dev.off()
-         
          
       })
    

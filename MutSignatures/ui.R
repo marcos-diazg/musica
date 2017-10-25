@@ -4,6 +4,7 @@ library(shinysky)
 library(shinyjs)
 library(V8)
 library(shinythemes)
+library(plotly)
 
 shinyUI(fluidPage(
    
@@ -75,7 +76,13 @@ shinyUI(fluidPage(
                #Plot profile 96 changes                  
                tabPanel("Mutational profile of provided sample/s",value="96prof",
                         br(),
+                        downloadButton("download_prof96_plot_ID",label="Download plot"),
+                        bsModal("modal_prof96","Download plot","download_prof96_plot_ID",
+                                radioButtons("type_prof96_plot","Format",c("pdf","png","tiff"),selected="pdf"),
+                                downloadButton("download_prof96_plot","OK")),
+                        br(),
                         plotOutput("prof96")
+
                ),
                
                #Contribution of COSMIC mutational signatures (heatmap and table)
@@ -87,7 +94,6 @@ shinyUI(fluidPage(
                         # bsModal("modal_signatures","Download plot","download_signatures_plot_ID", 
                         #         radioButtons("type_signatures_plot","Format",c("pdf","png","tiff")),
                         #         downloadButton("download_signatures_plot","OK")),
-                        #plotOutput("heatmap_signatures"),
                         p(),
                         fluidRow(plotlyOutput("heatmap_signatures",width="100%", height="500px")),
                         p(),
@@ -105,7 +111,6 @@ shinyUI(fluidPage(
                         # bsModal("modal_known","Download plot","download_known_plot_ID", 
                         #         radioButtons("type_known_plot","Format",c("pdf","png","tiff")),
                         #         downloadButton("download_known_plot","OK")),
-                        #plotOutput("heatmap_known"),
                         p(),
                         fluidRow(plotlyOutput("heatmap_known",width="100%", height="500px"))
                ),
@@ -117,6 +122,7 @@ shinyUI(fluidPage(
                         bsModal("modal_pca","Download plot","download_pca_ID", 
                                 radioButtons("type_pca_plot","Format",c("pdf","png","tiff")),
                                 downloadButton("download_pca_plot","OK")),
+                        br(),
                         plotOutput("pca_plot")
                )
 
