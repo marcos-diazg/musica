@@ -348,18 +348,32 @@ shinyServer(function(input, output,session){
    })
       
       
-   
-   
-   
-   
+   #PLOT somatic mutation prevalence
    output$smp <- renderPlot({
-      #mutation_counts<-data.frame(samples=names(vcfs()),smp=sapply(vcfs(),length))
       
-      plot_smp<-ggplot(data=mutation_counts(),aes(x=samples,y=smp)) + geom_bar(stat="identity",fill="orangered2") + theme_minimal()
+      mutation_counts_new<-data.frame(samples=rev(mutation_counts()$samples),smp=rev(mutation_counts()$smp))
+      
+      plot_smp<-ggplot(data=mutation_counts_new,aes(x=samples,y=smp)) + geom_bar(stat="identity",fill="orangered2") + theme_minimal()
       plot_smp + coord_flip() + labs(x = "", y = "", title = "Somatic mutation prevalence\n(number of mutations per megabase)") + theme(axis.text=element_text(size=12), plot.title = element_text(size = 16, face = "bold"), panel.grid.major.y=element_blank(), panel.grid.minor.y=element_blank(), panel.grid.major.x=element_blank(), panel.grid.minor.x=element_blank())
    
    })
    
+   #Download Plot somatic mutation prevalence 
+   output$download_smp_plot <- downloadHandler (
+      filename = function(){
+         paste("mut_prevalence_plot",input$type_smp_plot, sep=".")
+      },
+      content = function(ff) {
+         mutation_counts_new<-data.frame(samples=rev(mutation_counts()$samples),smp=rev(mutation_counts()$smp))
+         
+         plot_smp<-ggplot(data=mutation_counts_new,aes(x=samples,y=smp)) + geom_bar(stat="identity",fill="orangered2") + theme_minimal()
+         plot_smp + coord_flip() + labs(x = "", y = "", title = "Somatic mutation prevalence\n(number of mutations per megabase)") + theme(axis.text=element_text(size=12), plot.title = element_text(size = 16, face = "bold"), panel.grid.major.y=element_blank(), panel.grid.minor.y=element_blank(), panel.grid.major.x=element_blank(), panel.grid.minor.x=element_blank())
+         
+         
+         ggsave(ff,height=7,width=7,dpi=ppi)
+         
+      }
+   )
    
 
    #######################################
@@ -382,6 +396,7 @@ shinyServer(function(input, output,session){
          aux_96_profile<-as.matrix(mut_mat()[,setdiff(colnames(my_contributions()),c("mean"))])
          colnames(aux_96_profile)<-setdiff(colnames(my_contributions()),c("mean"))
          plot_96_profile(aux_96_profile)
+         
          ggsave(ff,height=7,width=7,dpi=ppi)
       }
    )
