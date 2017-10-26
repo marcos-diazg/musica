@@ -219,20 +219,26 @@ shinyServer(function(input, output,session){
 
    #Plot selectize to select samples to plot.
    output$selected_samples<-renderUI({
-      
-      if (input$tab == "96prof" | input$tab == "pca"){
-        
-         mysamp<-c("All",colnames(as.data.frame(fit_res()$contribution)))
-         selectInput("mysamp","Select your samples",mysamp, multiple=TRUE, selectize = FALSE, size=6, selected="All")
-         
+      if (length(vcfs())==1){
+            mysamp<-colnames(as.data.frame(fit_res()$contribution))
+            selectInput("mysamp","Select your samples",mysamp, multiple=TRUE, selectize = FALSE, size=1, selected=colnames(as.data.frame(fit_res()$contribution)))
       } else {
       
-         mysamp<-c("All",colnames(as.data.frame(fit_res()$contribution)),"mean")
-         selectInput("mysamp","Select your samples",mysamp, multiple=TRUE, selectize = FALSE, size=6, selected="All")
+         if (input$tab == "96prof" | input$tab == "pca"){
+           
+            mysamp<-c("All",colnames(as.data.frame(fit_res()$contribution)))
+            selectInput("mysamp","Select your samples",mysamp, multiple=TRUE, selectize = FALSE, size=6, selected="All")
+            
+         } else {
          
-      }
+            mysamp<-c("All",colnames(as.data.frame(fit_res()$contribution)),"mean")
+            selectInput("mysamp","Select your samples",mysamp, multiple=TRUE, selectize = FALSE, size=6, selected="All")
+            
+         }
       
+      }
    })
+   
    
    output$selected_cancer_types<-renderUI({
       
@@ -297,7 +303,7 @@ shinyServer(function(input, output,session){
    #Selection of type of study and MB affected by it
    output$kb_sequenced<-renderUI({
       
-      if (input$studytype == "Targeted sequencing"){
+      if (input$studytype == "Targeted Sequencing"){
          numericInput("bases_sequenced","Kilobases sequenced",value="10")
       }
          
@@ -312,7 +318,7 @@ shinyServer(function(input, output,session){
          return(30)
       }
       
-      if (input$studytype == "Targeted sequencing"){
+      if (input$studytype == "Targeted Sequencing"){
          return(input$bases_sequenced/1000)
       }
    })
@@ -355,16 +361,7 @@ shinyServer(function(input, output,session){
    })
    
    
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
+
    #######################################
    #PLOT 96 nucleotide changes profile (samples individually)
    #######################################

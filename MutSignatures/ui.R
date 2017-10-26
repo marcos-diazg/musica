@@ -38,7 +38,7 @@ shinyUI(fluidPage(
          hr(),
          
          #Type of Study
-         radioButtons("studytype","Type of study", c("Whole Genome Sequencing", "Whole Exome Sequencing", "Targeted sequencing")),
+         radioButtons("studytype","Type of study", c("Whole Genome Sequencing", "Whole Exome Sequencing", "Targeted Sequencing")),
          
 
          uiOutput("kb_sequenced"),
@@ -105,7 +105,7 @@ shinyUI(fluidPage(
                ),
                
                #Contribution of COSMIC mutational signatures (heatmap and table)
-               tabPanel("Cosmic mutational signatures contributions",
+               tabPanel("COSMIC mutational signatures contributions",
                         br(),
                         uiOutput("col_dendro_heatmap"),
                         uiOutput("row_dendro_heatmap"),
@@ -135,7 +135,7 @@ shinyUI(fluidPage(
                ),
                
                #Principal Component Analysis (PCA)
-               tabPanel("Principal Components Analysis", value="pca",
+               tabPanel("Principal components analysis", value="pca",
                         br(),
                         downloadButton("download_pca_ID",label="Download plot"),
                         bsModal("modal_pca","Download plot","download_pca_ID", 
