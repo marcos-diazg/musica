@@ -14,7 +14,7 @@ if(!require(MutationalPatterns)) {source("http://www.bioconductor.org/biocLite.R
 if(!require(VariantAnnotation)) {source("http://www.bioconductor.org/biocLite.R");biocLite("VariantAnnotation")}
 if(!require(BSgenome.Hsapiens.UCSC.hg38)) {source("http://www.bioconductor.org/biocLite.R");biocLite("BSgenome.Hsapiens.UCSC.hg38")}
 if(!require(BSgenome.Hsapiens.UCSC.hg19)) {source("http://www.bioconductor.org/biocLite.R");biocLite("BSgenome.Hsapiens.UCSC.hg19")}
-if(!require(BSgenome.Hsapiens.1000genomes.hs37d)) {source("http://www.bioconductor.org/biocLite.R");biocLite("BSgenome.Hsapiens.1000genomes.hs37d")}
+if(!require(BSgenome.Hsapiens.1000genomes.hs37d5)) {source("http://www.bioconductor.org/biocLite.R");biocLite("BSgenome.Hsapiens.1000genomes.hs37d5")}
 
 if(!require(ggplot2)) install.packages("ggplot2")
 if(!require(plotly)) install.packages("plotly")
@@ -28,7 +28,7 @@ if(!require(shinyBS)) install.packages("shinyBS")
 if(!require(shinysky)) {library(devtools) devtools::install_github("AnalytixWare/ShinySky")}
 if(!require(shinyjs)) install.packages("shinyjs")
 if(!require(shinythemes)) install.packages("shinythemes")
-if(!require(shiny)) install.packages("shiny")
+if(!require(V8)) install.packages("V8")
 
 ```
 
