@@ -22,7 +22,7 @@ shinyUI(fluidPage(
       sidebarPanel(
          
          #Input format
-         radioButtons("datatype", "Input format", c("VCF","MAF","TSV","Excel"),selected = "VCF",inline = TRUE),
+         radioButtons("datatype", "Input file format", c("VCF","MAF","TSV","Excel"),selected = "VCF",inline = TRUE),
          
          #Help menu for format of input file
          actionLink("helpformat","Help with input file format", icon=icon("question-circle-o")),
@@ -35,6 +35,14 @@ shinyUI(fluidPage(
          
          #Genome selection
          selectInput("genome","Reference Genome",c("UCSC GRCh38/hg38"="hg38","UCSC GRCh37/hg19"="19","1000genomes hs37d5"="37"),selected="hg38"),
+         hr(),
+         
+         #Type of Study
+         radioButtons("studytype","Type of study", c("Whole Genome Sequencing", "Whole Exome Sequencing", "Targeted sequencing")),
+         
+
+         uiOutput("kb_sequenced"),
+         
          hr(),
 
          #Run button
@@ -72,9 +80,20 @@ shinyUI(fluidPage(
          mainPanel(id="mainpanel",
                    
             tabsetPanel(id="tab", type="pills",
-               
+                        
+               #Somatic Mutation Prevalence
+               tabPanel("Somatic mutation prevalence",value="smp",
+                        br(),
+                        downloadButton("download_smp_plot_ID",label="Download plot"),
+                        bsModal("modal_smp","Download plot","download_smp_plot_ID",
+                                radioButtons("type_smp_plot","Format",c("pdf","png","tiff"),selected="pdf"),
+                                downloadButton("download_smp_plot","OK")),
+                        br(),
+                        plotOutput("smp")
+               ),
+                        
                #Plot profile 96 changes                  
-               tabPanel("Mutational profile of provided sample/s",value="96prof",
+               tabPanel("Mutational profile",value="96prof",
                         br(),
                         downloadButton("download_prof96_plot_ID",label="Download plot"),
                         bsModal("modal_prof96","Download plot","download_prof96_plot_ID",

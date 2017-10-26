@@ -4,6 +4,7 @@ library(shinysky)
 library(shinyjs)
 library(V8)
 library(shinythemes)
+library(plotly)
 #webshot::install_phantomjs()  #To plot into pdf Heatmaply
 
 shinyServer(function(input, output,session){
@@ -35,7 +36,6 @@ shinyServer(function(input, output,session){
    library(ggplot2)
    library(data.table)
    library(VariantAnnotation)
-   library(plotly)
    library(heatmaply)
    library(gplots)
    library(xlsx)
@@ -290,6 +290,81 @@ shinyServer(function(input, output,session){
    })
 
 
+   #######################################
+   #PLOT Somatic Mutation Prevalence (number mutations per megabase)
+   #######################################
+   
+   #Selection of type of study and MB affected by it
+   output$kb_sequenced<-renderUI({
+      
+      if (input$studytype == "Targeted sequencing"){
+         numericInput("bases_sequenced","Kilobases sequenced",value="10")
+      }
+         
+   })
+   
+   megabases<-reactive({
+      if (input$studytype == "Whole Genome Sequencing"){
+         return(2800)
+      }
+      
+      if (input$studytype == "Whole Exome Sequencing"){
+         return(30)
+      }
+      
+      if (input$studytype == "Targeted sequencing"){
+         return(input$bases_sequenced/1000)
+      }
+   })
+   
+   
+   #Selection of samples to plot
+   mutation_counts<- reactive({ 
+      
+      if ("All" %in% input$mysamp) {
+         mc<-data.frame(samples=c(names(vcfs()),"mean"),smp=(c(sapply(vcfs(),length),mean(sapply(vcfs(),length))))/megabases())
+         
+      } else {
+         
+         if("mean" %in% input$mysamp) {      
+            if (length(input$mysamp)>1) {
+               aux<-input$mysamp[-length(input$mysamp)]
+               mc<-data.frame(samples=c(names(vcfs()[aux]),"mean"), smp=(c(sapply(vcfs()[aux],length),mean(sapply(vcfs()[aux],length))))/megabases())
+               
+            } else {
+               mc<-data.frame(samples=c("mean"),smp=(c(mean(sapply(vcfs(),length))))/megabases())
+            }
+         } else {
+            mc<-data.frame(samples=names(vcfs()[input$mysamp]), smp=(sapply(vcfs()[input$mysamp],length))/megabases())
+         }
+      }
+      return(mc)
+   })
+      
+      
+   
+   
+   
+   
+   output$smp <- renderPlot({
+      #mutation_counts<-data.frame(samples=names(vcfs()),smp=sapply(vcfs(),length))
+      
+      plot_smp<-ggplot(data=mutation_counts(),aes(x=samples,y=smp)) + geom_bar(stat="identity",fill="orangered2") + theme_minimal()
+      plot_smp + coord_flip() + labs(x = "", y = "", title = "Somatic mutation prevalence\n(number of mutations per megabase)") + theme(axis.text=element_text(size=12), plot.title = element_text(size = 16, face = "bold"), panel.grid.major.y=element_blank(), panel.grid.minor.y=element_blank(), panel.grid.major.x=element_blank(), panel.grid.minor.x=element_blank())
+   
+   })
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
    #######################################
    #PLOT 96 nucleotide changes profile (samples individually)
    #######################################
