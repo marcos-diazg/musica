@@ -2,8 +2,9 @@ library(shiny)
 library(shinyBS)
 library(shinysky)
 library(shinyjs)
+library(V8)
 library(shinythemes)
-library(shinyHeatmaply)
+library(plotly)
 
 shinyUI(fluidPage(
    
@@ -12,16 +13,17 @@ shinyUI(fluidPage(
    
    #Activation of Shiny js
    useShinyjs(),
+   shinyjs::extendShinyjs(text = "shinyjs.refresh = function() { location.reload(); }"),
   
    #Title
-   titlePanel("MutSignatures"),
-  
+   titlePanel(title=div(img(src="music_4.png"),"\t\tMutational Signatures in Cancer"),windowTitle = "MuSiC - Mutational Signatures in Cancer"),
+#   img(src="music.png", align = "right"),
    sidebarLayout(
       
       sidebarPanel(
          
          #Input format
-         radioButtons("datatype", "Input format", c("VCF","MAF","TSV","Excel"),selected = "VCF",inline = TRUE),
+         radioButtons("datatype", "Input file format", c("VCF","MAF","TSV","Excel"),selected = "VCF",inline = TRUE),
          
          #Help menu for format of input file
          actionLink("helpformat","Help with input file format", icon=icon("question-circle-o")),
@@ -33,11 +35,20 @@ shinyUI(fluidPage(
          hr(),
          
          #Genome selection
-         selectInput("genome","Reference Genome",c("UCSC GRCh38/hg38"="hg38","UCSC GRCh37/hg19"="19","1000genomes hs37d5"="37"),selected="hg38"),
-         br(),
+         selectInput("genome","Reference genome",c("UCSC GRCh38/hg38"="hg38","UCSC GRCh37/hg19"="19","1000genomes hs37d5"="37"),selected="hg38"),
+         hr(),
+         
+         #Type of Study
+         radioButtons("studytype","Type of study", c("Whole Genome Sequencing", "Whole Exome Sequencing", "Targeted Sequencing")),
+         
+
+         uiOutput("kb_sequenced"),
+         
+         hr(),
 
          #Run button
          actionButton("run","Run",class = "btn-primary"),
+         
 
          #Busy indicator
          busyIndicator("Running",wait=0),
@@ -46,23 +57,17 @@ shinyUI(fluidPage(
          #Stuff only showed when run button is pressed
          hidden(
             div(id="after_run",
-              #Adding space between run button and sample selector
-              hr(),
               
               #Sample selection for plots (post push run)         
               uiOutput("selected_samples"),
               
-              #Clear button and script to hide input file
-              actionButton("clear","Clear"),
+              #Cancer type selection for plots (post push run)
+              uiOutput("selected_cancer_types"),
               
-               tags$script('
-                 Shiny.addCustomMessageHandler("resetFileInputHandler", function(x) {
-                 var id = "#" + x + "_progress";
-                 var idBar = id + " .bar";
-                 $(id).css("visibility", "hidden");
-                 $(idBar).css("width", "0%");
-                 });
-               ') 
+              hr(),
+              
+              #Clear button 
+              actionButton("clear","Clear")
             )
          )
       ),
@@ -75,53 +80,69 @@ shinyUI(fluidPage(
     
          mainPanel(id="mainpanel",
                    
-            tabsetPanel(type="pills",
-               
+            tabsetPanel(id="tab", type="pills",
+                        
+               #Somatic Mutation Prevalence
+               tabPanel("Somatic mutation prevalence",value="smp",
+                        br(),
+                        downloadButton("download_smp_plot_ID",label="Download plot"),
+                        bsModal("modal_smp","Download plot","download_smp_plot_ID",
+                                radioButtons("type_smp_plot","Format",c("pdf","png","tiff"),selected="pdf"),
+                                downloadButton("download_smp_plot","OK")),
+                        br(),
+                        plotOutput("smp")
+               ),
+                        
                #Plot profile 96 changes                  
-               tabPanel("Mutational profile of provided sample/s",
+               tabPanel("Mutational profile",value="96prof",
+                        br(),
+                        downloadButton("download_prof96_plot_ID",label="Download plot"),
+                        bsModal("modal_prof96","Download plot","download_prof96_plot_ID",
+                                radioButtons("type_prof96_plot","Format",c("pdf","png","tiff"),selected="pdf"),
+                                downloadButton("download_prof96_plot","OK")),
                         br(),
                         plotOutput("prof96")
+
                ),
                
                #Contribution of COSMIC mutational signatures (heatmap and table)
-               tabPanel("Cosmic mutational signatures contributions",
+               tabPanel("COSMIC mutational signatures contributions",
                         br(),
                         uiOutput("col_dendro_heatmap"),
                         uiOutput("row_dendro_heatmap"),
-                        downloadButton("download_signatures_plot_ID",label="Download plot"),
-                        bsModal("modal_signatures","Download plot","download_signatures_plot_ID", 
-                                radioButtons("type_signatures_plot","Format",c("pdf","png","tiff")),
-                                downloadButton("download_signatures_plot","OK")),
-                        #plotOutput("heatmap_signatures"),
+                         downloadButton("download_signatures_plot_ID",label="Download plot"),
+                         bsModal("modal_signatures","Download plot","download_signatures_plot_ID", 
+                                 radioButtons("type_signatures_plot","Format",c("pdf","png","tiff")),
+                                 downloadButton("download_signatures_plot","OK")),
+                        p(),
                         fluidRow(plotlyOutput("heatmap_signatures",width="100%", height="500px")),
+                        p(),
                         downloadButton("download_contr",label="Download table"),
+                        br(),
                         dataTableOutput("contr")
                ),
                
                #Comparison of COSMIC mutational signatures with cancers
-               tabPanel("Comparison with cancers signatures",
+               tabPanel("Comparison with cancers signatures", value="comp_canc_sign",
                         br(),
                         uiOutput("col_dendro_cancers"),
                         uiOutput("row_dendro_cancers"),
-                        downloadButton("download_known_plot_ID",label="Download plot"),
-                        bsModal("modal_known","Download plot","download_known_plot_ID", 
-                                radioButtons("type_known_plot","Format",c("pdf","png","tiff")),
-                                downloadButton("download_known_plot","OK")),
-                        #plotOutput("heatmap_known"),
-                        fluidRow(plotlyOutput("heatmap_known",width="100%", height="500px")),
-                        downloadButton("download_known",label="Download table"),
-                        br(),
-                        br(),
-                        selectInput("mycancers","Select the cancers to compare", c("All","Adrenocortical.carcinoma","ALL","AML","Bladder","Breast","Cervix","Chondrosarcoma","CLL","Colorectum","Glioblastoma","Glioma.Low.Grade","Head.and.Neck","Kidney.Chromophobe","Kidney.Clear.Cell","Kidney.Papillary","Liver","Lung.Adeno","Lung.Small.Cell","Lung.Squamous","Lymphoma.B.cell","Lymphoma.Hodgkin","Medulloblastoma","Melanoma","Myeloma","Nasopharyngeal.Carcinoma","Neuroblastoma","Oesophagus","Oral.gingivo.buccal.squamous","Osteosarcoma","Ovary","Pancreas","Paraganglioma","Pilocytic.Astrocytoma","Prostate","Stomach","Thyroid","Urothelial.Carcinoma","Uterine.Carcinoma","Uterine.Carcinosarcoma","Uveal.Melanoma"), multiple=TRUE, selectize=FALSE, size=10, selected="All")
+                         downloadButton("download_known_plot_ID",label="Download plot"),
+                         bsModal("modal_known","Download plot","download_known_plot_ID", 
+                                 radioButtons("type_known_plot","Format",c("pdf","png","tiff")),
+                                 downloadButton("download_known_plot","OK")),
+                        p(),
+                        fluidRow(plotlyOutput("heatmap_known",width="100%", height="500px"))
                ),
                
                #Principal Component Analysis (PCA)
-               tabPanel("Principal Components Analysis",
+               tabPanel("Principal components analysis", value="pca",
                         br(),
                         downloadButton("download_pca_ID",label="Download plot"),
                         bsModal("modal_pca","Download plot","download_pca_ID", 
                                 radioButtons("type_pca_plot","Format",c("pdf","png","tiff")),
                                 downloadButton("download_pca_plot","OK")),
+                        br(),
                         plotOutput("pca_plot")
                )
 

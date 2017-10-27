@@ -2,7 +2,10 @@ library(shiny)
 library(shinyBS)
 library(shinysky)
 library(shinyjs)
+library(V8)
 library(shinythemes)
+library(plotly)
+#webshot::install_phantomjs()  #To plot into pdf Heatmaply
 
 shinyServer(function(input, output,session){
    
@@ -11,7 +14,7 @@ shinyServer(function(input, output,session){
    
    
    #Resolution of the tiff images
-   ppi<-600
+   ppi<-200
    
    
    #Hidding/Showing tabs of mainpanel, run and clear buttons, ...
@@ -21,12 +24,10 @@ shinyServer(function(input, output,session){
       shinyjs::show(id="after_run")
    })
    
-   observeEvent(input$clear,{
-      shinyjs::hide(id="mainpanel")
-      shinyjs::show(id="run")
-      shinyjs::hide(id="after_run")
-      session$sendCustomMessage(type="resetFileInputHandler","fileinput")
+   observeEvent(input$clear, {
+      shinyjs::js$refresh()
    })
+   
    
    
    #Library loading
@@ -35,9 +36,9 @@ shinyServer(function(input, output,session){
    library(ggplot2)
    library(data.table)
    library(VariantAnnotation)
-   library(plotly)
    library(heatmaply)
    library(gplots)
+   library(xlsx)
 
    #######################################
    #Reference genome definition and loading [ref_genome]
@@ -152,7 +153,6 @@ shinyServer(function(input, output,session){
                need(length(grep(".xlsx",inFile$datapath))>0 | length(grep(".xls",inFile$datapath))>0,"File format error, please select the correct input file format before uploading your file/s.")
             )
             
-            library(xlsx)
             ff_list<-list()
             for (w in 1:length(inFile$datapath)){
                aux<-read.xlsx(inFile$datapath[w],1)
@@ -201,8 +201,6 @@ shinyServer(function(input, output,session){
    #######################################
    fit_res <- reactive({ fit_to_signatures(mut_mat(), cancer_signatures) })
          
-         ### add mean contribution
-   
    
    #Auxiliar files of aetiology and known signatures by cancer type (from COSMIC)
    proposed_etiology <- fread("../aux_files/proposed_etiology_COSMIC_signatures.txt",sep="\t",header=F,data.table=F)[,2]
@@ -221,61 +219,204 @@ shinyServer(function(input, output,session){
 
    #Plot selectize to select samples to plot.
    output$selected_samples<-renderUI({
-      mysamp<-c("All",colnames(as.data.frame(fit_res()$contribution)),"mean")
-      selectInput("mysamp","Select your samples",mysamp, multiple=TRUE, selectize = FALSE, size=6, selected="All")
+      if (length(vcfs())==1){
+            mysamp<-colnames(as.data.frame(fit_res()$contribution))
+            selectInput("mysamp","Select your samples",mysamp, multiple=TRUE, selectize = FALSE, size=1, selected=colnames(as.data.frame(fit_res()$contribution)))
+      } else {
+      
+         if (input$tab == "96prof" | input$tab == "pca"){
+           
+            mysamp<-c("All",colnames(as.data.frame(fit_res()$contribution)))
+            selectInput("mysamp","Select your samples",mysamp, multiple=TRUE, selectize = FALSE, size=6, selected="All")
+            
+         } else {
+         
+            mysamp<-c("All",colnames(as.data.frame(fit_res()$contribution)),"mean")
+            selectInput("mysamp","Select your samples",mysamp, multiple=TRUE, selectize = FALSE, size=6, selected="All")
+            
+         }
+      
+      }
+   })
+   
+   
+   output$selected_cancer_types<-renderUI({
+      
+      if (input$tab=="comp_canc_sign"){
+         
+         selectInput("mycancers","Select the cancers to compare", c("All",colnames(read.table("../aux_files/cancermatrix.tsv",header=TRUE,sep="\t",row.names=1))), multiple=TRUE, selectize=FALSE, size=10, selected="All")
+      
+      }
+      
    })
  
    
    #Select which samples use to plot.
-      my_contributions<- reactive({ 
+   my_contributions<- reactive({ 
          
-         if ("All" %in% input$mysamp) {
-            con<-data.frame( fit_res()$contribution, mean = apply(fit_res()$contribution,1,mean))
-         } else {
-         
-           if("mean" %in% input$mysamp) {      
-              if (length(input$mysamp)>2) {
-                 con<-data.frame( fit_res()$contribution[,input$mysamp[-length(input$mysamp)]], mean= apply(fit_res()$contribution[,input$mysamp[-length(input$mysamp)]],1,mean) ) 
-               } else {
-                  con<-data.frame(fit_res()$contribution[,input$mysamp[-length(input$mysamp)]] )    
-               }
-            } else {
-               if (length(input$mysamp)>2) {
-                  con<-data.frame( fit_res()$contribution[,input$mysamp] )   
-               } else {
-                  con<-data.frame( fit_res()$contribution[,input$mysamp] )   
-               }   
-            }
+      if ("All" %in% input$mysamp) {
+         aux<-divisionRel(as.data.frame(fit_res()$contribution))
+         con<-data.frame(aux, mean = apply(aux,1,mean))
             
+      } else {
+            
+         if("mean" %in% input$mysamp) {      
+            if (length(input$mysamp)>1) {
+               aux<-divisionRel(as.data.frame(fit_res()$contribution[,input$mysamp[-length(input$mysamp)]]))
+               con<-data.frame(aux, mean = apply(aux,1,mean)) 
+               
+            } else {
+               aux<-divisionRel(as.data.frame(fit_res()$contribution))
+               con<-data.frame(mean = apply(aux,1,mean))    
+            }
+              
+         } else {
+            con<-data.frame(divisionRel(as.data.frame(fit_res()$contribution[,input$mysamp])))  
          }
-         if (ncol(con)==1) colnames(con)<-setdiff(input$mysamp,c("All","mean"))
-         return(con)
+      }
          
-      })
-
       
-      #colnames(my_contributions())<-gsub("")
+      #Fixing colname of one sample (without mean)
+      if (ncol(con)==1 & colnames(con)[1]!="mean"){
+         colnames(con)<-setdiff(input$mysamp,c("All","mean"))
+      }
+         
+      #Fixing colname of one sample (with mean)
+      if (ncol(con)==2 & colnames(con)[2]=="mean" & input$mysamp!="All"){
+         colnames(con)[1]<-setdiff(input$mysamp,c("All","mean"))
+      }
+         
+      #Fixing colname of just mean of samples
+      if (ncol(con)==1 & colnames(con)[1]=="mean"){
+         colnames(con)<-"mean"
+      }
+         
+      return(con)
+      
+   })
+
+
+   #######################################
+   #PLOT Somatic Mutation Prevalence (number mutations per megabase)
+   #######################################
    
+   #Selection of type of study and MB affected by it
+   output$kb_sequenced<-renderUI({
+      
+      if (input$studytype == "Targeted Sequencing"){
+         numericInput("bases_sequenced","Kilobases sequenced",value="10")
+      }
+         
+   })
+   
+   megabases<-reactive({
+      if (input$studytype == "Whole Genome Sequencing"){
+         return(2800)
+      }
+      
+      if (input$studytype == "Whole Exome Sequencing"){
+         return(30)
+      }
+      
+      if (input$studytype == "Targeted Sequencing"){
+         return(input$bases_sequenced/1000)
+      }
+   })
+   
+   
+   #Selection of samples to plot
+   mutation_counts<- reactive({ 
+      
+      if ("All" %in% input$mysamp) {
+         mc<-data.frame(samples=c(names(vcfs()),"mean"),smp=(c(sapply(vcfs(),length),mean(sapply(vcfs(),length))))/megabases())
+         
+      } else {
+         
+         if("mean" %in% input$mysamp) {      
+            if (length(input$mysamp)>1) {
+               aux<-input$mysamp[-length(input$mysamp)]
+               mc<-data.frame(samples=c(names(vcfs()[aux]),"mean"), smp=(c(sapply(vcfs()[aux],length),mean(sapply(vcfs()[aux],length))))/megabases())
+               
+            } else {
+               mc<-data.frame(samples=c("mean"),smp=(c(mean(sapply(vcfs(),length))))/megabases())
+            }
+         } else {
+            mc<-data.frame(samples=names(vcfs()[input$mysamp]), smp=(sapply(vcfs()[input$mysamp],length))/megabases())
+         }
+      }
+      return(mc)
+   })
       
       
+   #PLOT somatic mutation prevalence
+   output$smp <- renderPlot({
+      
+      mutation_counts_new<-data.frame(samples=rev(mutation_counts()$samples),smp=rev(mutation_counts()$smp))
+      
+      plot_smp<-ggplot(data=mutation_counts_new,aes(x=samples,y=smp)) + geom_bar(stat="identity",fill="orangered2") + theme_minimal()
+      plot_smp + coord_flip() + labs(x = "", y = "", title = "Somatic mutation prevalence\n(number of mutations per megabase)") + theme(axis.text=element_text(size=12), plot.title = element_text(size = 16, face = "bold"), panel.grid.major.y=element_blank(), panel.grid.minor.y=element_blank(), panel.grid.major.x=element_blank(), panel.grid.minor.x=element_blank())
+   
+   })
+   
+   #Download Plot somatic mutation prevalence 
+   output$download_smp_plot <- downloadHandler (
+      filename = function(){
+         paste("mut_prevalence_plot",input$type_smp_plot, sep=".")
+      },
+      content = function(ff) {
+         mutation_counts_new<-data.frame(samples=rev(mutation_counts()$samples),smp=rev(mutation_counts()$smp))
+         
+         plot_smp<-ggplot(data=mutation_counts_new,aes(x=samples,y=smp)) + geom_bar(stat="identity",fill="orangered2") + theme_minimal()
+         plot_smp + coord_flip() + labs(x = "", y = "", title = "Somatic mutation prevalence\n(number of mutations per megabase)") + theme(axis.text=element_text(size=12), plot.title = element_text(size = 16, face = "bold"), panel.grid.major.y=element_blank(), panel.grid.minor.y=element_blank(), panel.grid.major.x=element_blank(), panel.grid.minor.x=element_blank())
+         
+         
+         ggsave(ff,height=7,width=7,dpi=ppi)
+         
+      }
+   )
+   
 
-      #######################################
-      #PLOT 96 nucleotide changes profile (samples individually)
-      #######################################
-      output$prof96 <- renderPlot({
-         plot_96_profile(mut_mat()[,setdiff(colnames(my_contributions()),c("mean","All"))])
-      })
+   #######################################
+   #PLOT 96 nucleotide changes profile (samples individually)
+   #######################################
+   
+   #Plot 96 profile
+   output$prof96 <- renderPlot({
+      aux_96_profile<-as.matrix(mut_mat()[,setdiff(colnames(my_contributions()),c("mean"))])
+      colnames(aux_96_profile)<-setdiff(colnames(my_contributions()),c("mean"))
+      plot_96_profile(aux_96_profile)
+   })
+   
+   #Download Plot 96 profile 
+   output$download_prof96_plot <- downloadHandler (
+      filename = function(){
+         paste("prof96_plot",input$type_prof96_plot, sep=".")
+      },
+      content = function(ff) {
+         aux_96_profile<-as.matrix(mut_mat()[,setdiff(colnames(my_contributions()),c("mean"))])
+         colnames(aux_96_profile)<-setdiff(colnames(my_contributions()),c("mean"))
+         plot_96_profile(aux_96_profile)
+         
+         ggsave(ff,height=7,width=7,dpi=ppi)
+      }
+   )
       
       
-      
-      ### Plot heatmap with contributions
-      
-      
+   #######################################
+   ### Plot heatmap with contributions
+   #######################################
+   
+   
+   #DataTable
    output$contr <- renderDataTable({
-      data.frame(Signature = 1:30, Proposed_Etiology = proposed_etiology, divisionRel(my_contributions()))
-   },options = list(lengthChange=FALSE,pageLength=30, paging=FALSE))
+         data.frame(Signature = 1:30, Proposed_Etiology = proposed_etiology, my_contributions())
+      },
+      options = list(lengthChange=FALSE,pageLength=30, paging=FALSE, searching=FALSE, info=FALSE)
+   )
    
-   output$download_contr <- downloadHandler( filename="contr.csv", content=function (file){ write.table(x=data.frame(colnames(cancer_signatures), proposed_etiology, divisionRel(my_contributions())), file=file, row.names=FALSE, sep="\t", quote=FALSE) })
+   
+   #Download Table
+   output$download_contr <- downloadHandler( filename="COSMIC_sign_contributions.txt", content=function (file){ write.table(x = data.frame(Signature = 1:30, Proposed_Etiology = proposed_etiology, my_contributions()), file = file, sep = "\t", quote=F, row.names=F) })
    
    
    #check if column or row dendogram is needed
@@ -287,9 +428,9 @@ shinyServer(function(input, output,session){
    })
    
    
-   
+   #HeatMap
    output$heatmap_signatures <- renderPlotly({
-      a<-divisionRel(as.data.frame(my_contributions()))
+      a<-my_contributions()
       if (ncol(a)==1) colnames(a)<-colnames(my_contributions()) ## fix colnames when there is only one sample
       rownames(a)<-colnames(cancer_signatures)[1:30] 
       colorends <- c("white","red")
@@ -302,57 +443,38 @@ shinyServer(function(input, output,session){
                 dendrogram = dendro, k_row = 1, k_col = 1, column_text_angle = 90)
    })
    
-    
-   output$download_signatures_plot <- downloadHandler (
-      filename = function(){paste("signatures_plot",input$type_signatures_plot, sep=".")}, 
-      content = function(ff) {
-         
-         a<-divisionRel(as.data.frame(my_contributions()))
-         a<-as.matrix(a)
-         if (ncol(a)==1) colnames(a)<-colnames(my_contributions()) ## fix colnames when there is only one sample
-         rownames(a)<-colnames(cancer_signatures)[1:30] 
-         colorends <- c("white","red")
-         dendro <- "none"
-         if (input$row_d_heatmap=="yes") dendro<-"row"
-         if (input$col_d_heatmap=="yes") dendro<-"column" 
-         if (input$row_d_heatmap=="yes" & input$col_d_heatmap=="yes") dendro<-"both"
-         
-         if (input$type_signatures_plot=="pdf") pdf(ff,height=7,width=7)
-         if (input$type_signatures_plot=="png") png(ff,height=7*ppi,width=7*ppi,res=ppi)
-         if (input$type_signatures_plot=="tiff") tiff(ff,height=7*ppi,width=7*ppi,res=ppi,compression="lzw")
+   
+   #Download HeatMap 
+    output$download_signatures_plot <- downloadHandler (
+       filename = function(){paste("signatures_plot",input$type_signatures_plot, sep=".")}, 
+       content = function(ff) {
+          
+          
+          a<-my_contributions()
+          if (ncol(a)==1) colnames(a)<-colnames(my_contributions()) ## fix colnames when there is only one sample
+          rownames(a)<-colnames(cancer_signatures)[1:30] 
+          colorends <- c("white","red")
+          dendro <- "none"
+          if (input$row_d_heatmap=="yes") dendro<-"row"
+          if (input$col_d_heatmap=="yes") dendro<-"column" 
+          if (input$row_d_heatmap=="yes" & input$col_d_heatmap=="yes") dendro<-"both"
+          
+          
+          
+          heatmaply(a, scale_fill_gradient_fun = scale_fill_gradientn(colours = colorends, limits = c(0,1)),
+                    dendrogram = dendro, k_row = 1, k_col = 1, column_text_angle = 90, file = ff)
+       })
+       
+          
 
-          heatmap.2(
-            a,
-            trace = "none",
-            Rowv = input$row_d_heatmap=="yes" , 
-            Colv = input$col_d_heatmap=="yes" , 
-            col = colorpanel (256, low = "white", high = "red")
-         )
- 
-    #     heatmaply(a, scale_fill_gradient_fun = scale_fill_gradientn(colours = colorends, limits = c(0,1)),
-    #               dendrogram = dendro, k_row = 1, k_col = 1, column_text_angle = 90)
-         
-         dev.off()
-         
-      #   a<-t(divisionRel(as.data.frame(my_contributions()[30:1,])))
-      #   if (nrow(a)==1) rownames(a)<-colnames(my_contributions()) ## fix colnames when there is only one sample
-      #   colnames(a)<-colnames(cancer_signatures)[30:1]
-      #   a.m<-reshape2::melt(as.matrix(a)) 
-      #   colorends <- c("white","red")
-         #     tiff(ff,height=7*ppi,width=7*ppi,res=ppi,compression="lzw")
-         #     pdf(ff)
-      #   ggplot(a.m, aes(x=Var1, y=Var2)) + geom_tile(aes(fill = value),
-      #                                                colour = "white") + theme(axis.text.x=element_text(angle=90)) +
-      #      scale_fill_gradientn(colours = colorends, limits = c(0,max(a))) + labs(x="",y="")
-      #   if (input$type_signatures_plot=="pdf") ggsave(ff)
-      #   if (input$type_signatures_plot=="png") ggsave(ff)
-      #   if (input$type_signatures_plot=="tiff") ggsave(ff,compression="lzw")
-      })
    
    
-   ### Comparison with other cancers
-
-      #check if column or row dendogram is needed
+   
+   #######################################
+   ### Plot - Comparison with other cancers
+   #######################################
+   
+   #check if column or row dendogram is needed
    output$row_dendro_cancers<-renderUI({
       radioButtons("row_c_heatmap", "Row dendrogram", c("yes","no"),selected = "no",inline = TRUE)
    })
@@ -360,38 +482,19 @@ shinyServer(function(input, output,session){
       radioButtons("col_c_heatmap", "Column dendrogram", c("yes","no"),selected = "no",inline = TRUE)
    })
    
- 
+   
+   #HeatMap
    output$heatmap_known <- renderPlotly({
       
       if ("All" %in% input$mycancers) my.sel.cancers<-colnames(known_cancer_signatures)
       else my.sel.cancers<-intersect(input$mycancers,colnames(known_cancer_signatures))
       
-      #      a<-t(data.frame(my_contributions()[30:1,], known_cancer_signatures[30:1,my.sel.cancers]))
-      #      colnames(a)<-colnames(cancer_signatures)[30:1]
-      #      if (ncol(my_contributions())==1) rownames(a)[1]<-colnames(my_contributions()) ## fix colnames when there is only one sample
- 
-      #for (i in 1:(nrow(a)-length(my.sel.cancers))) { 
-         #a[i,]<-a[i,]/max(a[i,])  # don't do a rescaling
-         #a[i,]<-a[i,]/sum(a[i,])   # put the proportions
-         #      }
-      #      a.m<-reshape2::melt(as.matrix(a)) 
-      #      a.m$category<-rep(c(rep("Sample",nrow(a)-length(my.sel.cancers)),rep("Cancers",length(my.sel.cancers))),30)
-      #      sel<-which(a.m$category=="Cancers")
-      #      a.m[sel,"value"]<-a.m[sel,"value"]+1.5
-      #      a.m[is.na(a.m)] <- 0
-      
-#     colorends <- c("white","red", "white", "blue")
-      
- #     ggplot(a.m, aes(x=Var1, y=Var2)) + geom_tile(aes(fill = value),
- #        colour = "white") + theme(axis.text.x=element_text(angle=90)) +
- #        scale_fill_gradientn(colours = colorends, limits = c(0,3)) + labs(x="",y="")
-      
- 
+
       a<-data.frame(my_contributions()[1:30,], known_cancer_signatures[1:30,my.sel.cancers])
       rownames(a)<-colnames(cancer_signatures)[1:30]
       if (ncol(my_contributions())==1) colnames(a)[1]<-colnames(my_contributions()) ## fix colnames when there is only one sample
+      if (length(my.sel.cancers)==1) colnames(a)[length(colnames(a))]<-my.sel.cancers ## fix colnames when there is only one cancer type
       
-
       for (i in 1:(ncol(a)-length(my.sel.cancers))) { 
          #a[,i]<-a[,i]/max(a[,i])  # don't do a rescaling
          a[,i]<-a[,i]/sum(a[,i])   # put the proportions
@@ -413,57 +516,65 @@ shinyServer(function(input, output,session){
    })
    
 
+   #  Download HeatMap 
+      output$download_known_plot <- downloadHandler(filename = function(){paste("comparison_with_other",input$type_known_plot, sep=".")}, content=function (ff) {
+        
+        
+           if ("All" %in% input$mycancers) my.sel.cancers<-colnames(known_cancer_signatures)
+           else my.sel.cancers<-intersect(input$mycancers,colnames(known_cancer_signatures))
+           
+           
+           a<-data.frame(my_contributions()[1:30,], known_cancer_signatures[1:30,my.sel.cancers])
+           rownames(a)<-colnames(cancer_signatures)[1:30]
+           if (ncol(my_contributions())==1) colnames(a)[1]<-colnames(my_contributions()) ## fix colnames when there is only one sample
+           if (length(my.sel.cancers)==1) colnames(a)[length(colnames(a))]<-my.sel.cancers ## fix colnames when there is only one cancer type
+           
+           for (i in 1:(ncol(a)-length(my.sel.cancers))) { 
+              #a[,i]<-a[,i]/max(a[,i])  # don't do a rescaling
+              a[,i]<-a[,i]/sum(a[,i])   # put the proportions
+           }
+           for (i in (ncol(a)-length(my.sel.cancers)+1):ncol(a)) { 
+              a[,i]<-a[,i]+1.5   # put the proportions   # add 1.5 to cancers
+           }
+           
+           rownames(a)<-colnames(cancer_signatures)[1:30] 
+           colorends <- c("white","red", "white", "blue")
+           dendro <- "none"
+           if (input$row_c_heatmap=="yes") dendro<-"row"
+           if (input$col_c_heatmap=="yes") dendro<-"column" 
+           if (input$row_c_heatmap=="yes" & input$col_c_heatmap=="yes") dendro<-"both"
+           
+           heatmaply(a, scale_fill_gradient_fun = scale_fill_gradientn(colours = colorends, limits = c(0,3)),
+                     dendrogram = dendro, k_row = 1, k_col = 1, column_text_angle = 90, file = ff)
+        
+      })
    
-   output$download_known_plot <- downloadHandler(filename = function(){paste("comparison_with_other",input$type_known_plot, sep=".")}, content=function (ff) {
-      
-      if ("All" %in% input$mycancers) my.sel.cancers<-colnames(known_cancer_signatures)
-      else my.sel.cancers<-intersect(input$mycancers,colnames(known_cancer_signatures))
       
       
-      a<-t(data.frame(my_contributions()[30:1,], known_cancer_signatures[30:1,my.sel.cancers]))
-      colnames(a)<-colnames(cancer_signatures)[30:1]
-      if (ncol(my_contributions())==1) rownames(a)[1]<-colnames(my_contributions()) ## fix colnames when there is only one sample
-  
-      for (i in 1:(nrow(a)-length(my.sel.cancers))) { 
-      #   a[i,]<-a[i,]/max(a[i,])   # don't do a rescaling
-          a[i,]<-a[i,]/sum(a[i,])   # put the proportions
-      }
-      a.m<-reshape2::melt(as.matrix(a)) 
-      a.m$category<-rep(c(rep("Sample",nrow(a)-length(my.sel.cancers)),rep("Cancers",length(my.sel.cancers))),30)
-      sel<-which(a.m$category=="Cancers")
-      a.m[sel,"value"]<-a.m[sel,"value"]+1.5
-      a.m[is.na(a.m)] <- 0
-      
-      colorends <- c("white","red", "white", "blue")
-      
-      ggplot(a.m, aes(x=Var1, y=Var2)) + geom_tile(aes(fill = value),
-                                                   colour = "white") + theme(axis.text.x=element_text(angle=90)) +
-         scale_fill_gradientn(colours = colorends, limits = c(0,3)) + labs(x="",y="")
-      if (input$type_known_plot=="pdf") ggsave(ff)
-      if (input$type_known_plot=="png") ggsave(ff)
-      if (input$type_known_plot=="tiff") ggsave(ff,compression="lzw")
-      
-   })
-   
-   
-   ###### Clustering of samples ## only if there are 3 or more samples
-   
+   #######################################
+   ###### PCA - Clustering of samples ## only if there are 3 or more samples
+   #######################################
    output$pca_plot <- renderPlot({
       
-      if (ncol(as.data.frame(my_contributions()))>=3) {
-         
-      a<-t(divisionRel(as.data.frame(my_contributions()[30:1,])))
-      for (i in 1:nrow(a)) { 
-         a[i,]<-a[i,]/sum(a[i,])   # put the proportions
+      if (input$mysamp=="All"){
+         my_contributions_mod <- my_contributions()[,-ncol(my_contributions())]
+      } else {
+         my_contributions_mod <- my_contributions()
       }
-      a<-a[,which(apply(a,2,sd)>0)] # remove signatures without variation
-      pca <- prcomp(a, scale=T)
-      plot(pca$x[,1], pca$x[,2],        # x y and z axis
-           col="red", pch=19,  
-           xlab=paste("Comp 1: ",round(pca$sdev[1]^2/sum(pca$sdev^2)*100,1),"%",sep=""),
-           ylab=paste("Comp 2: ",round(pca$sdev[2]^2/sum(pca$sdev^2)*100,1),"%",sep=""),
-           main="PCA")
-      text(pca$x[,1], pca$x[,2], rownames(a))
+      
+      if (ncol(as.data.frame(my_contributions_mod))>=3) {
+         a<-t(as.data.frame(my_contributions_mod[30:1,]))
+         for (i in 1:nrow(a)) { 
+            a[i,]<-a[i,]/sum(a[i,])   # put the proportions
+         }
+         a<-a[,which(apply(a,2,sd)>0)] # remove signatures without variation
+         pca <- prcomp(a, scale=T)
+         plot(pca$x[,1], pca$x[,2],        # x y and z axis
+              col="red", pch=19,  
+              xlab=paste("Comp 1: ",round(pca$sdev[1]^2/sum(pca$sdev^2)*100,1),"%",sep=""),
+              ylab=paste("Comp 2: ",round(pca$sdev[2]^2/sum(pca$sdev^2)*100,1),"%",sep=""),
+              main="PCA")
+         text(pca$x[,1], pca$x[,2], rownames(a))
       
       } else {
          par(mar = c(0,0,0,0))
@@ -481,28 +592,35 @@ shinyServer(function(input, output,session){
          if (input$type_pca_plot=="pdf") pdf(ff,height=7,width=7)
          if (input$type_pca_plot=="png") png(ff,height=7*ppi,width=7*ppi,res=ppi)
          if (input$type_pca_plot=="tiff") tiff(ff,height=7*ppi,width=7*ppi,res=ppi,compression="lzw")
+
          
-         if (ncol(as.data.frame(my_contributions()))>=3) {
-            a<-t(divisionRel(as.data.frame(my_contributions()[30:1,])))
-            for (i in 1:nrow(a)) { 
-               a[i,]<-a[i,]/sum(a[i,])   # put the proportions
-            }
-            a<-a[,which(apply(a,2,sd)>0)] # remove signatures without variation
-            pca <- prcomp(a, scale=T)
-            plot(pca$x[,1], pca$x[,2],        # x y and z axis
-                 col="red", pch=19,  
-                 xlab=paste("Comp 1: ",round(pca$sdev[1]^2/sum(pca$sdev^2)*100,1),"%",sep=""),
-                 ylab=paste("Comp 2: ",round(pca$sdev[2]^2/sum(pca$sdev^2)*100,1),"%",sep=""),
-                 main="PCA")
-            text(pca$x[,1], pca$x[,2], rownames(a))
+         if (input$mysamp=="All"){
+            my_contributions_mod <- my_contributions()[,-ncol(my_contributions())]
          } else {
-            par(mar = c(0,0,0,0))
-            plot(c(0, 1), c(0, 1), ann = F, bty = 'n', type = 'n', xaxt = 'n', yaxt = 'n')
-            text(x = 0.5, y = 0.5, paste("PCA analysis works only with >=3 samples"), 
-                 cex = 1.6, col = "black")
+            my_contributions_mod <- my_contributions()
          }
-         dev.off()
          
+         if (ncol(as.data.frame(my_contributions_mod))>=3) {
+             a<-t(as.data.frame(my_contributions_mod[30:1,]))
+             for (i in 1:nrow(a)) {
+                a[i,]<-a[i,]/sum(a[i,])   # put the proportions
+             }
+             a<-a[,which(apply(a,2,sd)>0)] # remove signatures without variation
+             pca <- prcomp(a, scale=T)
+             plot(pca$x[,1], pca$x[,2],        # x y and z axis
+                  col="red", pch=19,
+                  xlab=paste("Comp 1: ",round(pca$sdev[1]^2/sum(pca$sdev^2)*100,1),"%",sep=""),
+                  ylab=paste("Comp 2: ",round(pca$sdev[2]^2/sum(pca$sdev^2)*100,1),"%",sep=""),
+                  main="PCA")
+             text(pca$x[,1], pca$x[,2], rownames(a))
+         } else {
+             par(mar = c(0,0,0,0))
+             plot(c(0, 1), c(0, 1), ann = F, bty = 'n', type = 'n', xaxt = 'n', yaxt = 'n')
+             text(x = 0.5, y = 0.5, paste("PCA analysis works only with >=3 samples"),
+                  cex = 1.6, col = "black")
+         }
+
+         dev.off()
          
       })
    
