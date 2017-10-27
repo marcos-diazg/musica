@@ -561,7 +561,7 @@ shinyServer(function(input, output,session){
       } else {
          my_contributions_mod <- my_contributions()
       }
-      
+
       if (ncol(as.data.frame(my_contributions_mod))>=3) {
          a<-t(as.data.frame(my_contributions_mod[30:1,]))
          for (i in 1:nrow(a)) { 
@@ -573,6 +573,8 @@ shinyServer(function(input, output,session){
               col="red", pch=19,  
               xlab=paste("Comp 1: ",round(pca$sdev[1]^2/sum(pca$sdev^2)*100,1),"%",sep=""),
               ylab=paste("Comp 2: ",round(pca$sdev[2]^2/sum(pca$sdev^2)*100,1),"%",sep=""),
+              xlim=c(min(pca$x[,1])-0.5*(  max(pca$x[,1])-min(pca$x[,1]) ) ,max(pca$x[,1])+0.5*(  max(pca$x[,1])-min(pca$x[,1]) ) ),
+              ylim=c(min(pca$x[,2])-0.5*(  max(pca$x[,2])-min(pca$x[,2]) ) ,max(pca$x[,2])+0.5*(  max(pca$x[,2])-min(pca$x[,2]) ) ),
               main="PCA")
          text(pca$x[,1], pca$x[,2], rownames(a))
       
