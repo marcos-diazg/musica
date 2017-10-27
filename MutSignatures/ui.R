@@ -115,7 +115,7 @@ shinyUI(fluidPage(
                                  radioButtons("type_signatures_plot","Format",c("pdf","png","tiff")),
                                  downloadButton("download_signatures_plot","OK")),
                         p(),
-                        fluidRow(plotlyOutput("heatmap_signatures",width="100%", height="500px")),
+                        fluidRow(plotlyOutput("heatmap_signatures",width="100%", height="800px")),
                         p(),
                         downloadButton("download_contr",label="Download table"),
                         br(),
@@ -132,7 +132,7 @@ shinyUI(fluidPage(
                                  radioButtons("type_known_plot","Format",c("pdf","png","tiff")),
                                  downloadButton("download_known_plot","OK")),
                         p(),
-                        fluidRow(plotlyOutput("heatmap_known",width="100%", height="500px"))
+                        fluidRow(plotlyOutput("heatmap_known",width="100%", height="800px"))
                ),
                
                #Principal Component Analysis (PCA)
@@ -143,7 +143,7 @@ shinyUI(fluidPage(
                                 radioButtons("type_pca_plot","Format",c("pdf","png","tiff")),
                                 downloadButton("download_pca_plot","OK")),
                         br(),
-                        plotOutput("pca_plot")
+                        plotOutput("pca_plot",height=700,width=700)
                )
 
             ) 

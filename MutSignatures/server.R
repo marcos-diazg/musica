@@ -239,7 +239,6 @@ shinyServer(function(input, output,session){
       }
    })
    
-   
    output$selected_cancer_types<-renderUI({
       
       if (input$tab=="comp_canc_sign"){
@@ -380,12 +379,15 @@ shinyServer(function(input, output,session){
    #PLOT 96 nucleotide changes profile (samples individually)
    #######################################
    
+   #n.samp <- reactive {( ncol(my_contributions()) )}
+   
+   
    #Plot 96 profile
    output$prof96 <- renderPlot({
       aux_96_profile<-as.matrix(mut_mat()[,setdiff(colnames(my_contributions()),c("mean"))])
       colnames(aux_96_profile)<-setdiff(colnames(my_contributions()),c("mean"))
       plot_96_profile(aux_96_profile)
-   })
+   }, height = function(){20+100* length(colnames(my_contributions())) })
    
    #Download Plot 96 profile 
    output$download_prof96_plot <- downloadHandler (
@@ -397,7 +399,7 @@ shinyServer(function(input, output,session){
          colnames(aux_96_profile)<-setdiff(colnames(my_contributions()),c("mean"))
          plot_96_profile(aux_96_profile)
          
-         ggsave(ff,height=7,width=7,dpi=ppi)
+         ggsave(ff,height=2*ncol(aux_96_profile),width=10,dpi=ppi)
       }
    )
       
