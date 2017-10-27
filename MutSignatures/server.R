@@ -38,7 +38,8 @@ shinyServer(function(input, output,session){
    library(VariantAnnotation)
    library(heatmaply)
    library(gplots)
-   library(xlsx)
+   library(openxlsx)
+   library(gdata)
 
    #######################################
    #Reference genome definition and loading [ref_genome]
@@ -155,7 +156,13 @@ shinyServer(function(input, output,session){
             
             ff_list<-list()
             for (w in 1:length(inFile$datapath)){
-               aux<-read.xlsx(inFile$datapath[w],1)
+               
+               if (length(grep(".xlsx",inFile$datapath[w]))>0){
+                  aux<-read.xlsx(inFile$datapath[w],1)
+               } else {
+                  aux<-read.xls(inFile$datapath[w],sheet=1,header=T)
+               }
+               
                
                #Condition in case "chr" prefix is present at CHROM column in input file
                if (length(grep("chr",aux))>0){
@@ -304,7 +311,7 @@ shinyServer(function(input, output,session){
    output$kb_sequenced<-renderUI({
       
       if (input$studytype == "Targeted Sequencing"){
-         numericInput("bases_sequenced","Kilobases sequenced",value="10")
+         numericInput("bases_sequenced","Kilobases sequenced",value = 10,min = 1)
       }
          
    })
