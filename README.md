@@ -26,10 +26,10 @@ if(!require(gdata)) install.packages("gdata")
 if(!require(openxlsx)) install.packages("openxlsx")
 if(!require(shiny)) install.packages("shiny")
 if(!require(shinyBS)) install.packages("shinyBS")
+if(!require(devtools)) install.packages("devtools")
 if(!require(shinysky)) {library(devtools); devtools::install_github("AnalytixWare/ShinySky")}
 if(!require(shinyjs)) install.packages("shinyjs")
 if(!require(shinythemes)) install.packages("shinythemes")
-if(!require(shinySky)) install.packages("shinySky")
 if(!require(V8)) install.packages("V8")
 ```
 
