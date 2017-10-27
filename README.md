@@ -25,10 +25,10 @@ if(!require(data.table)) install.packages("data.table")
 if(!require(xlsx)) install.packages("xlsx")
 if(!require(shiny)) install.packages("shiny")
 if(!require(shinyBS)) install.packages("shinyBS")
-if(!require(shinysky)) {library(devtools) devtools::install_github("AnalytixWare/ShinySky")}
+if(!require(shinysky)) {library(devtools); devtools::install_github("AnalytixWare/ShinySky")}
 if(!require(shinyjs)) install.packages("shinyjs")
 if(!require(shinythemes)) install.packages("shinythemes")
-if(!require(shiny)) install.packages("shiny")
+if(!require(shinySky)) install.packages("shinySky")
 
 ```
 
