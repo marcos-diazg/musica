@@ -132,7 +132,8 @@ shinyUI(fluidPage(
                                  radioButtons("type_known_plot","Format",c("pdf","png","tiff")),
                                  downloadButton("download_known_plot","OK")),
                         p(),
-                        fluidRow(plotlyOutput("heatmap_known",width="100%", height="800px"))
+                        fluidRow(plotlyOutput("heatmap_known",width="100%", height="800px"),
+                        img(src="legend.png",width=250))
                ),
                
                #Principal Component Analysis (PCA)
