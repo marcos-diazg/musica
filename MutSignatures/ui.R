@@ -106,7 +106,7 @@ shinyUI(fluidPage(
                ),
                
                #Contribution of COSMIC mutational signatures (heatmap and table)
-               tabPanel("COSMIC mutational signatures contributions",
+               tabPanel("COSMIC signatures contributions",
                         br(),
                         uiOutput("col_dendro_heatmap"),
                         uiOutput("row_dendro_heatmap"),
@@ -121,6 +121,23 @@ shinyUI(fluidPage(
                         br(),
                         dataTableOutput("contr")
                ),
+               
+               #
+               
+               
+               #Reconstructed mutational profile
+               
+               tabPanel("Reconstructed mutational profile", value="reconst",
+                        br(),
+                        downloadButton("download_reconst_plot_ID",label="Download plot"),
+                        bsModal("modal_reconst","Download plot","download_reconst_plot_ID",
+                                radioButtons("type_reconst_plot","Format",c("pdf","png","tiff"),selected="pdf"),
+                                downloadButton("download_reconst_plot","OK")),
+                        br(),
+                        plotOutput("reconst")
+               ),
+               
+               
                
                #Comparison of COSMIC mutational signatures with cancers
                tabPanel("Comparison with cancers signatures", value="comp_canc_sign",
