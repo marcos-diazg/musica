@@ -237,10 +237,15 @@ shinyServer(function(input, output,session){
             selectInput("mysamp","Select your samples",mysamp, multiple=TRUE, selectize = FALSE, size=6, selected="All")
             
          } else {
-         
-            mysamp<-c("All",colnames(as.data.frame(fit_res()$contribution)),"mean")
-            selectInput("mysamp","Select your samples",mysamp, multiple=TRUE, selectize = FALSE, size=6, selected="All")
             
+            if (input$tab=="reconst"){
+               mysamp<-colnames(as.data.frame(fit_res()$contribution))
+               selectInput("mysamp","Select your samples",mysamp, multiple=TRUE, selectize = FALSE, size=6, selected = mysamp[1])
+            } else {
+               
+               mysamp<-c("All",colnames(as.data.frame(fit_res()$contribution)),"mean")
+               selectInput("mysamp","Select your samples",mysamp, multiple=TRUE, selectize = FALSE, size=6, selected="All")
+            }
          }
       
       }
@@ -315,6 +320,7 @@ shinyServer(function(input, output,session){
          
    })
    
+   #According to Alexandrov et al. 2013
    megabases<-reactive({
       if (input$studytype == "Whole Genome Sequencing"){
          return(2800)
@@ -361,7 +367,7 @@ shinyServer(function(input, output,session){
       
       plot_smp<-ggplot(data=mutation_counts_new,aes(x=samples,y=smp))
       
-      plot_smp + geom_bar(stat="identity",fill="orangered2") + theme_minimal() + geom_text(aes(label=smp), size=5, position = position_stack(vjust = 0.5), colour="white") + coord_flip() + labs(x = "", y = "", title = "Somatic mutation prevalence\n(number of mutations per megabase)") + theme(axis.text=element_text(size=12), plot.title = element_text(size = 16, face = "bold"), panel.grid.major.y=element_blank(), panel.grid.minor.y=element_blank(), panel.grid.major.x=element_blank(), panel.grid.minor.x=element_blank())
+      plot_smp + geom_bar(stat="identity",fill="orangered2") + theme_minimal() + geom_text(aes(label=smp), size=5, position = position_stack(vjust = 0.5), colour="white") + coord_flip() + labs(x = "", y = "Somatic mutation prevalence (number of mutations per megabase)") + theme(axis.text=element_text(size=12), axis.title = element_text(size = 13, face = "bold"), panel.grid.major.y=element_blank(), panel.grid.minor.y=element_blank(), panel.grid.major.x=element_blank(), panel.grid.minor.x=element_blank()) 
    
    })
    
@@ -375,7 +381,7 @@ shinyServer(function(input, output,session){
          
          plot_smp<-ggplot(data=mutation_counts_new,aes(x=samples,y=smp))
          
-         plot_smp + geom_bar(stat="identity",fill="orangered2") + theme_minimal() + geom_text(aes(label=smp), size=5, position = position_stack(vjust = 0.5), colour="white") + coord_flip() + labs(x = "", y = "", title = "Somatic mutation prevalence\n(number of mutations per megabase)") + theme(axis.text=element_text(size=12), plot.title = element_text(size = 16, face = "bold"), panel.grid.major.y=element_blank(), panel.grid.minor.y=element_blank(), panel.grid.major.x=element_blank(), panel.grid.minor.x=element_blank())         
+         plot_smp + geom_bar(stat="identity",fill="orangered2") + theme_minimal() + geom_text(aes(label=smp), size=5, position = position_stack(vjust = 0.5), colour="white") + coord_flip() + labs(x = "", y = "Somatic mutation prevalence (number of mutations per megabase)") + theme(axis.text=element_text(size=12), axis.title = element_text(size = 13, face = "bold"), panel.grid.major.y=element_blank(), panel.grid.minor.y=element_blank(), panel.grid.major.x=element_blank(), panel.grid.minor.x=element_blank())       
          
          ggsave(ff,height=7,width=7,dpi=ppi)
          
@@ -386,9 +392,6 @@ shinyServer(function(input, output,session){
    #######################################
    #PLOT 96 nucleotide changes profile (samples individually)
    #######################################
-   
-   #n.samp <- reactive {( ncol(my_contributions()) )}
-   
    
    #Plot 96 profile
    output$prof96 <- renderPlot({
@@ -489,7 +492,66 @@ shinyServer(function(input, output,session){
        
           
 
-   
+    #######################################
+    ### PLOT Reconstructed Mutational Profile
+    #######################################
+    
+    #Plot reconstructed profile
+    output$reconst <- renderPlot({
+
+      original_prof <- mut_mat()[,input$mysamp]
+      reconstructed_prof <- fit_res()$reconstructed[,input$mysamp]
+      
+      aux_ymax<-data.frame(original_prof,reconstructed_prof)
+      max_ymax<-max(divisionRel(aux_ymax))
+      
+      
+      plot_compare_profiles(original_prof,reconstructed_prof,profile_names=c("Original","Reconstructed"),profile_ymax = max_ymax)
+      
+    })
+    
+    
+    
+    #Download Plot reconstructed profile 
+    output$download_reconst_plot <- downloadHandler (
+       filename = function(){
+          paste("reconstructed_plot",input$type_reconst_plot, sep=".")
+       },
+       content = function(ff) {
+          
+          
+          original_prof <- mut_mat()[,input$mysamp]
+          reconstructed_prof <- fit_res()$reconstructed[,input$mysamp]
+          
+          aux_ymax<-data.frame(original_prof,reconstructed_prof)
+          max_ymax<-max(divisionRel(aux_ymax))
+          
+
+          
+          plot_compare_profiles(original_prof,reconstructed_prof,profile_names=c("Original","Reconstructed"),profile_ymax = max_ymax)
+          
+          
+          
+          ggsave(ff,height=7,width=7,dpi=ppi)
+       }
+    )
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
    
    
    #######################################
