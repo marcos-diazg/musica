@@ -1,6 +1,6 @@
 # MuSiC - Mutational Signatures in Cancer
 
-MuSiC (Mutational Signatures in Cancer) is a shiny-based web application aimed to visualize the somatic mutational profile of a series of provided samples (different formats are allowed) and to extract the contribution of the reported mutational signatures ([Alexandrov L.B. et al., Nature (2013)](http://dx.doi.org/10.1038/nature12477), [Catalogue Of Somatic Mutations In Cancer, COSMIC (2017)](http://cancer.sanger.ac.uk/cosmic/signatures)) on their variation profile. It is mainly based on the [MutationalPatterns](https://doi.org/10.1101/071761) R package.
+MuSiC (Mutational Signatures in Cancer) is a shiny-based web application aimed to visualize the somatic mutational profile of a series of provided samples (different formats are allowed) and to extract the contribution of the reported mutational signatures ([Alexandrov L.B. et al., Nature (2013)](http://dx.doi.org/10.1038/nature12477), [Catalogue Of Somatic Mutations In Cancer, COSMIC (2017)](http://cancer.sanger.ac.uk/cosmic/signatures)) on their variation profile. It is mainly based on the MutationalPatterns R package ([Blokzijl et al., BioRxiv (2017)](https://doi.org/10.1101/071761)).
 
 
 ## Running the app
@@ -22,13 +22,14 @@ if(!require(heatmaply)) install.packages("heatmaply")
 if(!require(gplots)) install.packages("gplots")
 if(!require(reshape2)) install.packages("reshape2")
 if(!require(data.table)) install.packages("data.table")
-if(!require(xlsx)) install.packages("xlsx")
+if(!require(gdata)) install.packages("gdata")
+if(!require(openxlsx)) install.packages("openxlsx")
 if(!require(shiny)) install.packages("shiny")
 if(!require(shinyBS)) install.packages("shinyBS")
+if(!require(devtools)) install.packages("devtools")
 if(!require(shinysky)) {library(devtools); devtools::install_github("AnalytixWare/ShinySky")}
 if(!require(shinyjs)) install.packages("shinyjs")
 if(!require(shinythemes)) install.packages("shinythemes")
-if(!require(shinySky)) install.packages("shinySky")
 if(!require(V8)) install.packages("V8")
 ```
 
