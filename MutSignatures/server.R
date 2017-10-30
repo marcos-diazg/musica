@@ -38,7 +38,8 @@ shinyServer(function(input, output,session){
    library(VariantAnnotation)
    library(heatmaply)
    library(gplots)
-   library(xlsx)
+   library(openxlsx)
+   library(gdata)
 
    #######################################
    #Reference genome definition and loading [ref_genome]
@@ -155,7 +156,13 @@ shinyServer(function(input, output,session){
             
             ff_list<-list()
             for (w in 1:length(inFile$datapath)){
-               aux<-read.xlsx(inFile$datapath[w],1)
+               
+               if (length(grep(".xlsx",inFile$datapath[w]))>0){
+                  aux<-read.xlsx(inFile$datapath[w],1)
+               } else {
+                  aux<-read.xls(inFile$datapath[w],sheet=1,header=T)
+               }
+               
                
                #Condition in case "chr" prefix is present at CHROM column in input file
                if (length(grep("chr",aux))>0){
@@ -303,7 +310,7 @@ shinyServer(function(input, output,session){
    output$kb_sequenced<-renderUI({
       
       if (input$studytype == "Targeted Sequencing"){
-         numericInput("bases_sequenced","Kilobases sequenced",value="10")
+         numericInput("bases_sequenced","Kilobases sequenced",value = 10,min = 1)
       }
          
    })
@@ -350,10 +357,11 @@ shinyServer(function(input, output,session){
    #PLOT somatic mutation prevalence
    output$smp <- renderPlot({
       
-      mutation_counts_new<-data.frame(samples=rev(mutation_counts()$samples),smp=rev(mutation_counts()$smp))
+      mutation_counts_new<-data.frame(samples=mutation_counts()$samples,smp=round(mutation_counts()$smp,1))
       
-      plot_smp<-ggplot(data=mutation_counts_new,aes(x=samples,y=smp)) + geom_bar(stat="identity",fill="orangered2") + theme_minimal()
-      plot_smp + coord_flip() + labs(x = "", y = "", title = "Somatic mutation prevalence\n(number of mutations per megabase)") + theme(axis.text=element_text(size=12), plot.title = element_text(size = 16, face = "bold"), panel.grid.major.y=element_blank(), panel.grid.minor.y=element_blank(), panel.grid.major.x=element_blank(), panel.grid.minor.x=element_blank())
+      plot_smp<-ggplot(data=mutation_counts_new,aes(x=samples,y=smp))
+      
+      plot_smp + geom_bar(stat="identity",fill="orangered2") + theme_minimal() + geom_text(aes(label=smp), size=5, position = position_stack(vjust = 0.5), colour="white") + coord_flip() + labs(x = "", y = "", title = "Somatic mutation prevalence\n(number of mutations per megabase)") + theme(axis.text=element_text(size=12), plot.title = element_text(size = 16, face = "bold"), panel.grid.major.y=element_blank(), panel.grid.minor.y=element_blank(), panel.grid.major.x=element_blank(), panel.grid.minor.x=element_blank())
    
    })
    
@@ -363,11 +371,11 @@ shinyServer(function(input, output,session){
          paste("mut_prevalence_plot",input$type_smp_plot, sep=".")
       },
       content = function(ff) {
-         mutation_counts_new<-data.frame(samples=rev(mutation_counts()$samples),smp=rev(mutation_counts()$smp))
+         mutation_counts_new<-data.frame(samples=mutation_counts()$samples,smp=round(mutation_counts()$smp,1))
          
-         plot_smp<-ggplot(data=mutation_counts_new,aes(x=samples,y=smp)) + geom_bar(stat="identity",fill="orangered2") + theme_minimal()
-         plot_smp + coord_flip() + labs(x = "", y = "", title = "Somatic mutation prevalence\n(number of mutations per megabase)") + theme(axis.text=element_text(size=12), plot.title = element_text(size = 16, face = "bold"), panel.grid.major.y=element_blank(), panel.grid.minor.y=element_blank(), panel.grid.major.x=element_blank(), panel.grid.minor.x=element_blank())
+         plot_smp<-ggplot(data=mutation_counts_new,aes(x=samples,y=smp))
          
+         plot_smp + geom_bar(stat="identity",fill="orangered2") + theme_minimal() + geom_text(aes(label=smp), size=5, position = position_stack(vjust = 0.5), colour="white") + coord_flip() + labs(x = "", y = "", title = "Somatic mutation prevalence\n(number of mutations per megabase)") + theme(axis.text=element_text(size=12), plot.title = element_text(size = 16, face = "bold"), panel.grid.major.y=element_blank(), panel.grid.minor.y=element_blank(), panel.grid.major.x=element_blank(), panel.grid.minor.x=element_blank())         
          
          ggsave(ff,height=7,width=7,dpi=ppi)
          
@@ -386,8 +394,15 @@ shinyServer(function(input, output,session){
    output$prof96 <- renderPlot({
       aux_96_profile<-as.matrix(mut_mat()[,setdiff(colnames(my_contributions()),c("mean"))])
       colnames(aux_96_profile)<-setdiff(colnames(my_contributions()),c("mean"))
-      plot_96_profile(aux_96_profile)
-   }, height = function(){20+100* length(colnames(my_contributions())) })
+
+      aux_ymax<-as.data.frame(aux_96_profile)
+      rownames(aux_ymax)<-1:96
+      max_ymax<-max(divisionRel(aux_ymax))
+      
+      plot_96_profile(aux_96_profile,ymax = max_ymax) + scale_y_continuous(breaks = seq(0, max_ymax, 0.05))
+      }, height = function(){20+100* length(colnames(my_contributions())) }
+  )
+
    
    #Download Plot 96 profile 
    output$download_prof96_plot <- downloadHandler (
@@ -397,7 +412,12 @@ shinyServer(function(input, output,session){
       content = function(ff) {
          aux_96_profile<-as.matrix(mut_mat()[,setdiff(colnames(my_contributions()),c("mean"))])
          colnames(aux_96_profile)<-setdiff(colnames(my_contributions()),c("mean"))
-         plot_96_profile(aux_96_profile)
+         
+         aux_ymax<-as.data.frame(aux_96_profile)
+         rownames(aux_ymax)<-1:96
+         max_ymax<-max(divisionRel(aux_ymax))
+         
+         plot_96_profile(aux_96_profile,ymax = max_ymax) + scale_y_continuous(breaks = seq(0, max_ymax, 0.05))
          
          ggsave(ff,height=2*ncol(aux_96_profile),width=10,dpi=ppi)
       }
