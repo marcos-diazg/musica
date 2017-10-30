@@ -391,7 +391,12 @@ shinyServer(function(input, output,session){
    output$prof96 <- renderPlot({
       aux_96_profile<-as.matrix(mut_mat()[,setdiff(colnames(my_contributions()),c("mean"))])
       colnames(aux_96_profile)<-setdiff(colnames(my_contributions()),c("mean"))
-      plot_96_profile(aux_96_profile)
+      
+      aux_ymax<-as.data.frame(aux_96_profile)
+      rownames(aux_ymax)<-1:96
+      max_ymax<-max(divisionRel(aux_ymax))
+      
+      plot_96_profile(aux_96_profile,ymax = max_ymax) + scale_y_continuous(breaks = seq(0, max_ymax, 0.05))
    })
    
    #Download Plot 96 profile 
@@ -402,7 +407,12 @@ shinyServer(function(input, output,session){
       content = function(ff) {
          aux_96_profile<-as.matrix(mut_mat()[,setdiff(colnames(my_contributions()),c("mean"))])
          colnames(aux_96_profile)<-setdiff(colnames(my_contributions()),c("mean"))
-         plot_96_profile(aux_96_profile)
+         
+         aux_ymax<-as.data.frame(aux_96_profile)
+         rownames(aux_ymax)<-1:96
+         max_ymax<-max(divisionRel(aux_ymax))
+         
+         plot_96_profile(aux_96_profile,ymax = max_ymax) + scale_y_continuous(breaks = seq(0, max_ymax, 0.05))
          
          ggsave(ff,height=7,width=7,dpi=ppi)
       }
