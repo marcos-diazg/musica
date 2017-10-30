@@ -358,10 +358,11 @@ shinyServer(function(input, output,session){
    #PLOT somatic mutation prevalence
    output$smp <- renderPlot({
       
-      mutation_counts_new<-data.frame(samples=rev(mutation_counts()$samples),smp=rev(mutation_counts()$smp))
+      mutation_counts_new<-data.frame(samples=mutation_counts()$samples,smp=round(mutation_counts()$smp,1))
       
-      plot_smp<-ggplot(data=mutation_counts_new,aes(x=samples,y=smp)) + geom_bar(stat="identity",fill="orangered2") + theme_minimal()
-      plot_smp + coord_flip() + labs(x = "", y = "", title = "Somatic mutation prevalence\n(number of mutations per megabase)") + theme(axis.text=element_text(size=12), plot.title = element_text(size = 16, face = "bold"), panel.grid.major.y=element_blank(), panel.grid.minor.y=element_blank(), panel.grid.major.x=element_blank(), panel.grid.minor.x=element_blank())
+      plot_smp<-ggplot(data=mutation_counts_new,aes(x=samples,y=smp))
+      
+      plot_smp + geom_bar(stat="identity",fill="orangered2") + theme_minimal() + geom_text(aes(label=smp), size=5, position = position_stack(vjust = 0.5), colour="white", face="bold") + coord_flip() + labs(x = "", y = "", title = "Somatic mutation prevalence\n(number of mutations per megabase)") + theme(axis.text=element_text(size=12), plot.title = element_text(size = 16, face = "bold"), panel.grid.major.y=element_blank(), panel.grid.minor.y=element_blank(), panel.grid.major.x=element_blank(), panel.grid.minor.x=element_blank())
    
    })
    
@@ -373,8 +374,9 @@ shinyServer(function(input, output,session){
       content = function(ff) {
          mutation_counts_new<-data.frame(samples=rev(mutation_counts()$samples),smp=rev(mutation_counts()$smp))
          
-         plot_smp<-ggplot(data=mutation_counts_new,aes(x=samples,y=smp)) + geom_bar(stat="identity",fill="orangered2") + theme_minimal()
-         plot_smp + coord_flip() + labs(x = "", y = "", title = "Somatic mutation prevalence\n(number of mutations per megabase)") + theme(axis.text=element_text(size=12), plot.title = element_text(size = 16, face = "bold"), panel.grid.major.y=element_blank(), panel.grid.minor.y=element_blank(), panel.grid.major.x=element_blank(), panel.grid.minor.x=element_blank())
+         plot_smp<-ggplot(data=mutation_counts_new,aes(x=samples,y=smp))
+         
+         plot_smp + geom_bar(stat="identity",fill="orangered2") + theme_minimal() + geom_text(label = round(mutation_counts_new$smp,1), size=5, position = position_stack(vjust = 0.5), colour="white") + coord_flip() + labs(x = "", y = "", title = "Somatic mutation prevalence\n(number of mutations per megabase)") + theme(axis.text=element_text(size=12), plot.title = element_text(size = 16, face = "bold"), panel.grid.major.y=element_blank(), panel.grid.minor.y=element_blank(), panel.grid.major.x=element_blank(), panel.grid.minor.x=element_blank())
          
          
          ggsave(ff,height=7,width=7,dpi=ppi)
