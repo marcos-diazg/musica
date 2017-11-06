@@ -268,13 +268,15 @@ shinyServer(function(input, output,session){
       if ("All" %in% input$mysamp) {
          aux<-divisionRel(as.data.frame(fit_res()$contribution))
          con<-data.frame(aux, mean = apply(aux,1,mean))
+         colnames(con)<-c(colnames(aux),"mean")
             
       } else {
             
          if("mean" %in% input$mysamp) {      
             if (length(input$mysamp)>1) {
                aux<-divisionRel(as.data.frame(fit_res()$contribution[,input$mysamp[-length(input$mysamp)]]))
-               con<-data.frame(aux, mean = apply(aux,1,mean)) 
+               con<-data.frame(aux, mean = apply(aux,1,mean))
+               colnames(con)<-c(colnames(aux),"mean")
                
             } else {
                aux<-divisionRel(as.data.frame(fit_res()$contribution))
@@ -282,7 +284,9 @@ shinyServer(function(input, output,session){
             }
               
          } else {
-            con<-data.frame(divisionRel(as.data.frame(fit_res()$contribution[,input$mysamp])))  
+            aux<-divisionRel(as.data.frame(fit_res()$contribution[,input$mysamp]))
+            con<-data.frame(aux)
+            colnames(con)<-colnames(aux)
          }
       }
          
@@ -397,7 +401,7 @@ shinyServer(function(input, output,session){
    output$prof96 <- renderPlot({
       aux_96_profile<-as.matrix(mut_mat()[,setdiff(colnames(my_contributions()),c("mean"))])
       colnames(aux_96_profile)<-setdiff(colnames(my_contributions()),c("mean"))
-
+      
       aux_ymax<-as.data.frame(aux_96_profile)
       rownames(aux_ymax)<-1:96
       max_ymax<-max(divisionRel(aux_ymax))
