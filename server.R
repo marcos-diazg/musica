@@ -210,8 +210,8 @@ shinyServer(function(input, output,session){
          
    
    #Auxiliar files of aetiology and known signatures by cancer type (from COSMIC)
-   proposed_etiology <- fread("../aux_files/proposed_etiology_COSMIC_signatures.txt",sep="\t",header=F,data.table=F)[,2]
-   known_cancer_signatures<-read.table("../aux_files/cancermatrix.tsv",header=TRUE,sep="\t",row.names=1)
+   proposed_etiology <- fread("./aux_files/proposed_etiology_COSMIC_signatures.txt",sep="\t",header=F,data.table=F)[,2]
+   known_cancer_signatures<-read.table("./aux_files/cancermatrix.tsv",header=TRUE,sep="\t",row.names=1)
    
    
    #divisionRel function creation to print final dataframe
@@ -255,7 +255,7 @@ shinyServer(function(input, output,session){
       
       if (input$tab=="comp_canc_sign"){
          
-         selectInput("mycancers","Select the cancers to compare", c("All",colnames(read.table("../aux_files/cancermatrix.tsv",header=TRUE,sep="\t",row.names=1))), multiple=TRUE, selectize=FALSE, size=10, selected="All")
+         selectInput("mycancers","Select the cancers to compare", c("All",colnames(read.table("./aux_files/cancermatrix.tsv",header=TRUE,sep="\t",row.names=1))), multiple=TRUE, selectize=FALSE, size=10, selected="All")
       
       }
       

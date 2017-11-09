@@ -27,7 +27,7 @@ shinyUI(fluidPage(
          
          #Help menu for format of input file
          actionLink("helpformat","Help with input file format", icon=icon("question-circle-o")),
-         bsModal("modal","HELP  Input file format","helpformat", includeHTML("../aux_files/help_with_input.html")),
+         bsModal("modal","HELP  Input file format","helpformat", includeHTML("./aux_files/help_with_input.html")),
          hr(),
          
          #File uploading
