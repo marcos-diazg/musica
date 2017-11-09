@@ -23,7 +23,7 @@ shinyUI(fluidPage(
       sidebarPanel(
          
          #Input format
-         radioButtons("datatype", "Input file format", c("VCF","MAF","TSV","Excel"),selected = "VCF",inline = TRUE),
+         radioButtons("datatype", "Input file format", c("VCF","TSV","Excel","MAF"),selected = "VCF",inline = TRUE),
          
          #Help menu for format of input file
          actionLink("helpformat","Help with input file format", icon=icon("question-circle-o")),
