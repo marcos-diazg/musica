@@ -469,7 +469,9 @@ shinyServer(function(input, output,session){
       if (input$row_d_heatmap=="yes" & input$col_d_heatmap=="yes") dendro<-"both"
    
       heatmaply(a, scale_fill_gradient_fun = scale_fill_gradientn(colours = colorends, limits = c(0,1)),
-                dendrogram = dendro, k_row = 1, k_col = 1, column_text_angle = 90)
+                dendrogram = dendro, k_row = 1, k_col = 1, column_text_angle = 90,
+                hclustfun=function(x) hclust(x,method="average"))
+               # distfun=function(x) as.dist(1-cor(t(x), method="pearson")) )  #, )
    })
    
    
@@ -491,7 +493,8 @@ shinyServer(function(input, output,session){
           
           
           heatmaply(a, scale_fill_gradient_fun = scale_fill_gradientn(colours = colorends, limits = c(0,1)),
-                    dendrogram = dendro, k_row = 1, k_col = 1, column_text_angle = 90, file = ff)
+                    dendrogram = dendro, k_row = 1, k_col = 1, column_text_angle = 90,
+                    hclustfun=function(x) hclust(x,method="average"), file = ff)
        })
        
           
@@ -599,7 +602,8 @@ shinyServer(function(input, output,session){
       if (input$row_c_heatmap=="yes" & input$col_c_heatmap=="yes") dendro<-"both"
 
             heatmaply(a, scale_fill_gradient_fun = scale_fill_gradientn(colours = colorends, limits = c(0,3)),
-                dendrogram = dendro, k_row = 1, k_col = 1, column_text_angle = 90, hide_colorbar = TRUE)
+                dendrogram = dendro, k_row = 1, k_col = 1, column_text_angle = 90, hide_colorbar = TRUE,
+                hclustfun=function(x) hclust(x,method="average"))
       
    })
    
@@ -633,7 +637,8 @@ shinyServer(function(input, output,session){
            if (input$row_c_heatmap=="yes" & input$col_c_heatmap=="yes") dendro<-"both"
            
            heatmaply(a, scale_fill_gradient_fun = scale_fill_gradientn(colours = colorends, limits = c(0,3)),
-                     dendrogram = dendro, k_row = 1, k_col = 1, column_text_angle = 90, hide_colorbar = TRUE, file = ff)
+                     dendrogram = dendro, k_row = 1, k_col = 1, column_text_angle = 90, hide_colorbar = TRUE,
+                     hclustfun=function(x) hclust(x,method="average"), file = ff)
         
       })
    
@@ -653,7 +658,7 @@ shinyServer(function(input, output,session){
       if (ncol(as.data.frame(my_contributions_mod))>=3) {
          a<-t(as.data.frame(my_contributions_mod[30:1,]))
          for (i in 1:nrow(a)) { 
-            a[i,]<-a[i,]/sum(a[i,])   # put the proportions
+           a[i,]<-a[i,]/sum(a[i,])   # put the proportions
          }
          a<-a[,which(apply(a,2,sd)>0)] # remove signatures without variation
          pca <- prcomp(a, scale=T)
