@@ -67,32 +67,15 @@ shinyServer(function(input, output,session){
 
          #VCF
          if (input$datatype=="VCF"){
-            #Warning for file format
-            validate(
-               need(length(grep(".vcf",inFile$datapath))>0 | length(grep(".txt",inFile$datapath))>0,"File format error, please select the correct input file format before uploading your file/s.")
-            )
             
-            
-            ########################################################################
-            #Filtering steps
-            #vcfilter<-readVcfAsVRanges(inFile$datapath)
-            ########################################################################
-            
-            
-            #Read vcf for MutationalPatterns
+         #Read vcf for MutationalPatterns
             return(read_vcfs_as_granges(inFile$datapath,inFile$name,ref_genome(),group = "auto+sex", check_alleles = TRUE))
          }
       
       
          #MAF
          if (input$datatype=="MAF"){
-            
-            #Warning for file format
-            validate(
-               need(length(grep(".maf",inFile$datapath))>0 | length(grep(".txt",inFile$datapath))>0,"File format error, please select the correct input file format before uploading your file/s."),
-               need(length(inFile$datapath)==1, "Only one multi-sample MAF file is allowed")
-            )
-            
+
             aux<-fread(inFile$datapath,header=T,sep="\t",skip="#",data.table=F)
             aux<-aux[,c("Chromosome","Start_Position","Reference_Allele","Tumor_Seq_Allele2","Tumor_Sample_Barcode")]
             colnames(aux)[1:4]<-c("#CHROM","POS","REF","ALT")
@@ -117,11 +100,6 @@ shinyServer(function(input, output,session){
       
          #TSV
          if (input$datatype=="TSV"){
-            
-            #Warning for file format
-            validate(
-               need(length(grep(".tsv",inFile$datapath))>0 | length(grep(".txt",inFile$datapath))>0,"File format error, please select the correct input file format before uploading your file/s.")
-            )
             
             ff_list<-list()
             for (w in 1:length(inFile$datapath)){
@@ -148,11 +126,6 @@ shinyServer(function(input, output,session){
       
          #Excel
          if (input$datatype=="Excel"){
-            
-            #Warning for file format
-            validate(
-               need(length(grep(".xlsx",inFile$datapath))>0 | length(grep(".xls",inFile$datapath))>0,"File format error, please select the correct input file format before uploading your file/s.")
-            )
             
             ff_list<-list()
             for (w in 1:length(inFile$datapath)){
@@ -226,6 +199,32 @@ shinyServer(function(input, output,session){
 
    #Plot selectize to select samples to plot.
    output$selected_samples<-renderUI({
+      
+      #Error managemente for file format
+      if (input$datatype=="VCF"){
+         validate(
+            need(length(grep(".vcf",input[["fileinput"]]$datapath))>0 | length(grep(".txt",input[["fileinput"]]$datapath))>0,"")
+         )
+      }
+      if (input$datatype=="TSV"){
+         validate(
+            need(length(grep(".tsv",input[["fileinput"]]$datapath))>0 | length(grep(".txt",input[["fileinput"]]$datapath))>0,"")
+         )
+      }
+      if (input$datatype=="Excel"){
+         validate(
+            need(length(grep(".xlsx",input[["fileinput"]]$datapath))>0 | length(grep(".xls",input[["fileinput"]]$datapath))>0,"")
+         )
+      }
+      if (input$datatype=="MAF"){
+         validate(
+            need(length(grep(".maf",input[["fileinput"]]$datapath))>0 | length(grep(".txt",input[["fileinput"]]$datapath))>0,""),
+            need(length(input[["fileinput"]]$datapath)==1, "")
+         )
+      }
+
+            
+      
       if (length(vcfs())==1){
             mysamp<-colnames(as.data.frame(fit_res()$contribution))
             selectInput("mysamp","Select your samples",mysamp, multiple=TRUE, selectize = FALSE, size=1, selected=colnames(as.data.frame(fit_res()$contribution)))
@@ -362,17 +361,46 @@ shinyServer(function(input, output,session){
       }
       return(mc)
    })
-      
-      
-   #PLOT somatic mutation prevalence
-   output$smp <- renderPlot({
-      
-      mutation_counts_new<-data.frame(samples=mutation_counts()$samples,smp=round(mutation_counts()$smp,1))
-      
-      plot_smp<-ggplot(data=mutation_counts_new,aes(x=samples,y=smp))
-      
-      plot_smp + geom_bar(stat="identity",fill="orangered2") + theme_minimal() + geom_text(aes(label=smp), size=5, position = position_stack(vjust = 0.5), colour="white") + coord_flip() + labs(x = "", y = "Somatic mutation prevalence (number of mutations per megabase)") + theme(axis.text=element_text(size=12), axis.title = element_text(size = 13, face = "bold"), panel.grid.major.y=element_blank(), panel.grid.minor.y=element_blank(), panel.grid.major.x=element_blank(), panel.grid.minor.x=element_blank()) 
    
+       
+#   PLOT somatic mutation prevalence
+   output$smp <- renderPlot({
+      #Error managemente for file format
+      
+      error_message<-"File format error, please select the correct input file format before uploading your file/s."
+      
+      if (input$datatype=="VCF"){
+         validate(
+            need(length(grep(".vcf",input[["fileinput"]]$datapath))>0 | length(grep(".txt",input[["fileinput"]]$datapath))>0,error_message)
+         )
+      }
+      if (input$datatype=="TSV"){
+         validate(
+            need(length(grep(".tsv",input[["fileinput"]]$datapath))>0 | length(grep(".txt",input[["fileinput"]]$datapath))>0,error_message)
+         )
+      }
+      if (input$datatype=="Excel"){
+         validate(
+            need(length(grep(".xlsx",input[["fileinput"]]$datapath))>0 | length(grep(".xls",input[["fileinput"]]$datapath))>0,error_message)
+         )
+      }
+      if (input$datatype=="MAF"){
+         validate(
+            need(length(grep(".maf",input[["fileinput"]]$datapath))>0 | length(grep(".txt",input[["fileinput"]]$datapath))>0,error_message),
+            need(length(input[["fileinput"]]$datapath)==1, "Only one multi-sample MAF file is allowed")
+         )
+      }
+      
+      #Error management
+      if (length(input$mysamp)==0) return(invisible(NULL))
+      
+
+      mutation_counts_new<-data.frame(samples=mutation_counts()$samples,smp=round(mutation_counts()$smp,1))
+
+      plot_smp<-ggplot(data=mutation_counts_new,aes(x=samples,y=smp))
+
+      plot_smp + geom_bar(stat="identity",fill="orangered2") + theme_minimal() + geom_text(aes(label=smp), size=5, position = position_stack(vjust = 0.5), colour="white") + coord_flip() + labs(x = "", y = "Somatic mutation prevalence (number of mutations per megabase)") + theme(axis.text=element_text(size=12), axis.title = element_text(size = 13, face = "bold"), panel.grid.major.y=element_blank(), panel.grid.minor.y=element_blank(), panel.grid.major.x=element_blank(), panel.grid.minor.x=element_blank())
+
    })
    
    #Download Plot somatic mutation prevalence 
@@ -387,10 +415,21 @@ shinyServer(function(input, output,session){
          
          plot_smp + geom_bar(stat="identity",fill="orangered2") + theme_minimal() + geom_text(aes(label=smp), size=5, position = position_stack(vjust = 0.5), colour="white") + coord_flip() + labs(x = "", y = "Somatic mutation prevalence (number of mutations per megabase)") + theme(axis.text=element_text(size=12), axis.title = element_text(size = 13, face = "bold"), panel.grid.major.y=element_blank(), panel.grid.minor.y=element_blank(), panel.grid.major.x=element_blank(), panel.grid.minor.x=element_blank())       
          
-         ggsave(ff,height=7,width=7,dpi=ppi)
+         ggsave(ff,height=2*ncol(mutation_counts_new),width=10,dpi=ppi)
          
       }
    )
+   
+   #Download Table somatic mutation prevalence 
+   output$download_smp_table <- downloadHandler(
+      filename="Somatic_mut_prev.txt",
+      content=function (file){
+         mutation_counts_new<-data.frame(Sample=mutation_counts()$samples,Somatic_Mutation_Prevalence=round(mutation_counts()$smp,1),Number_of_Samples=length(names(vcfs())))
+         
+         write.table(x = mutation_counts_new, file = file, sep = "\t", quote=F, row.names=F)
+      }
+   )
+   
    
 
    #######################################
@@ -445,7 +484,8 @@ shinyServer(function(input, output,session){
    
    
    #Download Table
-   output$download_contr <- downloadHandler( filename="COSMIC_sign_contributions.txt", content=function (file){ write.table(x = data.frame(Signature = 1:30, Proposed_Etiology = proposed_etiology, my_contributions()), file = file, sep = "\t", quote=F, row.names=F) })
+   output$download_contr <- downloadHandler( filename="COSMIC_sign_contributions.txt", content=function (file){
+      write.table(x = data.frame(Signature = 1:30, Proposed_Etiology = proposed_etiology, my_contributions()), file = file, sep = "\t", quote=F, row.names=F)})
    
    
    #check if column or row dendogram is needed
@@ -459,6 +499,10 @@ shinyServer(function(input, output,session){
    
    #HeatMap
    output$heatmap_signatures <- renderPlotly({
+      
+      if (length(input$row_d_heatmap)==0) return(invisible(NULL))
+      if (length(input$col_d_heatmap)==0) return(invisible(NULL))
+       
       a<-my_contributions()
       if (ncol(a)==1) colnames(a)<-colnames(my_contributions()) ## fix colnames when there is only one sample
       rownames(a)<-colnames(cancer_signatures)[1:30] 
@@ -505,7 +549,13 @@ shinyServer(function(input, output,session){
     
     #Plot reconstructed profile
     output$reconst <- renderPlot({
-
+      validate(
+          need(length(input$mysamp)==1,"Sample selection error, please select just one sample at a time to visualize its reconstructed mutational profile.")
+      )
+       
+      if (input$mysamp=="All") return(invisible(NULL))
+       
+       
       original_prof <- mut_mat()[,input$mysamp]
       reconstructed_prof <- fit_res()$reconstructed[,input$mysamp]
       
@@ -539,7 +589,7 @@ shinyServer(function(input, output,session){
           
           
           
-          ggsave(ff,height=7,width=7,dpi=ppi)
+          ggsave(ff,height=6,width=10,dpi=ppi)
        }
     )
     
@@ -576,6 +626,9 @@ shinyServer(function(input, output,session){
    
    #HeatMap
    output$heatmap_known <- renderPlotly({
+      
+      if (length(input$mysamp)==0) return(invisible(NULL))
+      if (length(input$mycancers)==0) return(invisible(NULL))
       
       if ("All" %in% input$mycancers) my.sel.cancers<-colnames(known_cancer_signatures)
       else my.sel.cancers<-intersect(input$mycancers,colnames(known_cancer_signatures))
@@ -648,6 +701,11 @@ shinyServer(function(input, output,session){
    ###### PCA - Clustering of samples ## only if there are 3 or more samples
    #######################################
    output$pca_plot <- renderPlot({
+      
+      validate(
+         need((length(input$mysamp)>2 | "All" %in% input$mysamp ),"PCA analysis works only with 3 or more samples.")
+      )
+      
       
       if (input$mysamp=="All"){
          my_contributions_mod <- my_contributions()[,-ncol(my_contributions())]
