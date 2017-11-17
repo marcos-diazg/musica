@@ -366,24 +366,27 @@ shinyServer(function(input, output,session){
 #   PLOT somatic mutation prevalence
    output$smp <- renderPlot({
       #Error managemente for file format
+      
+      error_message<-"File format error, please select the correct input file format before uploading your file/s."
+      
       if (input$datatype=="VCF"){
          validate(
-            need(length(grep(".vcf",input[["fileinput"]]$datapath))>0 | length(grep(".txt",input[["fileinput"]]$datapath))>0,"File format error, please select the correct input file format before uploading your file/s.")
+            need(length(grep(".vcf",input[["fileinput"]]$datapath))>0 | length(grep(".txt",input[["fileinput"]]$datapath))>0,error_message)
          )
       }
       if (input$datatype=="TSV"){
          validate(
-            need(length(grep(".tsv",input[["fileinput"]]$datapath))>0 | length(grep(".txt",input[["fileinput"]]$datapath))>0,"File format error, please select the correct input file format before uploading your file/s.")
+            need(length(grep(".tsv",input[["fileinput"]]$datapath))>0 | length(grep(".txt",input[["fileinput"]]$datapath))>0,error_message)
          )
       }
       if (input$datatype=="Excel"){
          validate(
-            need(length(grep(".xlsx",input[["fileinput"]]$datapath))>0 | length(grep(".xls",input[["fileinput"]]$datapath))>0,"File format error, please select the correct input file format before uploading your file/s.")
+            need(length(grep(".xlsx",input[["fileinput"]]$datapath))>0 | length(grep(".xls",input[["fileinput"]]$datapath))>0,error_message)
          )
       }
       if (input$datatype=="MAF"){
          validate(
-            need(length(grep(".maf",input[["fileinput"]]$datapath))>0 | length(grep(".txt",input[["fileinput"]]$datapath))>0,"File format error, please select the correct input file format before uploading your file/s."),
+            need(length(grep(".maf",input[["fileinput"]]$datapath))>0 | length(grep(".txt",input[["fileinput"]]$datapath))>0,error_message),
             need(length(input[["fileinput"]]$datapath)==1, "Only one multi-sample MAF file is allowed")
          )
       }
