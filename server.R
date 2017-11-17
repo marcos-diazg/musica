@@ -417,6 +417,17 @@ shinyServer(function(input, output,session){
       }
    )
    
+   #Download Table somatic mutation prevalence 
+   output$download_smp_table <- downloadHandler(
+      filename="Somatic_mut_prev.txt",
+      content=function (file){
+         mutation_counts_new<-data.frame(Sample=mutation_counts()$samples,Somatic_Mutation_Prevalence=round(mutation_counts()$smp,1),Number_of_Samples=length(names(vcfs())))
+         
+         write.table(x = mutation_counts_new, file = file, sep = "\t", quote=F, row.names=F)
+      }
+   )
+   
+   
 
    #######################################
    #PLOT 96 nucleotide changes profile (samples individually)
@@ -470,7 +481,8 @@ shinyServer(function(input, output,session){
    
    
    #Download Table
-   output$download_contr <- downloadHandler( filename="COSMIC_sign_contributions.txt", content=function (file){ write.table(x = data.frame(Signature = 1:30, Proposed_Etiology = proposed_etiology, my_contributions()), file = file, sep = "\t", quote=F, row.names=F) })
+   output$download_contr <- downloadHandler( filename="COSMIC_sign_contributions.txt", content=function (file){
+      write.table(x = data.frame(Signature = 1:30, Proposed_Etiology = proposed_etiology, my_contributions()), file = file, sep = "\t", quote=F, row.names=F)})
    
    
    #check if column or row dendogram is needed

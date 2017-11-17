@@ -89,6 +89,7 @@ shinyUI(fluidPage(
                         bsModal("modal_smp","Download plot","download_smp_plot_ID",
                                 radioButtons("type_smp_plot","Format",c("pdf","png","tiff"),selected="pdf"),
                                 downloadButton("download_smp_plot","OK")),
+                        downloadButton("download_smp_table",label="Download table"),
                         br(),
                         plotOutput("smp")
                ),
