@@ -67,32 +67,15 @@ shinyServer(function(input, output,session){
 
          #VCF
          if (input$datatype=="VCF"){
-            #Warning for file format
-            validate(
-               need(length(grep(".vcf",inFile$datapath))>0 | length(grep(".txt",inFile$datapath))>0,"File format error, please select the correct input file format before uploading your file/s.")
-            )
             
-            
-            ########################################################################
-            #Filtering steps
-            #vcfilter<-readVcfAsVRanges(inFile$datapath)
-            ########################################################################
-            
-            
-            #Read vcf for MutationalPatterns
+         #Read vcf for MutationalPatterns
             return(read_vcfs_as_granges(inFile$datapath,inFile$name,ref_genome(),group = "auto+sex", check_alleles = TRUE))
          }
       
       
          #MAF
          if (input$datatype=="MAF"){
-            
-            #Warning for file format
-            validate(
-               need(length(grep(".maf",inFile$datapath))>0 | length(grep(".txt",inFile$datapath))>0,"File format error, please select the correct input file format before uploading your file/s."),
-               need(length(inFile$datapath)==1, "Only one multi-sample MAF file is allowed")
-            )
-            
+
             aux<-fread(inFile$datapath,header=T,sep="\t",skip="#",data.table=F)
             aux<-aux[,c("Chromosome","Start_Position","Reference_Allele","Tumor_Seq_Allele2","Tumor_Sample_Barcode")]
             colnames(aux)[1:4]<-c("#CHROM","POS","REF","ALT")
@@ -117,11 +100,6 @@ shinyServer(function(input, output,session){
       
          #TSV
          if (input$datatype=="TSV"){
-            
-            #Warning for file format
-            validate(
-               need(length(grep(".tsv",inFile$datapath))>0 | length(grep(".txt",inFile$datapath))>0,"File format error, please select the correct input file format before uploading your file/s.")
-            )
             
             ff_list<-list()
             for (w in 1:length(inFile$datapath)){
@@ -148,11 +126,6 @@ shinyServer(function(input, output,session){
       
          #Excel
          if (input$datatype=="Excel"){
-            
-            #Warning for file format
-            validate(
-               need(length(grep(".xlsx",inFile$datapath))>0 | length(grep(".xls",inFile$datapath))>0,"File format error, please select the correct input file format before uploading your file/s.")
-            )
             
             ff_list<-list()
             for (w in 1:length(inFile$datapath)){
@@ -226,6 +199,32 @@ shinyServer(function(input, output,session){
 
    #Plot selectize to select samples to plot.
    output$selected_samples<-renderUI({
+      
+      #Error managemente for file format
+      if (input$datatype=="VCF"){
+         validate(
+            need(length(grep(".vcf",input[["fileinput"]]$datapath))>0 | length(grep(".txt",input[["fileinput"]]$datapath))>0,"")
+         )
+      }
+      if (input$datatype=="TSV"){
+         validate(
+            need(length(grep(".tsv",input[["fileinput"]]$datapath))>0 | length(grep(".txt",input[["fileinput"]]$datapath))>0,"")
+         )
+      }
+      if (input$datatype=="Excel"){
+         validate(
+            need(length(grep(".xlsx",input[["fileinput"]]$datapath))>0 | length(grep(".xls",input[["fileinput"]]$datapath))>0,"")
+         )
+      }
+      if (input$datatype=="MAF"){
+         validate(
+            need(length(grep(".maf",input[["fileinput"]]$datapath))>0 | length(grep(".txt",input[["fileinput"]]$datapath))>0,""),
+            need(length(input[["fileinput"]]$datapath)==1, "")
+         )
+      }
+
+            
+      
       if (length(vcfs())==1){
             mysamp<-colnames(as.data.frame(fit_res()$contribution))
             selectInput("mysamp","Select your samples",mysamp, multiple=TRUE, selectize = FALSE, size=1, selected=colnames(as.data.frame(fit_res()$contribution)))
@@ -366,8 +365,32 @@ shinyServer(function(input, output,session){
        
 #   PLOT somatic mutation prevalence
    output$smp <- renderPlot({
-
+      #Error managemente for file format
+      if (input$datatype=="VCF"){
+         validate(
+            need(length(grep(".vcf",input[["fileinput"]]$datapath))>0 | length(grep(".txt",input[["fileinput"]]$datapath))>0,"File format error, please select the correct input file format before uploading your file/s.")
+         )
+      }
+      if (input$datatype=="TSV"){
+         validate(
+            need(length(grep(".tsv",input[["fileinput"]]$datapath))>0 | length(grep(".txt",input[["fileinput"]]$datapath))>0,"File format error, please select the correct input file format before uploading your file/s.")
+         )
+      }
+      if (input$datatype=="Excel"){
+         validate(
+            need(length(grep(".xlsx",input[["fileinput"]]$datapath))>0 | length(grep(".xls",input[["fileinput"]]$datapath))>0,"File format error, please select the correct input file format before uploading your file/s.")
+         )
+      }
+      if (input$datatype=="MAF"){
+         validate(
+            need(length(grep(".maf",input[["fileinput"]]$datapath))>0 | length(grep(".txt",input[["fileinput"]]$datapath))>0,"File format error, please select the correct input file format before uploading your file/s."),
+            need(length(input[["fileinput"]]$datapath)==1, "Only one multi-sample MAF file is allowed")
+         )
+      }
+      
+      #Error management
       if (length(input$mysamp)==0) return(invisible(NULL))
+      
 
       mutation_counts_new<-data.frame(samples=mutation_counts()$samples,smp=round(mutation_counts()$smp,1))
 
