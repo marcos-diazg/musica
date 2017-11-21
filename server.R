@@ -446,7 +446,10 @@ shinyServer(function(input, output,session){
       max_ymax<-max(divisionRel(aux_ymax))
       
       plot_96_profile(aux_96_profile,ymax = max_ymax) + scale_y_continuous(breaks = seq(0, max_ymax, 0.05))
-      }, height = function(){20+100* length(colnames(my_contributions())) }
+   }, height = function(x=length(colnames(my_contributions())) ){ if (x < 5) {return(400)} 
+     if (x >100) {return(5000)}   
+     if (x>=100 & x<=5) {return (20+100*x)}   
+      }
   )
 
    
