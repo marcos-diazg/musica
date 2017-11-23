@@ -401,8 +401,12 @@ shinyServer(function(input, output,session){
 
       plot_smp + geom_bar(stat="identity",fill="orangered2") + theme_minimal() + geom_text(aes(label=smp), size=5, position = position_stack(vjust = 0.5), colour="white") + coord_flip() + labs(x = "", y = "Somatic mutation prevalence (number of mutations per megabase)") + theme(axis.text=element_text(size=12), axis.title = element_text(size = 13, face = "bold"), panel.grid.major.y=element_blank(), panel.grid.minor.y=element_blank(), panel.grid.major.x=element_blank(), panel.grid.minor.x=element_blank())
 
+   }, height = function(x=length(colnames(my_contributions())) ){ if (x < 5) {return(350)} 
+     if (x >100) {return(10000)}   
+     if (x<=100 & x>=5) {return (75*x)}   
    })
    
+
    #Download Plot somatic mutation prevalence 
    output$download_smp_plot <- downloadHandler (
       filename = function(){
@@ -447,8 +451,8 @@ shinyServer(function(input, output,session){
       
       plot_96_profile(aux_96_profile,ymax = max_ymax) + scale_y_continuous(breaks = seq(0, max_ymax, 0.05))
    }, height = function(x=length(colnames(my_contributions())) ){ if (x < 5) {return(400)} 
-     if (x >100) {return(5000)}   
-     if (x>=100 & x<=5) {return (20+100*x)}   
+     if (x >100) {return(10000)}   
+     if (x<=100 & x>=5) {return (20+100*x)}   
       }
   )
 
