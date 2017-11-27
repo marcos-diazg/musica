@@ -263,6 +263,9 @@ shinyServer(function(input, output,session){
    
    #Select which samples use to plot.
    my_contributions<- reactive({ 
+      
+      #Error management
+      if (length(input$mysamp)==0) return(invisible(NULL))
          
       if ("All" %in% input$mysamp) {
          aux<-divisionRel(as.data.frame(fit_res()$contribution))
@@ -711,6 +714,7 @@ shinyServer(function(input, output,session){
    #######################################
    output$pca_plot <- renderPlot({
       
+      #Error management
       validate(
          need((length(input$mysamp)>2 | "All" %in% input$mysamp ),"PCA analysis works only with 3 or more samples.")
       )
@@ -721,6 +725,11 @@ shinyServer(function(input, output,session){
       } else {
          my_contributions_mod <- my_contributions()
       }
+      
+      #Error management
+      validate(
+         need((length(colnames(my_contributions_mod))>2),"PCA analysis works only with 3 or more samples.")
+      )
 
       if (ncol(as.data.frame(my_contributions_mod))>=3) {
          a<-t(as.data.frame(my_contributions_mod[30:1,]))
