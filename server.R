@@ -263,6 +263,9 @@ shinyServer(function(input, output,session){
    
    #Select which samples use to plot.
    my_contributions<- reactive({ 
+      
+      #Error management
+      if (length(input$mysamp)==0) return(invisible(NULL))
          
       if ("All" %in% input$mysamp) {
          aux<-divisionRel(as.data.frame(fit_res()$contribution))
