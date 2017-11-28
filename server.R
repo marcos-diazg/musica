@@ -570,10 +570,12 @@ shinyServer(function(input, output,session){
           
           
           
-          heatmaply(a, scale_fill_gradient_fun = scale_fill_gradientn(colours = colorends, limits = c(0,1)),
-                    dendrogram = dendro, k_row = 1, k_col = 1, column_text_angle = 90,
+          tmp<-heatmaply(a, scale_fill_gradient_fun = scale_fill_gradientn(colours = colorends, limits = c(0,1)),
+                    dendrogram = dendro, k_row = 1, k_col = 1, column_text_angle = 90
                     #hclustfun=function(x) hclust(x,method="average"), 
-                    file = ff)
+                    )
+          plotly_IMAGE(tmp,out_file = ff)
+          
        })
        
           
@@ -697,7 +699,7 @@ shinyServer(function(input, output,session){
    
 
    #  Download HeatMap 
-      output$download_known_plot <- downloadHandler(filename = function(){paste("comparison_with_other",input$type_known_plot, sep=".")}, content=function (ff) {
+      output$download_known_plot <- downloadHandler(filename = function(){paste("comparison_with_cancers",input$type_known_plot, sep=".")}, content=function (ff) {
         
         
            if ("All cancers" %in% input$mycancers) my.sel.cancers<-colnames(known_cancer_signatures)
@@ -724,9 +726,12 @@ shinyServer(function(input, output,session){
            if (input$col_c_heatmap=="yes") dendro<-"column" 
            if (input$row_c_heatmap=="yes" & input$col_c_heatmap=="yes") dendro<-"both"
            
-           heatmaply(a, scale_fill_gradient_fun = scale_fill_gradientn(colours = colorends, limits = c(0,3)),
+           tmp<-heatmaply(a, scale_fill_gradient_fun = scale_fill_gradientn(colours = colorends, limits = c(0,3)),
                      dendrogram = dendro, k_row = 1, k_col = 1, column_text_angle = 90, hide_colorbar = TRUE,
-                     hclustfun=function(x) hclust(x,method="average"), file = ff)
+                     hclustfun=function(x) hclust(x,method="average"))
+           
+           plotly_IMAGE(tmp,out_file = ff)
+           
         
       })
    
