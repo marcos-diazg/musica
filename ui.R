@@ -157,13 +157,14 @@ shinyUI(fluidPage(
                #Principal Component Analysis (PCA)
                tabPanel("Principal components analysis", value="pca",
                         br(),
-                        uiOutput("write_text_pca"),
                         downloadButton("download_pca_ID",label="Download plot"),
                         bsModal("modal_pca","Download plot","download_pca_ID", 
                                 radioButtons("type_pca_plot","Format",c("pdf","png","tiff")),
                                 downloadButton("download_pca_plot","OK")),
                         br(),
-                        plotOutput("pca_plot",height=700,width=700)
+                        plotOutput("pca_plot",height=700,width=700),
+                        p(),
+                        tableOutput("pca_plot_table")
                )
 
             ) 

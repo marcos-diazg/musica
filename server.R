@@ -735,11 +735,6 @@ shinyServer(function(input, output,session){
    #######################################
    ###### PCA - Clustering of samples ## only if there are 3 or more samples
    #######################################
-      output$write_text_pca<-renderUI({
-        radioButtons("write_text_pca", "Write sample names", c("yes","no"),selected = "no",inline = TRUE)
-      })
-      
-      
    output$pca_plot <- renderPlot({
       
       #Error management
@@ -762,7 +757,11 @@ shinyServer(function(input, output,session){
          for (i in 1:nrow(a)) { 
            a[i,]<-a[i,]/sum(a[i,])   # put the proportions
          }
-         a<-a[,which(apply(a,2,sd)>0)] # remove signatures without variation
+         a<-a[,which(apply(a,2,sd)>0)]# remove signatures without variation
+         
+         samplesnames<-rownames(a)
+         rownames(a)<-1:(length(rownames(a)))
+         
          pca <- prcomp(a, scale=T)
          plot(pca$x[,1], pca$x[,2],        # x y and z axis
               col="red", pch=19,  
@@ -771,9 +770,8 @@ shinyServer(function(input, output,session){
               xlim=c(min(pca$x[,1])-0.5*(  max(pca$x[,1])-min(pca$x[,1]) ) ,max(pca$x[,1])+0.5*(  max(pca$x[,1])-min(pca$x[,1]) ) ),
               ylim=c(min(pca$x[,2])-0.5*(  max(pca$x[,2])-min(pca$x[,2]) ) ,max(pca$x[,2])+0.5*(  max(pca$x[,2])-min(pca$x[,2]) ) ),
               main="PCA")
-         if (input$write_text_pca=="yes") {
-           text(pca$x[,1], pca$x[,2], rownames(a))
-         }
+         text(pca$x[,1], pca$x[,2]-0.15, rownames(a))
+
            
       } else {
          par(mar = c(0,0,0,0))
@@ -783,6 +781,32 @@ shinyServer(function(input, output,session){
       }
 
    })
+   
+   
+   output$pca_plot_table <- renderTable({
+      
+      my_contributions_mod <- my_contributions()
+      
+      
+      if (ncol(as.data.frame(my_contributions_mod))>=3) {
+         a<-t(as.data.frame(my_contributions_mod[30:1,]))
+         for (i in 1:nrow(a)) { 
+            a[i,]<-a[i,]/sum(a[i,])   # put the proportions
+         }
+         a<-a[,which(apply(a,2,sd)>0)]# remove signatures without variation
+         
+         samplesnames<-rownames(a)
+         rownames(a)<-1:(length(rownames(a)))
+         
+         data.frame(ID=rownames(a),Sample=samplesnames)
+         
+         
+      }
+      
+      
+   })
+   
+   
    
    
    output$download_pca_plot <- downloadHandler (
@@ -798,25 +822,31 @@ shinyServer(function(input, output,session){
          #######################################
          
          if (ncol(as.data.frame(my_contributions_mod))>=3) {
-             a<-t(as.data.frame(my_contributions_mod[30:1,]))
-             for (i in 1:nrow(a)) {
-                a[i,]<-a[i,]/sum(a[i,])   # put the proportions
-             }
-             a<-a[,which(apply(a,2,sd)>0)] # remove signatures without variation
-             pca <- prcomp(a, scale=T)
-             plot(pca$x[,1], pca$x[,2],        # x y and z axis
-                  col="red", pch=19,
-                  xlab=paste("Comp 1: ",round(pca$sdev[1]^2/sum(pca$sdev^2)*100,1),"%",sep=""),
-                  ylab=paste("Comp 2: ",round(pca$sdev[2]^2/sum(pca$sdev^2)*100,1),"%",sep=""),
-                  main="PCA")
-             if (input$write_text_pca=="yes") {
-                text(pca$x[,1], pca$x[,2], rownames(a))
-             }
-          } else {
-             par(mar = c(0,0,0,0))
-             plot(c(0, 1), c(0, 1), ann = F, bty = 'n', type = 'n', xaxt = 'n', yaxt = 'n')
-             text(x = 0.5, y = 0.5, paste("PCA analysis works only with >=3 samples"),
-                  cex = 1.6, col = "black")
+            a<-t(as.data.frame(my_contributions_mod[30:1,]))
+            for (i in 1:nrow(a)) { 
+               a[i,]<-a[i,]/sum(a[i,])   # put the proportions
+            }
+            a<-a[,which(apply(a,2,sd)>0)]# remove signatures without variation
+            
+            samplesnames<-rownames(a)
+            rownames(a)<-1:(length(rownames(a)))
+            
+            pca <- prcomp(a, scale=T)
+            plot(pca$x[,1], pca$x[,2],        # x y and z axis
+                 col="red", pch=19,  
+                 xlab=paste("Comp 1: ",round(pca$sdev[1]^2/sum(pca$sdev^2)*100,1),"%",sep=""),
+                 ylab=paste("Comp 2: ",round(pca$sdev[2]^2/sum(pca$sdev^2)*100,1),"%",sep=""),
+                 xlim=c(min(pca$x[,1])-0.5*(  max(pca$x[,1])-min(pca$x[,1]) ) ,max(pca$x[,1])+0.5*(  max(pca$x[,1])-min(pca$x[,1]) ) ),
+                 ylim=c(min(pca$x[,2])-0.5*(  max(pca$x[,2])-min(pca$x[,2]) ) ,max(pca$x[,2])+0.5*(  max(pca$x[,2])-min(pca$x[,2]) ) ),
+                 main="PCA")
+            text(pca$x[,1], pca$x[,2]-0.15, rownames(a))
+            
+            
+         } else {
+            par(mar = c(0,0,0,0))
+            plot(c(0, 1), c(0, 1), ann = F, bty = 'n', type = 'n', xaxt = 'n', yaxt = 'n')
+            text(x = 0.5, y = 0.5, paste("PCA analysis works only with >=3 samples"), 
+                 cex = 1.6, col = "black")
          }
 
          dev.off()
