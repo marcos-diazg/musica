@@ -39,7 +39,7 @@ shinyServer(function(input, output,session){
    library(heatmaply)
    library(gplots)
    library(openxlsx)
-   library(gdata)
+   library(readxl)
 
    #######################################
    #Reference genome definition and loading [ref_genome]
@@ -133,7 +133,7 @@ shinyServer(function(input, output,session){
                if (length(grep(".xlsx",inFile$datapath[w]))>0){
                   aux<-read.xlsx(inFile$datapath[w],1)
                } else {
-                  aux<-read.xls(inFile$datapath[w],sheet=1,header=T)
+                  aux<-data.frame(read_xls(inFile$datapath[w],col_names = TRUE,col_types = "text"))
                }
                
                
