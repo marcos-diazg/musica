@@ -570,12 +570,10 @@ shinyServer(function(input, output,session){
           
           
           
-          tmp<-heatmaply(a, scale_fill_gradient_fun = scale_fill_gradientn(colours = colorends, limits = c(0,1)),
+          heatmaply(a, scale_fill_gradient_fun = scale_fill_gradientn(colours = colorends, limits = c(0,1)),
                     dendrogram = dendro, k_row = 1, k_col = 1, column_text_angle = 90
                     #hclustfun=function(x) hclust(x,method="average"), 
-                    )
-          plotly_IMAGE(tmp,out_file = ff)
-          
+                    ,file=ff)
        })
        
           
@@ -726,12 +724,9 @@ shinyServer(function(input, output,session){
            if (input$col_c_heatmap=="yes") dendro<-"column" 
            if (input$row_c_heatmap=="yes" & input$col_c_heatmap=="yes") dendro<-"both"
            
-           tmp<-heatmaply(a, scale_fill_gradient_fun = scale_fill_gradientn(colours = colorends, limits = c(0,3)),
+           heatmaply(a, scale_fill_gradient_fun = scale_fill_gradientn(colours = colorends, limits = c(0,3)),
                      dendrogram = dendro, k_row = 1, k_col = 1, column_text_angle = 90, hide_colorbar = TRUE,
-                     hclustfun=function(x) hclust(x,method="average"))
-           
-           plotly_IMAGE(tmp,out_file = ff)
-           
+                     hclustfun=function(x) hclust(x,method="average"),file=ff)
         
       })
    
