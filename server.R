@@ -895,7 +895,7 @@ shinyServer(function(input, output,session){
                  xlim=c(min(pca$x[,1])-0.5*(  max(pca$x[,1])-min(pca$x[,1]) ) ,max(pca$x[,1])+0.5*(  max(pca$x[,1])-min(pca$x[,1]) ) ),
                  ylim=c(min(pca$x[,2])-0.5*(  max(pca$x[,2])-min(pca$x[,2]) ) ,max(pca$x[,2])+0.5*(  max(pca$x[,2])-min(pca$x[,2]) ) ),
                  main="PCA")
-            text(pca$x[,1], pca$x[,2]-0.15, rownames(a))
+            text(pca$x[,1], pca$x[,2]-0.25, rownames(a))
             
             
          } else {
