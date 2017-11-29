@@ -60,11 +60,13 @@ shinyUI(fluidPage(
               
               #Sample selection for plots (post push run)         
               uiOutput("selected_samples"),
+              uiOutput("mean_checkbox"),
               
               #Cancer type selection for plots (post push run)
               uiOutput("selected_cancer_types"),
               
               hr(),
+              
               uiOutput("col_dendro_heatmap"),
               uiOutput("row_dendro_heatmap"),
               uiOutput("col_dendro_cancers"),
