@@ -166,8 +166,9 @@ shinyUI(fluidPage(
                                 downloadButton("download_pca_plot","OK")),
                         p(),
                         fluidRow(
-                           column(7,plotOutput("pca_plot",height=600,width=600)),
-                           column(5,tableOutput("pca_plot_table"))
+                           column(4,tableOutput("pca_plot_table")),
+                           column(8,plotOutput("pca_plot",height=650,width=650))
+                           
                         )
                )
 
