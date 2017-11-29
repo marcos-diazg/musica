@@ -522,10 +522,7 @@ shinyServer(function(input, output,session){
       if (input$row_d_heatmap=="yes" & input$col_d_heatmap=="yes") dendro<-"both"
    
       heatmaply(a, scale_fill_gradient_fun = scale_fill_gradientn(colours = colorends, limits = c(0,1)),
-                dendrogram = dendro, k_row = 1, k_col = 1, column_text_angle = 90
-                #,hclustfun=function(x) hclust(x,method="complete")
-                )
-               # distfun=function(x) as.dist(1-cor(t(x), method="pearson")) )  #, )
+                dendrogram = dendro, k_row = 1, k_col = 1, column_text_angle = 90  )
    })
    
    
@@ -548,7 +545,6 @@ shinyServer(function(input, output,session){
           
           heatmaply(a, scale_fill_gradient_fun = scale_fill_gradientn(colours = colorends, limits = c(0,1)),
                     dendrogram = dendro, k_row = 1, k_col = 1, column_text_angle = 90,
-                    #hclustfun=function(x) hclust(x,method="average"), 
                     file = ff)
        })
        
@@ -666,8 +662,7 @@ shinyServer(function(input, output,session){
       if (input$row_c_heatmap=="yes" & input$col_c_heatmap=="yes") dendro<-"both"
 
             heatmaply(a, scale_fill_gradient_fun = scale_fill_gradientn(colours = colorends, limits = c(0,3)),
-                dendrogram = dendro, k_row = 1, k_col = 1, column_text_angle = 90, hide_colorbar = TRUE,
-                hclustfun=function(x) hclust(x,method="average"))
+                dendrogram = dendro, k_row = 1, k_col = 1, column_text_angle = 90, hide_colorbar = TRUE)
       
    })
    
@@ -702,7 +697,7 @@ shinyServer(function(input, output,session){
            
            heatmaply(a, scale_fill_gradient_fun = scale_fill_gradientn(colours = colorends, limits = c(0,3)),
                      dendrogram = dendro, k_row = 1, k_col = 1, column_text_angle = 90, hide_colorbar = TRUE,
-                     hclustfun=function(x) hclust(x,method="average"), file = ff)
+                     file = ff)
         
       })
    
