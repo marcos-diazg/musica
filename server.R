@@ -231,23 +231,13 @@ shinyServer(function(input, output,session){
             selectInput("mysamp","Select your samples",mysamp, multiple=TRUE, selectize = FALSE, size=1, selected=colnames(as.data.frame(fit_res()$contribution)))
       } else {
       
-         if (input$tab == "96prof" | input$tab == "pca"){
-           
+         if (input$tab=="reconst"){
+            mysamp<-colnames(as.data.frame(fit_res()$contribution))
+            selectInput("mysamp","Select your samples",mysamp, multiple=TRUE, selectize = FALSE, size=6, selected = mysamp[1])
+         } else {
             mysamp<-c("All samples",colnames(as.data.frame(fit_res()$contribution)))
             selectInput("mysamp","Select your samples",mysamp, multiple=TRUE, selectize = FALSE, size=6, selected="All samples")
-            
-         } else {
-            
-            if (input$tab=="reconst"){
-               mysamp<-colnames(as.data.frame(fit_res()$contribution))
-               selectInput("mysamp","Select your samples",mysamp, multiple=TRUE, selectize = FALSE, size=6, selected = mysamp[1])
-            } else {
-               
-               mysamp<-c("All samples","All samples + mean",colnames(as.data.frame(fit_res()$contribution)),"mean")
-               selectInput("mysamp","Select your samples",mysamp, multiple=TRUE, selectize = FALSE, size=6, selected="All samples")
-            }
          }
-      
       }
    })
    
@@ -261,6 +251,17 @@ shinyServer(function(input, output,session){
       
    })
  
+   #Checkbox to decide if mean is plotted.
+   output$mean_checkbox<-renderUI({
+      if (input$tab=="smp" | input$tab=="contrib" | input$tab=="comp_canc_sign"){
+         checkboxInput("meancheck","Show mean",value=FALSE)
+      } else {
+         return(invisible(NULL))
+      }
+   })
+
+   
+   
    
    #Select which samples use to plot.
    my_contributions<- reactive({ 
@@ -268,61 +269,42 @@ shinyServer(function(input, output,session){
       #Error management
       if (length(input$mysamp)==0) return(invisible(NULL))
          
-      if ("All samples + mean" %in% input$mysamp) {
-         aux<-divisionRel(as.data.frame(fit_res()$contribution))
-         con<-data.frame(aux, mean = apply(aux,1,mean))
-         colnames(con)<-c(colnames(aux),"mean")
-            
-      } else {
-         if ("All samples" %in% input$mysamp){
-            if("mean" %in% input$mysamp) {
-               aux<-divisionRel(as.data.frame(fit_res()$contribution))
-               con<-data.frame(aux, mean = apply(aux,1,mean))
-               colnames(con)<-c(colnames(aux),"mean")
-            } else {
-               aux<-divisionRel(as.data.frame(fit_res()$contribution))
-               con<-data.frame(aux)
-               colnames(con)<-c(colnames(aux))   
-            }
-            
-            
-            
+
+      if ("All samples" %in% input$mysamp){
+         if(input$meancheck==TRUE) {
+            aux<-divisionRel(as.data.frame(fit_res()$contribution))
+            con<-data.frame(aux, mean = apply(aux,1,mean))
+            colnames(con)<-c(colnames(aux),"mean")
          } else {
-            
-            if("mean" %in% input$mysamp) {      
-               if (length(input$mysamp)>1) {
-                  aux<-divisionRel(as.data.frame(fit_res()$contribution[,input$mysamp[-length(input$mysamp)]]))
-                  con<-data.frame(aux, mean = apply(aux,1,mean))
-                  colnames(con)<-c(colnames(aux),"mean")
-                  
-               } else {
-                  aux<-divisionRel(as.data.frame(fit_res()$contribution))
-                  con<-data.frame(mean = apply(aux,1,mean))    
-               }
-                 
-            } else {
-               aux<-divisionRel(as.data.frame(fit_res()$contribution[,input$mysamp]))
-               con<-data.frame(aux)
-               colnames(con)<-colnames(aux)
-            }
+            aux<-divisionRel(as.data.frame(fit_res()$contribution))
+            con<-data.frame(aux)
+            colnames(con)<-c(colnames(aux))   
+         }
+         
+      } else {
+         if(input$meancheck==TRUE) {      
+            aux<-divisionRel(as.data.frame(fit_res()$contribution[,input$mysamp]))
+            con<-data.frame(aux, mean = apply(aux,1,mean))
+            colnames(con)<-c(colnames(aux),"mean")
+         } else {
+            aux<-divisionRel(as.data.frame(fit_res()$contribution[,input$mysamp]))
+            con<-data.frame(aux)
+            colnames(con)<-colnames(aux)
          }
       }
+      
             
       
       #Fixing colname of one sample (without mean)
-      if (ncol(con)==1 & colnames(con)[1]!="mean"){
-         colnames(con)<-setdiff(input$mysamp,c("All samples","mean","All samples + mean"))
+      if (ncol(con)==1){
+         colnames(con)<-setdiff(input$mysamp,c("All samples"))
       }
          
       #Fixing colname of one sample (with mean)
-      if (ncol(con)==2 & colnames(con)[2]=="mean" & input$mysamp!="All samples + mean" & input$mysamp!="All samples"){
-         colnames(con)[1]<-setdiff(input$mysamp,c("All samples","mean","All samples + mean"))
+      if (ncol(con)==1 & input$meancheck==TRUE & input$mysamp!="All samples"){
+         colnames(con)[1]<-setdiff(input$mysamp,c("All samples"))
       }
          
-      #Fixing colname of just mean of samples
-      if (ncol(con)==1 & colnames(con)[1]=="mean"){
-         colnames(con)<-"mean"
-      }
          
       return(con)
       
@@ -360,31 +342,22 @@ shinyServer(function(input, output,session){
    
    #Selection of samples to plot
    mutation_counts<- reactive({ 
-      
-      if ("All samples + mean" %in% input$mysamp) {
-         mc<-data.frame(samples=c(names(vcfs()),"mean"),smp=(c(sapply(vcfs(),length),mean(sapply(vcfs(),length))))/megabases())
+         
+      if ("All samples" %in% input$mysamp){
+         
+         if(input$meancheck==TRUE) {
+            mc<-data.frame(samples=c(names(vcfs()),"mean"),smp=(c(sapply(vcfs(),length),mean(sapply(vcfs(),length))))/megabases())
+         } else {
+            mc<-data.frame(samples=names(vcfs()),smp=(sapply(vcfs(),length))/megabases())
+         }
          
       } else {
          
-         if ("All samples" %in% input$mysamp){
-            if("mean" %in% input$mysamp) {
-               mc<-data.frame(samples=c(names(vcfs()),"mean"),smp=(c(sapply(vcfs(),length),mean(sapply(vcfs(),length))))/megabases())
-            } else {
-               mc<-data.frame(samples=names(vcfs()),smp=(sapply(vcfs(),length))/megabases())
-            }
+         if(input$meancheck==TRUE) {      
+            aux<-input$mysamp
+            mc<-data.frame(samples=c(names(vcfs()[aux]),"mean"), smp=(c(sapply(vcfs()[aux],length),mean(sapply(vcfs()[aux],length))))/megabases())
          } else {
-         
-            if("mean" %in% input$mysamp) {      
-               if (length(input$mysamp)>1) {
-                  aux<-input$mysamp[-length(input$mysamp)]
-                  mc<-data.frame(samples=c(names(vcfs()[aux]),"mean"), smp=(c(sapply(vcfs()[aux],length),mean(sapply(vcfs()[aux],length))))/megabases())
-                  
-               } else {
-                  mc<-data.frame(samples=c("mean"),smp=(c(mean(sapply(vcfs(),length))))/megabases())
-               }
-            } else {
-               mc<-data.frame(samples=names(vcfs()[input$mysamp]), smp=(sapply(vcfs()[input$mysamp],length))/megabases())
-            }
+            mc<-data.frame(samples=names(vcfs()[input$mysamp]), smp=(sapply(vcfs()[input$mysamp],length))/megabases())
          }
       }
       return(mc)
@@ -447,8 +420,8 @@ shinyServer(function(input, output,session){
          
          plot_smp + geom_bar(stat="identity",fill="orangered2") + theme_minimal() + geom_text(aes(label=smp), size=5, position = position_stack(vjust = 0.5), colour="white") + coord_flip() + labs(x = "", y = "Somatic mutation prevalence (number of mutations per megabase)") + theme(axis.text=element_text(size=12), axis.title = element_text(size = 13, face = "bold"), panel.grid.major.y=element_blank(), panel.grid.minor.y=element_blank(), panel.grid.major.x=element_blank(), panel.grid.minor.x=element_blank())       
          
-         ggsave(ff,height=2*ncol(mutation_counts_new),width=10,dpi=ppi)
-         
+         ggsave(ff,height=min(2*nrow(mutation_counts_new),40),width=25,dpi=ppi,units="cm")
+
       }
    )
    
@@ -500,7 +473,7 @@ shinyServer(function(input, output,session){
          
          plot_96_profile(aux_96_profile,ymax = max_ymax) + scale_y_continuous(breaks = seq(0, max_ymax, 0.05))
          
-         ggsave(ff,height=2*ncol(aux_96_profile),width=10,dpi=ppi)
+         ggsave(ff,height=min(4*ncol(aux_96_profile),40),width=25,dpi=ppi,units="cm")
       }
    )
       
@@ -529,7 +502,7 @@ shinyServer(function(input, output,session){
    
    #DataTable
    output$contr <- renderDataTable({
-         data.frame(Signature = 1:30, Proposed_Etiology = proposed_etiology, my_contributions())
+         data.frame(Signature = 1:30, Proposed_Etiology = proposed_etiology, round(my_contributions(),3))
       },
       options = list(lengthChange=FALSE,pageLength=30, paging=FALSE, searching=FALSE, info=FALSE)
    )
@@ -537,7 +510,7 @@ shinyServer(function(input, output,session){
    
    #Download Table
    output$download_contr <- downloadHandler( filename="COSMIC_sign_contributions.txt", content=function (file){
-      write.table(x = data.frame(Signature = 1:30, Proposed_Etiology = proposed_etiology, my_contributions()), file = file, sep = "\t", quote=F, row.names=F)})
+      write.table(x = data.frame(Signature = 1:30, Proposed_Etiology = proposed_etiology, round(my_contributions(),3)), file = file, sep = "\t", quote=F, row.names=F)})
    
    
    #check if column or row dendogram is needed
@@ -628,7 +601,7 @@ shinyServer(function(input, output,session){
           need(length(input$mysamp)==1,"Sample selection error, please select just one sample at a time to visualize its reconstructed mutational profile.")
       )
        
-      if (input$mysamp=="All samples + mean" | input$mysamp=="All samples") return(invisible(NULL))
+      if (input$mysamp=="All samples") return(invisible(NULL))
        
        
       original_prof <- mut_mat()[,input$mysamp]
@@ -895,7 +868,7 @@ shinyServer(function(input, output,session){
                  xlim=c(min(pca$x[,1])-0.5*(  max(pca$x[,1])-min(pca$x[,1]) ) ,max(pca$x[,1])+0.5*(  max(pca$x[,1])-min(pca$x[,1]) ) ),
                  ylim=c(min(pca$x[,2])-0.5*(  max(pca$x[,2])-min(pca$x[,2]) ) ,max(pca$x[,2])+0.5*(  max(pca$x[,2])-min(pca$x[,2]) ) ),
                  main="PCA")
-            text(pca$x[,1], pca$x[,2]-0.15, rownames(a))
+            text(pca$x[,1], pca$x[,2]-0.25, rownames(a))
             
             
          } else {
