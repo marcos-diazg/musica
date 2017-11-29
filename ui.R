@@ -65,6 +65,10 @@ shinyUI(fluidPage(
               uiOutput("selected_cancer_types"),
               
               hr(),
+              uiOutput("col_dendro_heatmap"),
+              uiOutput("row_dendro_heatmap"),
+              uiOutput("col_dendro_cancers"),
+              uiOutput("row_dendro_cancers"),
               
               #Clear button 
               actionButton("clear","Clear")
@@ -90,7 +94,7 @@ shinyUI(fluidPage(
                                 radioButtons("type_smp_plot","Format",c("pdf","png","tiff"),selected="pdf"),
                                 downloadButton("download_smp_plot","OK")),
                         downloadButton("download_smp_table",label="Download table"),
-                        br(),
+                        p(),
                         plotOutput("smp")
                ),
                         
@@ -101,25 +105,23 @@ shinyUI(fluidPage(
                         bsModal("modal_prof96","Download plot","download_prof96_plot_ID",
                                 radioButtons("type_prof96_plot","Format",c("pdf","png","tiff"),selected="pdf"),
                                 downloadButton("download_prof96_plot","OK")),
-                        br(),
+                        downloadButton("download_prof96_table",label="Download table"),
+                        p(),
                         plotOutput("prof96")
 
                ),
                
                #Contribution of COSMIC mutational signatures (heatmap and table)
-               tabPanel("COSMIC signatures contributions",
+               tabPanel("COSMIC signatures contributions", value="contrib",
                         br(),
-                        uiOutput("col_dendro_heatmap"),
-                        uiOutput("row_dendro_heatmap"),
-                         downloadButton("download_signatures_plot_ID",label="Download plot"),
-                         bsModal("modal_signatures","Download plot","download_signatures_plot_ID", 
+                        downloadButton("download_signatures_plot_ID",label="Download plot"),
+                        bsModal("modal_signatures","Download plot","download_signatures_plot_ID", 
                                  radioButtons("type_signatures_plot","Format",c("pdf","png")),
                                  downloadButton("download_signatures_plot","OK")),
+                        downloadButton("download_contr",label="Download table"),
                         p(),
                         fluidRow(plotlyOutput("heatmap_signatures",width="100%", height="800px")),
                         p(),
-                        downloadButton("download_contr",label="Download table"),
-                        br(),
                         dataTableOutput("contr")
                ),
                
@@ -134,7 +136,8 @@ shinyUI(fluidPage(
                         bsModal("modal_reconst","Download plot","download_reconst_plot_ID",
                                 radioButtons("type_reconst_plot","Format",c("pdf","png","tiff"),selected="pdf"),
                                 downloadButton("download_reconst_plot","OK")),
-                        br(),
+                        downloadButton("download_reconst_table",label="Download table"),
+                        p(),
                         plotOutput("reconst")
                ),
                
@@ -143,8 +146,6 @@ shinyUI(fluidPage(
                #Comparison of COSMIC mutational signatures with cancers
                tabPanel("Comparison with cancers signatures", value="comp_canc_sign",
                         br(),
-                        uiOutput("col_dendro_cancers"),
-                        uiOutput("row_dendro_cancers"),
                          downloadButton("download_known_plot_ID",label="Download plot"),
                          bsModal("modal_known","Download plot","download_known_plot_ID", 
                                  radioButtons("type_known_plot","Format",c("pdf","png")),
@@ -158,10 +159,11 @@ shinyUI(fluidPage(
                tabPanel("Principal components analysis", value="pca",
                         br(),
                         downloadButton("download_pca_ID",label="Download plot"),
+                        downloadButton("download_pca_table",label="Download table"),
                         bsModal("modal_pca","Download plot","download_pca_ID", 
                                 radioButtons("type_pca_plot","Format",c("pdf","png","tiff")),
                                 downloadButton("download_pca_plot","OK")),
-                        br(),
+                        p(),
                         plotOutput("pca_plot",height=700,width=700),
                         p(),
                         tableOutput("pca_plot_table")

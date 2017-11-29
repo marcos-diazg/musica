@@ -172,8 +172,9 @@ shinyServer(function(input, output,session){
    #######################################
    sp_url <- "http://cancer.sanger.ac.uk/cancergenome/assets/signatures_probabilities.txt"
    cancer_signatures <- read.table(sp_url, sep = "\t", header = TRUE)
-   cancer_signatures <- cancer_signatures[order(cancer_signatures[,1]),]
-   cancer_signatures <- as.matrix(cancer_signatures[,4:33])
+   cancer_signatures_aux <- cancer_signatures[order(cancer_signatures[,1]),]
+   cancer_signatures <- as.matrix(cancer_signatures_aux[,4:33])
+   cancer_signatures_mut_types <- as.matrix(cancer_signatures_aux[,1:3])
    
    
    #######################################
@@ -503,6 +504,23 @@ shinyServer(function(input, output,session){
       }
    )
       
+   
+   #Download Plot 96 TABLE
+   
+   
+   output$download_prof96_table <- downloadHandler(
+      filename="Mutational_Profile.txt",
+      content=function (file){
+         aux_96_profile<-as.matrix(mut_mat()[,setdiff(colnames(my_contributions()),c("mean"))])
+         aux_ymax<-divisionRel(as.data.frame(aux_96_profile))
+         
+         
+         write.table(x = data.frame(Substitution_Type = cancer_signatures_mut_types[,1], Trinucleotide = cancer_signatures_mut_types[,2], Somatic_Mutation_Type = cancer_signatures_mut_types[,3], aux_ymax), file = file, sep = "\t", quote=F, row.names=F)
+      }
+   )
+   
+   
+   
       
    #######################################
    ### Plot heatmap with contributions
@@ -524,10 +542,18 @@ shinyServer(function(input, output,session){
    
    #check if column or row dendogram is needed
    output$row_dendro_heatmap<-renderUI({
-      radioButtons("row_d_heatmap", "Row dendrogram", c("yes","no"),selected = "no",inline = TRUE)
+      if (input$tab == "contrib"){
+         radioButtons("row_d_heatmap", "Row dendrogram", c("yes","no"),selected = "no",inline = TRUE)
+      } else {
+         return(invisible(NULL))
+      }
    })
    output$col_dendro_heatmap<-renderUI({
-      radioButtons("col_d_heatmap", "Column dendrogram", c("yes","no"),selected = "no",inline = TRUE)
+      if (input$tab == "contrib"){
+         radioButtons("col_d_heatmap", "Column dendrogram", c("yes","no"),selected = "no",inline = TRUE)
+      } else {
+         return(invisible(NULL))
+      }
    })
 
    #HeatMap
@@ -625,23 +651,25 @@ shinyServer(function(input, output,session){
        }
     )
     
+    #Download reconstructed TABLE
     
+
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+    output$download_reconst_table <- downloadHandler(
+       filename="reconstructed_table.txt",
+       content=function (file){
+          original_prof <- mut_mat()[,input$mysamp]
+          reconstructed_prof <- fit_res()$reconstructed[,input$mysamp]
+          
+          aux_ymax<-divisionRel(data.frame(Original_Profile = original_prof, Reconstructed_Profile = reconstructed_prof))
+          
+          
+          write.table(x = data.frame(Substitution_Type = cancer_signatures_mut_types[,1], Trinucleotide = cancer_signatures_mut_types[,2], Somatic_Mutation_Type = cancer_signatures_mut_types[,3], aux_ymax), file = file, sep = "\t", quote=F, row.names=F)
+       }
+    )
    
+    
+
    
    #######################################
    ### Plot - Comparison with other cancers
@@ -649,12 +677,19 @@ shinyServer(function(input, output,session){
    
    #check if column or row dendogram is needed
    output$row_dendro_cancers<-renderUI({
-      radioButtons("row_c_heatmap", "Row dendrogram", c("yes","no"),selected = "no",inline = TRUE)
+      if (input$tab == "comp_canc_sign"){
+         radioButtons("row_c_heatmap", "Row dendrogram", c("yes","no"),selected = "no",inline = TRUE)
+      } else {
+         return(invisible(NULL))
+      }
    })
    output$col_dendro_cancers<-renderUI({
-      radioButtons("col_c_heatmap", "Column dendrogram", c("yes","no"),selected = "no",inline = TRUE)
+      if (input$tab == "comp_canc_sign"){
+         radioButtons("col_c_heatmap", "Column dendrogram", c("yes","no"),selected = "no",inline = TRUE)
+      } else {
+         return(invisible(NULL))
+      }
    })
-   
    
    #HeatMap
    output$heatmap_known <- renderPlotly({
@@ -849,6 +884,25 @@ shinyServer(function(input, output,session){
          
       })
    
+   output$download_pca_table <- downloadHandler(filename="PCA.txt",
+                                                content=function (file){
+                                                   my_contributions_mod <- my_contributions()
+                                                   
+                                                   if (ncol(as.data.frame(my_contributions_mod))>=3) {
+                                                      a<-t(as.data.frame(my_contributions_mod[30:1,]))
+                                                      for (i in 1:nrow(a)) { 
+                                                         a[i,]<-a[i,]/sum(a[i,])   # put the proportions
+                                                      }
+                                                      a<-a[,which(apply(a,2,sd)>0)]# remove signatures without variation
+                                                      
+                                                      samplesnames<-rownames(a)
+                                                      rownames(a)<-1:(length(rownames(a)))
+                                                      
+                                                      write.table(x = data.frame(ID=rownames(a),Sample=samplesnames), file = file, sep="\t",quote=F,row.names=F)
+                                                   }
+                                                })
    
    
+
+
 })
