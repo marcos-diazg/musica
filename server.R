@@ -393,8 +393,8 @@ shinyServer(function(input, output,session){
        
 #   PLOT somatic mutation prevalence
    output$smp <- renderPlot({
-      #Error managemente for file format
       
+      #Error managemente for file format
       error_message<-"File format error, please select the correct input file format before uploading your file/s."
       
       if (input$datatype=="VCF"){
@@ -555,6 +555,15 @@ shinyServer(function(input, output,session){
          return(invisible(NULL))
       }
    })
+   
+   #check if sample names are needed
+   output$heatmap_sample_names<-renderUI({
+      if (input$tab == "contrib" | input$tab == "comp_canc_sign"){
+         checkboxInput("samplenames","Show sample names",value=TRUE)
+      } else {
+         return(invisible(NULL))
+      }
+   })
 
    #HeatMap
    output$heatmap_signatures <- renderPlotly({
@@ -564,6 +573,8 @@ shinyServer(function(input, output,session){
        
       a<-my_contributions()
       if (ncol(a)==1) colnames(a)<-colnames(my_contributions()) ## fix colnames when there is only one sample
+      
+      
       rownames(a)<-colnames(cancer_signatures)[1:30] 
       colorends <- c("white","red")
       dendro <- "none"
@@ -571,6 +582,10 @@ shinyServer(function(input, output,session){
       if (input$col_d_heatmap=="yes") dendro<-"column" 
       if (input$row_d_heatmap=="yes" & input$col_d_heatmap=="yes") dendro<-"both"
    
+      if (input$samplenames==FALSE){
+         colnames(a)<-1:length(colnames(a))
+      }
+      
       heatmaply(a, scale_fill_gradient_fun = scale_fill_gradientn(colours = colorends, limits = c(0,1)),
                 dendrogram = dendro, k_row = 1, k_col = 1, column_text_angle = 90  )
    })
@@ -591,7 +606,9 @@ shinyServer(function(input, output,session){
           if (input$col_d_heatmap=="yes") dendro<-"column" 
           if (input$row_d_heatmap=="yes" & input$col_d_heatmap=="yes") dendro<-"both"
           
-          
+          if (input$samplenames==FALSE){
+             colnames(a)<-1:length(colnames(a))
+          }
           
           heatmaply(a, scale_fill_gradient_fun = scale_fill_gradientn(colours = colorends, limits = c(0,1)),
                     dendrogram = dendro, k_row = 1, k_col = 1, column_text_angle = 90,
@@ -721,7 +738,11 @@ shinyServer(function(input, output,session){
       if (input$col_c_heatmap=="yes") dendro<-"column" 
       if (input$row_c_heatmap=="yes" & input$col_c_heatmap=="yes") dendro<-"both"
 
-            heatmaply(a, scale_fill_gradient_fun = scale_fill_gradientn(colours = colorends, limits = c(0,3)),
+      if (input$samplenames==FALSE){
+         colnames(a)<-1:length(colnames(a))
+      }
+      
+      heatmaply(a, scale_fill_gradient_fun = scale_fill_gradientn(colours = colorends, limits = c(0,3)),
                 dendrogram = dendro, k_row = 1, k_col = 1, column_text_angle = 90, hide_colorbar = TRUE)
       
    })
@@ -754,6 +775,10 @@ shinyServer(function(input, output,session){
            if (input$row_c_heatmap=="yes") dendro<-"row"
            if (input$col_c_heatmap=="yes") dendro<-"column" 
            if (input$row_c_heatmap=="yes" & input$col_c_heatmap=="yes") dendro<-"both"
+           
+           if (input$samplenames==FALSE){
+              colnames(a)<-1:length(colnames(a))
+           }
            
            heatmaply(a, scale_fill_gradient_fun = scale_fill_gradientn(colours = colorends, limits = c(0,3)),
                      dendrogram = dendro, k_row = 1, k_col = 1, column_text_angle = 90, hide_colorbar = TRUE,

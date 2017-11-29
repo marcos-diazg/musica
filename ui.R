@@ -69,6 +69,7 @@ shinyUI(fluidPage(
               uiOutput("row_dendro_heatmap"),
               uiOutput("col_dendro_cancers"),
               uiOutput("row_dendro_cancers"),
+              uiOutput("heatmap_sample_names"),
               
               #Clear button 
               actionButton("clear","Clear")
@@ -164,9 +165,10 @@ shinyUI(fluidPage(
                                 radioButtons("type_pca_plot","Format",c("pdf","png","tiff")),
                                 downloadButton("download_pca_plot","OK")),
                         p(),
-                        plotOutput("pca_plot",height=700,width=700),
-                        p(),
-                        tableOutput("pca_plot_table")
+                        fluidRow(
+                           column(7,plotOutput("pca_plot",height=600,width=600)),
+                           column(5,tableOutput("pca_plot_table"))
+                        )
                )
 
             ) 
