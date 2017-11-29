@@ -21,7 +21,7 @@ if(!require(heatmaply)) install.packages("heatmaply")
 if(!require(gplots)) install.packages("gplots")
 if(!require(reshape2)) install.packages("reshape2")
 if(!require(data.table)) install.packages("data.table")
-if(!require(gdata)) install.packages("gdata")
+if(!require(readxl)) install.packages("readxl")
 if(!require(openxlsx)) install.packages("openxlsx")
 
 if(!require(shiny)) install.packages("shiny")
@@ -42,18 +42,18 @@ Then load the shiny app:
 library(shiny)
 
 # Easiest way is to use runGitHub
-runGitHub("MutSignatures_ShinyApp/MutSignatures", "marcos-diazg")
+runGitHub("music", "marcos-diazg")
 ```
 
 Other ways to load the app:
 
 ```R
 # Run a tar or zip file directly
-runUrl("https://github.com/marcos-diazg/MutSignatures_ShinyApp/MutSignatures/archive/master.tar.gz")
-runUrl("https://github.com/marcos-diazg/MutSignatures_ShinyApp/MutSignatures/archive/master.zip")
+runUrl("https://github.com/marcos-diazg/music/archive/master.tar.gz")
+runUrl("https://github.com/marcos-diazg/music/archive/master.zip")
 
 # Using runApp(),  first clone the repository with git. If you have cloned it into
-# ~/MutSignatures_ShinyApp/MutSignatures, first go to that directory, then use runApp().
-setwd("~/MutSignatures_ShinyApp/MutSignatures")
+# ~/music, first go to that directory, then use runApp().
+setwd("~/music")
 runApp()
 ```

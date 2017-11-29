@@ -39,7 +39,7 @@ shinyServer(function(input, output,session){
    library(heatmaply)
    library(gplots)
    library(openxlsx)
-   library(gdata)
+   library(readxl)
 
    #######################################
    #Reference genome definition and loading [ref_genome]
@@ -133,7 +133,7 @@ shinyServer(function(input, output,session){
                if (length(grep(".xlsx",inFile$datapath[w]))>0){
                   aux<-read.xlsx(inFile$datapath[w],1)
                } else {
-                  aux<-read.xls(inFile$datapath[w],sheet=1,header=T)
+                  aux<-data.frame(read_xls(inFile$datapath[w],col_names = TRUE,col_types = "text"))
                }
                
                
@@ -232,8 +232,8 @@ shinyServer(function(input, output,session){
       
          if (input$tab == "96prof" | input$tab == "pca"){
            
-            mysamp<-c("All",colnames(as.data.frame(fit_res()$contribution)))
-            selectInput("mysamp","Select your samples",mysamp, multiple=TRUE, selectize = FALSE, size=6, selected="All")
+            mysamp<-c("All samples",colnames(as.data.frame(fit_res()$contribution)))
+            selectInput("mysamp","Select your samples",mysamp, multiple=TRUE, selectize = FALSE, size=6, selected="All samples")
             
          } else {
             
@@ -242,8 +242,8 @@ shinyServer(function(input, output,session){
                selectInput("mysamp","Select your samples",mysamp, multiple=TRUE, selectize = FALSE, size=6, selected = mysamp[1])
             } else {
                
-               mysamp<-c("All",colnames(as.data.frame(fit_res()$contribution)),"mean")
-               selectInput("mysamp","Select your samples",mysamp, multiple=TRUE, selectize = FALSE, size=6, selected="All")
+               mysamp<-c("All samples","All samples + mean",colnames(as.data.frame(fit_res()$contribution)),"mean")
+               selectInput("mysamp","Select your samples",mysamp, multiple=TRUE, selectize = FALSE, size=6, selected="All samples")
             }
          }
       
@@ -254,7 +254,7 @@ shinyServer(function(input, output,session){
       
       if (input$tab=="comp_canc_sign"){
          
-         selectInput("mycancers","Select the cancers to compare", c("All",colnames(read.table("./aux_files/cancermatrix.tsv",header=TRUE,sep="\t",row.names=1))), multiple=TRUE, selectize=FALSE, size=10, selected="All")
+         selectInput("mycancers","Select the cancers to compare", c("All cancers",colnames(read.table("./aux_files/cancermatrix.tsv",header=TRUE,sep="\t",row.names=1))), multiple=TRUE, selectize=FALSE, size=10, selected="All cancers")
       
       }
       
@@ -267,40 +267,55 @@ shinyServer(function(input, output,session){
       #Error management
       if (length(input$mysamp)==0) return(invisible(NULL))
          
-      if ("All" %in% input$mysamp) {
+      if ("All samples + mean" %in% input$mysamp) {
          aux<-divisionRel(as.data.frame(fit_res()$contribution))
          con<-data.frame(aux, mean = apply(aux,1,mean))
          colnames(con)<-c(colnames(aux),"mean")
             
       } else {
-            
-         if("mean" %in% input$mysamp) {      
-            if (length(input$mysamp)>1) {
-               aux<-divisionRel(as.data.frame(fit_res()$contribution[,input$mysamp[-length(input$mysamp)]]))
+         if ("All samples" %in% input$mysamp){
+            if("mean" %in% input$mysamp) {
+               aux<-divisionRel(as.data.frame(fit_res()$contribution))
                con<-data.frame(aux, mean = apply(aux,1,mean))
                colnames(con)<-c(colnames(aux),"mean")
-               
             } else {
                aux<-divisionRel(as.data.frame(fit_res()$contribution))
-               con<-data.frame(mean = apply(aux,1,mean))    
+               con<-data.frame(aux)
+               colnames(con)<-c(colnames(aux))   
             }
-              
+            
+            
+            
          } else {
-            aux<-divisionRel(as.data.frame(fit_res()$contribution[,input$mysamp]))
-            con<-data.frame(aux)
-            colnames(con)<-colnames(aux)
+            
+            if("mean" %in% input$mysamp) {      
+               if (length(input$mysamp)>1) {
+                  aux<-divisionRel(as.data.frame(fit_res()$contribution[,input$mysamp[-length(input$mysamp)]]))
+                  con<-data.frame(aux, mean = apply(aux,1,mean))
+                  colnames(con)<-c(colnames(aux),"mean")
+                  
+               } else {
+                  aux<-divisionRel(as.data.frame(fit_res()$contribution))
+                  con<-data.frame(mean = apply(aux,1,mean))    
+               }
+                 
+            } else {
+               aux<-divisionRel(as.data.frame(fit_res()$contribution[,input$mysamp]))
+               con<-data.frame(aux)
+               colnames(con)<-colnames(aux)
+            }
          }
       }
-         
+            
       
       #Fixing colname of one sample (without mean)
       if (ncol(con)==1 & colnames(con)[1]!="mean"){
-         colnames(con)<-setdiff(input$mysamp,c("All","mean"))
+         colnames(con)<-setdiff(input$mysamp,c("All samples","mean","All samples + mean"))
       }
          
       #Fixing colname of one sample (with mean)
-      if (ncol(con)==2 & colnames(con)[2]=="mean" & input$mysamp!="All"){
-         colnames(con)[1]<-setdiff(input$mysamp,c("All","mean"))
+      if (ncol(con)==2 & colnames(con)[2]=="mean" & input$mysamp!="All samples + mean" & input$mysamp!="All samples"){
+         colnames(con)[1]<-setdiff(input$mysamp,c("All samples","mean","All samples + mean"))
       }
          
       #Fixing colname of just mean of samples
@@ -345,21 +360,30 @@ shinyServer(function(input, output,session){
    #Selection of samples to plot
    mutation_counts<- reactive({ 
       
-      if ("All" %in% input$mysamp) {
+      if ("All samples + mean" %in% input$mysamp) {
          mc<-data.frame(samples=c(names(vcfs()),"mean"),smp=(c(sapply(vcfs(),length),mean(sapply(vcfs(),length))))/megabases())
          
       } else {
          
-         if("mean" %in% input$mysamp) {      
-            if (length(input$mysamp)>1) {
-               aux<-input$mysamp[-length(input$mysamp)]
-               mc<-data.frame(samples=c(names(vcfs()[aux]),"mean"), smp=(c(sapply(vcfs()[aux],length),mean(sapply(vcfs()[aux],length))))/megabases())
-               
+         if ("All samples" %in% input$mysamp){
+            if("mean" %in% input$mysamp) {
+               mc<-data.frame(samples=c(names(vcfs()),"mean"),smp=(c(sapply(vcfs(),length),mean(sapply(vcfs(),length))))/megabases())
             } else {
-               mc<-data.frame(samples=c("mean"),smp=(c(mean(sapply(vcfs(),length))))/megabases())
+               mc<-data.frame(samples=names(vcfs()),smp=(sapply(vcfs(),length))/megabases())
             }
          } else {
-            mc<-data.frame(samples=names(vcfs()[input$mysamp]), smp=(sapply(vcfs()[input$mysamp],length))/megabases())
+         
+            if("mean" %in% input$mysamp) {      
+               if (length(input$mysamp)>1) {
+                  aux<-input$mysamp[-length(input$mysamp)]
+                  mc<-data.frame(samples=c(names(vcfs()[aux]),"mean"), smp=(c(sapply(vcfs()[aux],length),mean(sapply(vcfs()[aux],length))))/megabases())
+                  
+               } else {
+                  mc<-data.frame(samples=c("mean"),smp=(c(mean(sapply(vcfs(),length))))/megabases())
+               }
+            } else {
+               mc<-data.frame(samples=names(vcfs()[input$mysamp]), smp=(sapply(vcfs()[input$mysamp],length))/megabases())
+            }
          }
       }
       return(mc)
@@ -546,6 +570,7 @@ shinyServer(function(input, output,session){
           heatmaply(a, scale_fill_gradient_fun = scale_fill_gradientn(colours = colorends, limits = c(0,1)),
                     dendrogram = dendro, k_row = 1, k_col = 1, column_text_angle = 90,
                     file = ff)
+
        })
        
           
@@ -560,7 +585,7 @@ shinyServer(function(input, output,session){
           need(length(input$mysamp)==1,"Sample selection error, please select just one sample at a time to visualize its reconstructed mutational profile.")
       )
        
-      if (input$mysamp=="All") return(invisible(NULL))
+      if (input$mysamp=="All samples + mean" | input$mysamp=="All samples") return(invisible(NULL))
        
        
       original_prof <- mut_mat()[,input$mysamp]
@@ -637,7 +662,7 @@ shinyServer(function(input, output,session){
       if (length(input$mysamp)==0) return(invisible(NULL))
       if (length(input$mycancers)==0) return(invisible(NULL))
       
-      if ("All" %in% input$mycancers) my.sel.cancers<-colnames(known_cancer_signatures)
+      if ("All cancers" %in% input$mycancers) my.sel.cancers<-colnames(known_cancer_signatures)
       else my.sel.cancers<-intersect(input$mycancers,colnames(known_cancer_signatures))
       
 
@@ -668,10 +693,10 @@ shinyServer(function(input, output,session){
    
 
    #  Download HeatMap 
-      output$download_known_plot <- downloadHandler(filename = function(){paste("comparison_with_other",input$type_known_plot, sep=".")}, content=function (ff) {
+      output$download_known_plot <- downloadHandler(filename = function(){paste("comparison_with_cancers",input$type_known_plot, sep=".")}, content=function (ff) {
         
         
-           if ("All" %in% input$mycancers) my.sel.cancers<-colnames(known_cancer_signatures)
+           if ("All cancers" %in% input$mycancers) my.sel.cancers<-colnames(known_cancer_signatures)
            else my.sel.cancers<-intersect(input$mycancers,colnames(known_cancer_signatures))
            
            
@@ -706,24 +731,17 @@ shinyServer(function(input, output,session){
    #######################################
    ###### PCA - Clustering of samples ## only if there are 3 or more samples
    #######################################
-      output$write_text_pca<-renderUI({
-        radioButtons("write_text_pca", "Write sample names", c("yes","no"),selected = "no",inline = TRUE)
-      })
-      
-      
    output$pca_plot <- renderPlot({
       
       #Error management
       validate(
-         need((length(input$mysamp)>2 | "All" %in% input$mysamp ),"PCA analysis works only with 3 or more samples.")
+         need((length(input$mysamp)>2 | "All samples" %in% input$mysamp ),"PCA analysis works only with 3 or more samples.")
       )
       
       
-      if (input$mysamp=="All"){
-         my_contributions_mod <- my_contributions()[,-ncol(my_contributions())]
-      } else {
-         my_contributions_mod <- my_contributions()
-      }
+      #######################################
+      my_contributions_mod <- my_contributions()
+      #######################################
       
       #Error management
       validate(
@@ -735,7 +753,11 @@ shinyServer(function(input, output,session){
          for (i in 1:nrow(a)) { 
            a[i,]<-a[i,]/sum(a[i,])   # put the proportions
          }
-         a<-a[,which(apply(a,2,sd)>0)] # remove signatures without variation
+         a<-a[,which(apply(a,2,sd)>0)]# remove signatures without variation
+         
+         samplesnames<-rownames(a)
+         rownames(a)<-1:(length(rownames(a)))
+         
          pca <- prcomp(a, scale=T)
          plot(pca$x[,1], pca$x[,2],        # x y and z axis
               col="red", pch=19,  
@@ -744,9 +766,8 @@ shinyServer(function(input, output,session){
               xlim=c(min(pca$x[,1])-0.5*(  max(pca$x[,1])-min(pca$x[,1]) ) ,max(pca$x[,1])+0.5*(  max(pca$x[,1])-min(pca$x[,1]) ) ),
               ylim=c(min(pca$x[,2])-0.5*(  max(pca$x[,2])-min(pca$x[,2]) ) ,max(pca$x[,2])+0.5*(  max(pca$x[,2])-min(pca$x[,2]) ) ),
               main="PCA")
-         if (input$write_text_pca=="yes") {
-           text(pca$x[,1], pca$x[,2], rownames(a))
-         }
+         text(pca$x[,1], pca$x[,2]-0.15, rownames(a))
+
            
       } else {
          par(mar = c(0,0,0,0))
@@ -758,6 +779,32 @@ shinyServer(function(input, output,session){
    })
    
    
+   output$pca_plot_table <- renderTable({
+      
+      my_contributions_mod <- my_contributions()
+      
+      
+      if (ncol(as.data.frame(my_contributions_mod))>=3) {
+         a<-t(as.data.frame(my_contributions_mod[30:1,]))
+         for (i in 1:nrow(a)) { 
+            a[i,]<-a[i,]/sum(a[i,])   # put the proportions
+         }
+         a<-a[,which(apply(a,2,sd)>0)]# remove signatures without variation
+         
+         samplesnames<-rownames(a)
+         rownames(a)<-1:(length(rownames(a)))
+         
+         data.frame(ID=rownames(a),Sample=samplesnames)
+         
+         
+      }
+      
+      
+   })
+   
+   
+   
+   
    output$download_pca_plot <- downloadHandler (
       filename = function(){paste("pca_plot",input$type_pca_plot, sep=".")}, 
       content = function(ff) {
@@ -766,32 +813,36 @@ shinyServer(function(input, output,session){
          if (input$type_pca_plot=="tiff") tiff(ff,height=7*ppi,width=7*ppi,res=ppi,compression="lzw")
 
          
-         if (input$mysamp=="All"){
-            my_contributions_mod <- my_contributions()[,-ncol(my_contributions())]
-         } else {
-            my_contributions_mod <- my_contributions()
-         }
+         #######################################
+         my_contributions_mod <- my_contributions()
+         #######################################
          
          if (ncol(as.data.frame(my_contributions_mod))>=3) {
-             a<-t(as.data.frame(my_contributions_mod[30:1,]))
-             for (i in 1:nrow(a)) {
-                a[i,]<-a[i,]/sum(a[i,])   # put the proportions
-             }
-             a<-a[,which(apply(a,2,sd)>0)] # remove signatures without variation
-             pca <- prcomp(a, scale=T)
-             plot(pca$x[,1], pca$x[,2],        # x y and z axis
-                  col="red", pch=19,
-                  xlab=paste("Comp 1: ",round(pca$sdev[1]^2/sum(pca$sdev^2)*100,1),"%",sep=""),
-                  ylab=paste("Comp 2: ",round(pca$sdev[2]^2/sum(pca$sdev^2)*100,1),"%",sep=""),
-                  main="PCA")
-             if (input$write_text_pca=="yes") {
-                text(pca$x[,1], pca$x[,2], rownames(a))
-             }
-          } else {
-             par(mar = c(0,0,0,0))
-             plot(c(0, 1), c(0, 1), ann = F, bty = 'n', type = 'n', xaxt = 'n', yaxt = 'n')
-             text(x = 0.5, y = 0.5, paste("PCA analysis works only with >=3 samples"),
-                  cex = 1.6, col = "black")
+            a<-t(as.data.frame(my_contributions_mod[30:1,]))
+            for (i in 1:nrow(a)) { 
+               a[i,]<-a[i,]/sum(a[i,])   # put the proportions
+            }
+            a<-a[,which(apply(a,2,sd)>0)]# remove signatures without variation
+            
+            samplesnames<-rownames(a)
+            rownames(a)<-1:(length(rownames(a)))
+            
+            pca <- prcomp(a, scale=T)
+            plot(pca$x[,1], pca$x[,2],        # x y and z axis
+                 col="red", pch=19,  
+                 xlab=paste("Comp 1: ",round(pca$sdev[1]^2/sum(pca$sdev^2)*100,1),"%",sep=""),
+                 ylab=paste("Comp 2: ",round(pca$sdev[2]^2/sum(pca$sdev^2)*100,1),"%",sep=""),
+                 xlim=c(min(pca$x[,1])-0.5*(  max(pca$x[,1])-min(pca$x[,1]) ) ,max(pca$x[,1])+0.5*(  max(pca$x[,1])-min(pca$x[,1]) ) ),
+                 ylim=c(min(pca$x[,2])-0.5*(  max(pca$x[,2])-min(pca$x[,2]) ) ,max(pca$x[,2])+0.5*(  max(pca$x[,2])-min(pca$x[,2]) ) ),
+                 main="PCA")
+            text(pca$x[,1], pca$x[,2]-0.15, rownames(a))
+            
+            
+         } else {
+            par(mar = c(0,0,0,0))
+            plot(c(0, 1), c(0, 1), ann = F, bty = 'n', type = 'n', xaxt = 'n', yaxt = 'n')
+            text(x = 0.5, y = 0.5, paste("PCA analysis works only with >=3 samples"), 
+                 cex = 1.6, col = "black")
          }
 
          dev.off()
