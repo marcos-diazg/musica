@@ -16,8 +16,7 @@ shinyUI(fluidPage(
    shinyjs::extendShinyjs(text = "shinyjs.refresh = function() { location.reload(); }"),
   
    #Title
-   titlePanel(title=div(img(src="music_4.png"),"\t\tMutational Signatures in Cancer"),windowTitle = "MuSiC - Mutational Signatures in Cancer"),
-#   img(src="music.png", align = "right"),
+   titlePanel(title=div(img(src="music_4.png"),"\t\tMutational Signatures in Cancer"),windowTitle = "MuSiCa - Mutational Signatures in Cancer"),
    sidebarLayout(
       
       sidebarPanel(
