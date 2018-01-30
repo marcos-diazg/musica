@@ -42,18 +42,18 @@ Then load the shiny app:
 library(shiny)
 
 # Easiest way is to use runGitHub
-runGitHub("music", "marcos-diazg")
+runGitHub("musica", "marcos-diazg")
 ```
 
 Other ways to load the app:
 
 ```R
 # Run a tar or zip file directly
-runUrl("https://github.com/marcos-diazg/music/archive/master.tar.gz")
-runUrl("https://github.com/marcos-diazg/music/archive/master.zip")
+runUrl("https://github.com/marcos-diazg/musica/archive/master.tar.gz")
+runUrl("https://github.com/marcos-diazg/musica/archive/master.zip")
 
 # Using runApp(),  first clone the repository with git. If you have cloned it into
 # ~/music, first go to that directory, then use runApp().
-setwd("~/music")
+setwd("~/musica")
 runApp()
 ```
