@@ -45,13 +45,15 @@ shinyUI(fluidPage(
          
          hr(),
 
-         uiOutput("run_button_and_errors"),
+         uiOutput("run_button"),
 
          
          #Stuff only showed when run button is pressed
          hidden(
             div(id="after_run",
               
+               br(),
+               br(),
               #Sample selection for plots (post push run)         
               uiOutput("selected_samples"),
               uiOutput("mean_checkbox"),
@@ -66,6 +68,8 @@ shinyUI(fluidPage(
               uiOutput("col_dendro_cancers"),
               uiOutput("row_dendro_cancers"),
               uiOutput("heatmap_sample_names"),
+              
+              #uiOutput("error_input"),
               
               #Clear button 
               actionButton("clear","Clear")
