@@ -45,12 +45,7 @@ shinyUI(fluidPage(
          
          hr(),
 
-         #Run button
-         actionButton("run","Run",class = "btn-primary"),
-         
-
-         #Busy indicator
-         busyIndicator("Running",wait=0),
+         uiOutput("run_button_and_errors"),
 
          
          #Stuff only showed when run button is pressed

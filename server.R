@@ -59,12 +59,48 @@ shinyServer(function(input, output,session){
       }
    })
  
+   
+   filedata <- reactive({
+      infile <- input$fileinput #file loaded
+      if (is.null(infile)) {
+         # User has not uploaded a file yet
+         return(NULL)
+      } else {return(infile)}
+   })
+   
+   output$run_button_and_errors <- renderUI({
+      if (!is.null(filedata())) {
+         
+         
+         div(
+            #Run button
+            actionButton("run","Run",class = "btn-primary"),
+            
+            
+            #Busy indicator
+            busyIndicator("Running",wait=0),
+            
+            HTML("")
+         )
+         
+      } else if (is.null(filedata())) {
+         HTML("")
+      }
+   })
+
+   
+   #######WHEN RUN BUTTON##
+   observeEvent(input$run,{
+      
+
+   all_ok_for_run <- TRUE
    #######################################
    #Reading input files as GRanges objects [vcfs]
    #######################################
-   vcfs<-eventReactive(input$run,{
-      inFile<-input$fileinput
+   vcfs<-eventReactive((all_ok_for_run==TRUE),{
 
+      inFile<-input$fileinput
+            
          #VCF
          if (input$datatype=="VCF"){
             
@@ -155,6 +191,7 @@ shinyServer(function(input, output,session){
                
             return(read_vcfs_as_granges(ff,inFile$name,ref_genome(),group = "auto+sex", check_alleles = TRUE))
          }
+         
 
    })
    
@@ -375,11 +412,19 @@ shinyServer(function(input, output,session){
             need(length(grep(".vcf",input[["fileinput"]]$datapath))>0 | length(grep(".txt",input[["fileinput"]]$datapath))>0,error_message)
          )
       }
+      
+      #####TSV
       if (input$datatype=="TSV"){
          validate(
             need(length(grep(".tsv",input[["fileinput"]]$datapath))>0 | length(grep(".txt",input[["fileinput"]]$datapath))>0,error_message)
          )
       }
+      if (input$datatype=="TSV"){
+         validate(
+            need(try(all(c("CHROM", "POS", "REF", "ALT") %in% colnames(input[["fileinput"]]$datapath))==TRUE  ), error_message)
+         )
+      }
+      
       if (input$datatype=="Excel"){
          validate(
             need(length(grep(".xlsx",input[["fileinput"]]$datapath))>0 | length(grep(".xls",input[["fileinput"]]$datapath))>0,error_message)
@@ -901,6 +946,6 @@ shinyServer(function(input, output,session){
                                                 })
    
    
-
+   })# observeEvent(input$run)
 
 })
