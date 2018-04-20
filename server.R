@@ -14,7 +14,7 @@ shinyServer(function(input, output,session){
    
    
    #Resolution of the tiff images
-   ppi<-200
+   ppi<-200 
    
    
    #Hidding/Showing tabs of mainpanel, run and clear buttons, ...

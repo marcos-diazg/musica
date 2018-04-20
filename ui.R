@@ -9,7 +9,7 @@ library(plotly)
 shinyUI(fluidPage(
    
    #CSS style specification
-   theme = shinytheme("united"),
+   theme = shinytheme("united"), 
    
    #Activation of Shiny js
    useShinyjs(),
