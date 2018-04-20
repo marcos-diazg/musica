@@ -9,7 +9,7 @@ library(plotly)
 shinyUI(fluidPage(
    
    #CSS style specification
-   theme = shinytheme("united"),
+   theme = shinytheme("united"), 
    
    #Activation of Shiny js
    useShinyjs(),
@@ -45,18 +45,15 @@ shinyUI(fluidPage(
          
          hr(),
 
-         #Run button
-         actionButton("run","Run",class = "btn-primary"),
-         
-
-         #Busy indicator
-         busyIndicator("Running",wait=0),
+         uiOutput("run_button"),
 
          
          #Stuff only showed when run button is pressed
          hidden(
             div(id="after_run",
               
+               br(),
+               br(),
               #Sample selection for plots (post push run)         
               uiOutput("selected_samples"),
               uiOutput("mean_checkbox"),
@@ -71,6 +68,8 @@ shinyUI(fluidPage(
               uiOutput("col_dendro_cancers"),
               uiOutput("row_dendro_cancers"),
               uiOutput("heatmap_sample_names"),
+              
+              #uiOutput("error_input"),
               
               #Clear button 
               actionButton("clear","Clear")

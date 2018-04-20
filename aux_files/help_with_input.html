@@ -7,15 +7,15 @@
                      <p>
                      <u>VCF (Variant Call Format)</u>: Default file format for variant calling and annotation according to this <a href=https://samtools.github.io/hts-specs/>specification</a> (optimized for 4.2 version).
                      </p>
-                     <p>
-                     <u>TSV (Tab-Separated Values)</u>: plain text file with four required fields separated by a tab character. A header line is mandatory and the four headers must be provided as listed below:
+
+                     <u>TSV (Tab-Separated Values)</u>: plain text file with four required fields separated by a tab character. <b><u>A header line is mandatory</u></b> and the four headers must be provided as listed below:
                      <ol>
                      <li>CHROM - Chromosome, ‘chr’ prefix is optional (e.g. ‘chr10’ and ’10’ are both valid).</li>
                      <li>POS - Chomosomal coordinate of reference allele.</li>
                      <li>REF - Reference allele at position given above.</li>
                      <li>ALT - Observed alternate allele.</li>
                      </ol>
-                     </p>
+
                      <p>
                      <u>Excel</u>: Excel file (<i>xls</i> and <i>xlsx</i> extensions are both valid) with the same structure of four required fields with mandatory headers described above (CHROM, POS, REF and ALT).
                      </p>
@@ -23,6 +23,6 @@
                      <u>MAF (Mutation Annotation Format)</u>: File format widely used for multi-sample variant annotation in TCGA public available data. A complete specification may be consulted <a href=https://wiki.nci.nih.gov/display/TCGA/Mutation+Annotation+Format+%28MAF%29+Specification>here</a>.
                      </p>
                      <br>
-                     <p>Multiple file uploading is allowed in the case of VCF, TSV and Excel formats, each containing the somatic mutations of one sample at a time. For MAF format, only one multi-sample file is allowed.
-                     </p>
+                     <p>Multiple file uploading is allowed in the case of VCF, TSV and Excel formats, each containing the somatic mutations of one sample at a time (CTRL button during file selection).</p>
+		<p> For MAF format, only one multi-sample file is allowed.</p>
 </html>

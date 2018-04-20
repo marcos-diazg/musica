@@ -14,7 +14,7 @@ shinyServer(function(input, output,session){
    
    
    #Resolution of the tiff images
-   ppi<-200
+   ppi<-200 
    
    
    #Hidding/Showing tabs of mainpanel, run and clear buttons, ...
@@ -59,12 +59,58 @@ shinyServer(function(input, output,session){
       }
    })
  
+   
+   filedata <- reactive({
+      infile <- input$fileinput #file loaded
+      if (is.null(infile)) {
+         # User has not uploaded a file yet
+         return(NULL)
+      } else {return(infile)}
+   })
+   
+   output$run_button <- renderUI({
+      if (!is.null(filedata())) {
+         
+         
+         div(
+            #Run button
+            actionButton("run","Run",class = "btn-primary"),
+            
+            
+            #Busy indicator
+            busyIndicator("Running",wait=0)
+            
+         )
+         
+      } else if (is.null(filedata())) {
+         HTML("")
+      }
+   })
+
+   
+   #######WHEN RUN BUTTON##
+   observeEvent(input$run,{
+     all_ok_for_run <- TRUE
+     
+     
+     if (!is.null(filedata())) {
+       output$error_input <- renderUI({
+         HTML("All well!")
+       })
+     } else {
+       all_ok_for_run <- FALSE
+     }
+       
+
+
+
    #######################################
    #Reading input files as GRanges objects [vcfs]
    #######################################
-   vcfs<-eventReactive(input$run,{
-      inFile<-input$fileinput
+   vcfs<-eventReactive((all_ok_for_run==TRUE),{
 
+      inFile<<-input$fileinput
+            
          #VCF
          if (input$datatype=="VCF"){
             
@@ -155,6 +201,7 @@ shinyServer(function(input, output,session){
                
             return(read_vcfs_as_granges(ff,inFile$name,ref_genome(),group = "auto+sex", check_alleles = TRUE))
          }
+         
 
    })
    
@@ -375,16 +422,57 @@ shinyServer(function(input, output,session){
             need(length(grep(".vcf",input[["fileinput"]]$datapath))>0 | length(grep(".txt",input[["fileinput"]]$datapath))>0,error_message)
          )
       }
+      
+      #####TSV
       if (input$datatype=="TSV"){
          validate(
             need(length(grep(".tsv",input[["fileinput"]]$datapath))>0 | length(grep(".txt",input[["fileinput"]]$datapath))>0,error_message)
          )
       }
+      if (input$datatype=="TSV"){
+         
+         mat_list<-list()
+         for (w in 1:length(inFile$datapath)){
+            mat <- fread(inFile$datapath[w],header=T,sep="\t",data.table=F)
+            condition <- as.character(length(grep("TRUE", (c("CHROM", "POS", "REF", "ALT") %in% colnames(mat))))==4)
+            
+            mat_list[[w]] <- condition
+         }
+         mat_vector <- as.vector(do.call(cbind, mat_list))
+         validate(
+            need(length(grep("FALSE", mat_vector))==0, "Uploaded files header do not have necessary columns CHROM, POS, REF and ALT")
+         )
+
+      }
+      
+      #####Excel
       if (input$datatype=="Excel"){
          validate(
             need(length(grep(".xlsx",input[["fileinput"]]$datapath))>0 | length(grep(".xls",input[["fileinput"]]$datapath))>0,error_message)
          )
       }
+      if (input$datatype=="Excel"){
+         mat_list<-list()
+         for (w in 1:length(inFile$datapath)){
+            
+            if (length(grep(".xlsx",inFile$datapath[w]))>0){
+               mat<-read.xlsx(inFile$datapath[w],1)
+            } else {
+               mat<-data.frame(read_xls(inFile$datapath[w],col_names = TRUE,col_types = "text"))
+            }
+            
+            condition <- as.character(length(grep("TRUE", (c("CHROM", "POS", "REF", "ALT") %in% colnames(mat))))==4)
+            
+            mat_list[[w]] <- condition
+         }
+         mat_vector <- as.vector(do.call(cbind, mat_list))
+         validate(
+            need(length(grep("FALSE", mat_vector))==0, "Uploaded files header do not have necessary columns CHROM, POS, REF and ALT")
+         )
+         
+      }
+      
+      #####MAF
       if (input$datatype=="MAF"){
          validate(
             need(length(grep(".maf",input[["fileinput"]]$datapath))>0 | length(grep(".txt",input[["fileinput"]]$datapath))>0,error_message),
@@ -901,6 +989,6 @@ shinyServer(function(input, output,session){
                                                 })
    
    
-
+   })# observeEvent(input$run)
 
 })
