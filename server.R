@@ -701,7 +701,8 @@ shinyServer(function(input, output,session){
          a[,i]<-a[,i]/sum(a[,i])   # put the proportions
       }
       for (i in (ncol(a)-length(my.sel.cancers)+1):ncol(a)) { 
-         a[,i]<-a[,i]+1.5   # put the proportions   # add 1.5 to cancers
+         a[,i]<-a[,i]*2.5   # put the proportions   # 1 goes to 2.5 (light blue)
+
       }
 
       rownames(a)<-colnames(cancer_signatures)[1:30] 
