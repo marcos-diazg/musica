@@ -560,7 +560,7 @@ shinyServer(function(input, output,session){
       }
       
       heatmaply(a, scale_fill_gradient_fun = scale_fill_gradientn(colours = colorends, limits = c(0,1)),
-                dendrogram = dendro, k_row = 1, k_col = 1, column_text_angle = 90  )
+                dendrogram = dendro, k_row = 1, k_col = 1, column_text_angle = 90, distfun = 'pearson'  )
    })
    
    
@@ -584,7 +584,7 @@ shinyServer(function(input, output,session){
           }
           
           heatmaply(a, scale_fill_gradient_fun = scale_fill_gradientn(colours = colorends, limits = c(0,1)),
-                    dendrogram = dendro, k_row = 1, k_col = 1, column_text_angle = 90,
+                    dendrogram = dendro, k_row = 1, k_col = 1, column_text_angle = 90, distfun = 'pearson',
                     file = ff)
 
        })
