@@ -648,7 +648,7 @@ shinyServer(function(input, output,session){
       }
       
       heatmaply(a, scale_fill_gradient_fun = scale_fill_gradientn(colours = colorends, limits = c(0,1)),
-                dendrogram = dendro, k_row = 1, k_col = 1, column_text_angle = 90  )
+                dendrogram = dendro, k_row = 1, k_col = 1, column_text_angle = 90, distfun = 'pearson'  )
    })
    
    
@@ -672,7 +672,7 @@ shinyServer(function(input, output,session){
           }
           
           heatmaply(a, scale_fill_gradient_fun = scale_fill_gradientn(colours = colorends, limits = c(0,1)),
-                    dendrogram = dendro, k_row = 1, k_col = 1, column_text_angle = 90,
+                    dendrogram = dendro, k_row = 1, k_col = 1, column_text_angle = 90, distfun = 'pearson',
                     file = ff)
 
        })
@@ -789,7 +789,8 @@ shinyServer(function(input, output,session){
          a[,i]<-a[,i]/sum(a[,i])   # put the proportions
       }
       for (i in (ncol(a)-length(my.sel.cancers)+1):ncol(a)) { 
-         a[,i]<-a[,i]+1.5   # put the proportions   # add 1.5 to cancers
+         a[,i]<-a[,i]*2.5   # put the proportions   # 1 goes to 2.5 (light blue)
+
       }
 
       rownames(a)<-colnames(cancer_signatures)[1:30] 
@@ -804,7 +805,8 @@ shinyServer(function(input, output,session){
       }
       
       heatmaply(a, scale_fill_gradient_fun = scale_fill_gradientn(colours = colorends, limits = c(0,3)),
-                dendrogram = dendro, k_row = 1, k_col = 1, column_text_angle = 90, hide_colorbar = TRUE)
+                dendrogram = dendro, k_row = 1, k_col = 1, column_text_angle = 90, hide_colorbar = TRUE,
+                distfun = 'pearson')
       
    })
    
@@ -843,6 +845,7 @@ shinyServer(function(input, output,session){
            
            heatmaply(a, scale_fill_gradient_fun = scale_fill_gradientn(colours = colorends, limits = c(0,3)),
                      dendrogram = dendro, k_row = 1, k_col = 1, column_text_angle = 90, hide_colorbar = TRUE,
+                     distfun = 'pearson',
                      file = ff)
         
       })
