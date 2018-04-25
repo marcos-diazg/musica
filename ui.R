@@ -9,8 +9,20 @@ library(plotly)
 shinyUI(fluidPage(
    
    #CSS style specification
-   theme = shinytheme("united"), 
+   theme = shinytheme("united"),
    
+   #Errors color
+   tags$style(HTML(".shiny-output-error-validation {color: grey;}")),
+   
+   #Modification of default error
+   tags$style(HTML("
+        .shiny-output-error { visibility: hidden; }
+        .shiny-output-error:before {
+          visibility: visible;
+          content: 'An error has occurred. Please contact the app authors at diaz2@clinic.cat or submit your bug-reports at https://github.com/marcos-diazg/musica/issues.'; }
+        }
+")),
+
    #Activation of Shiny js
    useShinyjs(),
    shinyjs::extendShinyjs(text = "shinyjs.refresh = function() { location.reload(); }"),

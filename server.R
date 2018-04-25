@@ -11,7 +11,7 @@ shinyServer(function(input, output,session){
    
    #Setting maximum file size for uploading (500 MB)
    options(shiny.maxRequestSize=500*1024^2)
-   
+   options(shiny.sanitize.errors = FALSE)
    
    #Resolution of the tiff images
    ppi<-200 
@@ -251,13 +251,28 @@ shinyServer(function(input, output,session){
       #Error managemente for file format
       if (input$datatype=="VCF"){
          validate(
-            need(length(grep(".vcf",input[["fileinput"]]$datapath))>0 | length(grep(".txt",input[["fileinput"]]$datapath))>0,"")
+            need(length(grep(".vcf",input[["fileinput"]]$datapath))>0,"")
          )
       }
       if (input$datatype=="TSV"){
          validate(
             need(length(grep(".tsv",input[["fileinput"]]$datapath))>0 | length(grep(".txt",input[["fileinput"]]$datapath))>0,"")
          )
+      }
+      if (input$datatype=="TSV"){
+
+       mat_list<-list()
+       for (w in 1:length(input[["fileinput"]]$datapath)){
+         mat <- fread(input[["fileinput"]]$datapath[w],header=T,sep="\t",data.table=F)
+         condition <- as.character(length(grep("TRUE", (c("CHROM", "POS", "REF", "ALT") %in% colnames(mat))))==4)
+
+         mat_list[[w]] <- condition
+       }
+       mat_vector <- as.vector(do.call(cbind, mat_list))
+       validate(
+         need(length(grep("FALSE", mat_vector))==0, "")
+       )
+
       }
       if (input$datatype=="Excel"){
          validate(
@@ -266,7 +281,7 @@ shinyServer(function(input, output,session){
       }
       if (input$datatype=="MAF"){
          validate(
-            need(length(grep(".maf",input[["fileinput"]]$datapath))>0 | length(grep(".txt",input[["fileinput"]]$datapath))>0,""),
+            need(length(grep(".maf",input[["fileinput"]]$datapath))>0,""),
             need(length(input[["fileinput"]]$datapath)==1, "")
          )
       }
@@ -419,7 +434,7 @@ shinyServer(function(input, output,session){
       
       if (input$datatype=="VCF"){
          validate(
-            need(length(grep(".vcf",input[["fileinput"]]$datapath))>0 | length(grep(".txt",input[["fileinput"]]$datapath))>0,error_message)
+            need(length(grep(".vcf",input[["fileinput"]]$datapath))>0,error_message)
          )
       }
       
@@ -432,8 +447,8 @@ shinyServer(function(input, output,session){
       if (input$datatype=="TSV"){
          
          mat_list<-list()
-         for (w in 1:length(inFile$datapath)){
-            mat <- fread(inFile$datapath[w],header=T,sep="\t",data.table=F)
+         for (w in 1:length(input[["fileinput"]]$datapath)){
+            mat <- fread(input[["fileinput"]]$datapath[w],header=T,sep="\t",data.table=F)
             condition <- as.character(length(grep("TRUE", (c("CHROM", "POS", "REF", "ALT") %in% colnames(mat))))==4)
             
             mat_list[[w]] <- condition
@@ -475,7 +490,7 @@ shinyServer(function(input, output,session){
       #####MAF
       if (input$datatype=="MAF"){
          validate(
-            need(length(grep(".maf",input[["fileinput"]]$datapath))>0 | length(grep(".txt",input[["fileinput"]]$datapath))>0,error_message),
+            need(length(grep(".maf",input[["fileinput"]]$datapath))>0,error_message),
             need(length(input[["fileinput"]]$datapath)==1, "Only one multi-sample MAF file is allowed")
          )
       }
