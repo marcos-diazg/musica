@@ -23,7 +23,7 @@ shinyServer(function(input, output,session){
    	shinyjs::show(id="after_run")
    	
    	
-   	if (input$datatype=="TSV"){
+   	if (input$datatype=="TSV" & (length(grep(".tsv",input[["fileinput"]]$datapath))>0 | length(grep(".txt",input[["fileinput"]]$datapath))>0)){
    		
    		mat_list<-list()
    		for (w in 1:length(input[["fileinput"]]$datapath)){
@@ -37,7 +37,7 @@ shinyServer(function(input, output,session){
    		mat_vector<-c("mat_vector")
    	}
    	
-   	if (input$datatype=="Excel"){
+   	if (input$datatype=="Excel" & (length(grep(".xlsx",input[["fileinput"]]$datapath))>0 | length(grep(".xls",input[["fileinput"]]$datapath))>0)){
    		mat_list<-list()
    		for (w in 1:length(input[["fileinput"]]$datapath)){
    			
