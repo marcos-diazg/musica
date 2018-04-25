@@ -8,68 +8,6 @@ library(plotly)
 #webshot::install_phantomjs()  #To plot into pdf Heatmaply
 
 shinyServer(function(input, output,session){
-   
-	#Custom error messages management
-	output$custom_error<-renderUI({
-	
-		if (input$datatype=="TSV" & exists("input[['fileinput']]")==TRUE){
-			mat_list<-list()
-			for (w in 1:length(input[["fileinput"]]$datapath)){
-				mat <- fread(input[["fileinput"]]$datapath[w],header=T,sep="\t",data.table=F)
-				condition <- as.character(length(grep("TRUE", (c("CHROM", "POS", "REF", "ALT") %in% colnames(mat))))==4)
-				
-				mat_list[[w]] <- condition
-			}
-			mat_vector <- as.vector(do.call(cbind, mat_list))
-		} else {
-			mat_vector<-NULL
-		}
-		
-		if (input$datatype=="Excel" & exists("input[['fileinput']]")==TRUE){
-			mat_list<-list()
-			for (w in 1:length(input[["fileinput"]]$datapath)){
-				
-				if (length(grep(".xlsx",input[["fileinput"]]$datapath[w]))>0){
-					mat<-data.frame(read.xlsx(input[["fileinput"]]$datapath[w],1))
-				} else {
-					mat<-data.frame(read_xls(input[["fileinput"]]$datapath[w],col_names = TRUE,col_types = "text"))
-				}
-				
-				condition <- as.character(length(grep("TRUE", (c("CHROM", "POS", "REF", "ALT") %in% colnames(mat))))==4)
-				
-				mat_list[[w]] <- condition
-			}
-			mat_vector <- as.vector(do.call(cbind, mat_list))
-		} else {
-			mat_vector<-NULL
-		}
-		
-		
-		
-		
-		if (input$datatype=="VCF" & length(grep(".vcf",input[["fileinput"]]$datapath))<=0 |
-			 input$datatype=="TSV" & (length(grep(".tsv",input[["fileinput"]]$datapath))<=0 | length(grep(".txt",input[["fileinput"]]$datapath))<=0) |
-			 input$datatype=="TSV" & length(grep("FALSE", mat_vector))!=0 |
-			 input$datatype=="Excel" & (length(grep(".xlsx",input[["fileinput"]]$datapath))<=0 | length(grep(".xls",input[["fileinput"]]$datapath))<=0) |
-			 input$datatype=="Excel" & length(grep("FALSE", mat_vector))==0 |
-			 input$datatype=="MAF" & length(grep(".maf",input[["fileinput"]]$datapath))<=0 |
-			 input$datatype=="MAF" & length(input[["fileinput"]]$datapath)!=1
-			 ){
-			tags$style(HTML(".shiny-output-error {color: orangered}"))
-		} else {
-			#Modification of default error
-			tags$style(HTML("
-				     .shiny-output-error { visibility: hidden; }
-			        .shiny-output-error:before {
-			          visibility: visible;
-						 color: orangered;
-			          content: 'ERROR. An error has occurred. Please contact the app authors at diaz2@clinic.cat or submit your bug-reports at https://github.com/marcos-diazg/musica/issues.\t'; }
-			        }
-				"))
-		}
-
-	})
-	
 	
    #Setting maximum file size for uploading (1000 MB)
    options(shiny.maxRequestSize=1000*1024^2)
@@ -84,7 +22,8 @@ shinyServer(function(input, output,session){
    	shinyjs::hide(id="run")
    	shinyjs::show(id="after_run")
    	
-   	if (input$datatype=="TSV" & exists("input[['fileinput']]")==TRUE){
+   	
+   	if (input$datatype=="TSV"){
    		
    		mat_list<-list()
    		for (w in 1:length(input[["fileinput"]]$datapath)){
@@ -95,15 +34,15 @@ shinyServer(function(input, output,session){
    		}
    		mat_vector <- as.vector(do.call(cbind, mat_list))
    	} else {
-   		mat_vector<-NULL
+   		mat_vector<-c("mat_vector")
    	}
    	
-   	if (input$datatype=="Excel" & exists("input[['fileinput']]")==TRUE){
+   	if (input$datatype=="Excel"){
    		mat_list<-list()
    		for (w in 1:length(input[["fileinput"]]$datapath)){
    			
    			if (length(grep(".xlsx",input[["fileinput"]]$datapath[w]))>0){
-   				mat<-data.frame(read.xlsx(input[["fileinput"]]$datapath[w],1))
+   				mat<-read.xlsx(input[["fileinput"]]$datapath[w],1)
    			} else {
    				mat<-data.frame(read_xls(input[["fileinput"]]$datapath[w],col_names = TRUE,col_types = "text"))
    			}
@@ -112,18 +51,19 @@ shinyServer(function(input, output,session){
    			
    			mat_list[[w]] <- condition
    		}
-   		mat_vector <- as.vector(do.call(cbind, mat_list))
+   		mat_vector_2 <- as.vector(do.call(cbind, mat_list))
    	} else {
-   		mat_vector<-NULL
+   		mat_vector_2<-c("mat_vector_2")
    	}
+   		
    	
-   	if (input$datatype=="VCF" & length(grep(".vcf",input[["fileinput"]]$datapath))<=0 |
-   		 input$datatype=="TSV" & (length(grep(".tsv",input[["fileinput"]]$datapath))<=0 | length(grep(".txt",input[["fileinput"]]$datapath))<=0) |
-   		 input$datatype=="TSV" & length(grep("FALSE", mat_vector))!=0 |
-   		 input$datatype=="Excel" & (length(grep(".xlsx",input[["fileinput"]]$datapath))<=0 | length(grep(".xls",input[["fileinput"]]$datapath))<=0) |
-   		 input$datatype=="Excel" & length(grep("FALSE", mat_vector))==0 |
-   		 input$datatype=="MAF" & length(grep(".maf",input[["fileinput"]]$datapath))<=0 |
-   		 input$datatype=="MAF" & length(input[["fileinput"]]$datapath)!=1
+   	if (length(grep("FALSE", mat_vector))!=0 |
+   		 length(grep("FALSE", mat_vector_2))!=0 |
+   		(input$datatype=="VCF" & length(grep(".vcf",input[["fileinput"]]$datapath))<=0) |
+		    (input$datatype=="TSV" & (length(grep(".tsv",input[["fileinput"]]$datapath))<=0 & length(grep(".txt",input[["fileinput"]]$datapath))<=0)) |
+   		 (input$datatype=="Excel" & (length(grep(".xlsx",input[["fileinput"]]$datapath))<=0 & length(grep(".xls",input[["fileinput"]]$datapath))<=0)) |
+   		 (input$datatype=="MAF" & length(grep(".maf",input[["fileinput"]]$datapath))<=0) |
+   		 (input$datatype=="MAF" & length(input[["fileinput"]]$datapath)!=1)
    		 ){}else{
       shinyjs::show(id="mainpanel")
    	}
@@ -358,12 +298,12 @@ shinyServer(function(input, output,session){
    	
       if (input$datatype=="VCF"){
          validate(
-            need(length(grep(".vcf",input[["fileinput"]]$datapath))>0,error_message)
+            need(length(grep(".vcf",input[["fileinput"]]$datapath))>0,error_message), errorClass = "formats"
          )
       }
       if (input$datatype=="TSV"){
          validate(
-            need(length(grep(".tsv",input[["fileinput"]]$datapath))>0 | length(grep(".txt",input[["fileinput"]]$datapath))>0,error_message)
+            need(length(grep(".tsv",input[["fileinput"]]$datapath))>0 | length(grep(".txt",input[["fileinput"]]$datapath))>0,error_message), errorClass = "formats"
          )
       }
       if (input$datatype=="TSV"){
@@ -377,13 +317,13 @@ shinyServer(function(input, output,session){
        }
        mat_vector <- as.vector(do.call(cbind, mat_list))
        validate(
-         need(length(grep("FALSE", mat_vector))==0, "Uploaded files header do not have necessary columns CHROM, POS, REF and ALT")
+         need(length(grep("FALSE", mat_vector))==0, "Uploaded files header do not have necessary columns CHROM, POS, REF and ALT."), errorClass = "noheader"
        )
 
       }
       if (input$datatype=="Excel"){
          validate(
-            need(length(grep(".xlsx",input[["fileinput"]]$datapath))>0 | length(grep(".xls",input[["fileinput"]]$datapath))>0,error_message)
+            need(length(grep(".xlsx",input[["fileinput"]]$datapath))>0 | length(grep(".xls",input[["fileinput"]]$datapath))>0,error_message), errorClass = "formats"
          )
       }
    	if (input$datatype=="Excel"){
@@ -402,7 +342,7 @@ shinyServer(function(input, output,session){
    		   }
    		   mat_vector <- as.vector(do.call(cbind, mat_list))
    		   validate(
-   		      need(length(grep("FALSE", mat_vector))==0, "Uploaded files header do not have necessary columns CHROM, POS, REF and ALT")
+   		      need(length(grep("FALSE", mat_vector))==0, "Uploaded files header do not have necessary columns CHROM, POS, REF and ALT."), errorClass = "noheader"
    		   )
 
    	}
@@ -410,8 +350,10 @@ shinyServer(function(input, output,session){
    	
       if (input$datatype=="MAF"){
          validate(
-            need(length(grep(".maf",input[["fileinput"]]$datapath))>0,error_message),
-            need(length(input[["fileinput"]]$datapath)==1, "Only one multi-sample MAF file is allowed")
+            need(length(grep(".maf",input[["fileinput"]]$datapath))>0,error_message),errorClass = "formats"
+         )
+      	validate(
+            need(length(input[["fileinput"]]$datapath)==1, "Only one multi-sample MAF file is allowed."),errorClass = "maf"
          )
       }
 
@@ -831,7 +773,7 @@ shinyServer(function(input, output,session){
     #Plot reconstructed profile
     output$reconst <- renderPlot({
       validate(
-          need(length(input$mysamp)==1,"Sample selection error, please select just one sample at a time to visualize its reconstructed mutational profile.")
+          need(length(input$mysamp)==1,"Sample selection error, please select just one sample at a time to visualize its reconstructed mutational profile."), errorClass = "reconstructed"
       )
        
       if (input$mysamp=="All samples") return(invisible(NULL))
@@ -1004,7 +946,7 @@ shinyServer(function(input, output,session){
       
       #Error management
       validate(
-         need((length(input$mysamp)>2 | "All samples" %in% input$mysamp ),"PCA analysis works only with 3 or more samples.")
+         need((length(input$mysamp)>2 | "All samples" %in% input$mysamp ),"PCA analysis works only with 3 or more samples."),errorClass = "pca"
       )
       
       
@@ -1014,7 +956,7 @@ shinyServer(function(input, output,session){
       
       #Error management
       validate(
-         need((length(colnames(my_contributions_mod))>2),"PCA analysis works only with 3 or more samples.")
+         need((length(colnames(my_contributions_mod))>2),"PCA analysis works only with 3 or more samples."),errorClass = "pca"
       )
 
       if (ncol(as.data.frame(my_contributions_mod))>=3) {

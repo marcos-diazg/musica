@@ -11,6 +11,15 @@ shinyUI(fluidPage(
    #CSS style specification
    theme = shinytheme("united"),
    
+   tags$style(HTML("
+				     .shiny-output-error { visibility: hidden; }
+			        .shiny-output-error:before {
+			          visibility: visible;
+						 color: orangered;
+			          content: 'ERROR. An error has occurred. Please contact the app authors at diaz2@clinic.cat or submit your bug-reports at https://github.com/marcos-diazg/musica/issues.'; }
+			        }
+				")),
+   
    #Error management
 	uiOutput("custom_error"),
 
@@ -59,6 +68,17 @@ shinyUI(fluidPage(
                br(),
               #Sample selection for plots (post push run)   
               uiOutput("mean_checkbox"),
+              
+              tags$style(HTML(".shiny-output-error-formats {visibility: hidden;}
+               			.shiny-output-error-formats:before {visibility: visible; color: orangered; content:'File format error, please select the correct input file format before uploading your file/s.';}
+              					 .shiny-output-error-maf {visibility: hidden;}
+              					 .shiny-output-error-maf:before {visibility: visible; color: orangered; content:'Only one multi-sample MAF file is allowed.';}
+              					 .shiny-output-error-noheader {visibility: hidden;}
+              					 .shiny-output-error-noheader:before {visibility: visible; color: orangered; content:'Uploaded files header do not have necessary columns CHROM, POS, REF and ALT.';}
+              					 
+              					 "
+              					 )
+              			  ),
               uiOutput("selected_samples"),
               
               #Cancer type selection for plots (post push run)
@@ -135,6 +155,9 @@ shinyUI(fluidPage(
                #Reconstructed mutational profile
                
                tabPanel("Reconstructed mutational profile", value="reconst",
+               			tags$style(HTML(".shiny-output-error-reconstructed {visibility: hidden;}
+               			.shiny-output-error-reconstructed:before {visibility: visible; color: orangered; content:'Sample selection error, please select just one sample at a time to visualize its reconstructed mutational profile.';}")),
+               			
                         br(),
                         downloadButton("download_reconst_plot_ID",label="Download plot"),
                         bsModal("modal_reconst","Download plot","download_reconst_plot_ID",
@@ -161,6 +184,8 @@ shinyUI(fluidPage(
                
                #Principal Component Analysis (PCA)
                tabPanel("Principal components analysis", value="pca",
+               			tags$style(HTML(".shiny-output-error-pca {visibility: hidden;}
+               			.shiny-output-error-pca:before {visibility: visible; color: orangered; content:'PCA analysis works only with 3 or more samples.';}")),
                         br(),
                         downloadButton("download_pca_ID",label="Download plot"),
                         downloadButton("download_pca_table",label="Download table"),
