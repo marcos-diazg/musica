@@ -11,7 +11,7 @@ shinyServer(function(input, output,session){
    
    #Setting maximum file size for uploading (500 MB)
    options(shiny.maxRequestSize=500*1024^2)
-   options(shiny.sanitize.errors = FALSE)
+   options(shiny.sanitize.errors = TRUE)
    
    #Resolution of the tiff images
    ppi<-200 
@@ -434,7 +434,7 @@ shinyServer(function(input, output,session){
       
       if (input$datatype=="VCF"){
          validate(
-            need(length(grep(".vcf",input[["fileinput"]]$datapath))>0,error_message)
+            need(length(grep(".vcf",input[["fileinput"]]$datapath))>0,error_message),errorClass = "marcos"
          )
       }
       

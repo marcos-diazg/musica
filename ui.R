@@ -12,14 +12,15 @@ shinyUI(fluidPage(
    theme = shinytheme("united"),
    
    #Errors color
-   tags$style(HTML(".shiny-output-error-validation {color: grey;}")),
+   #tags$style(HTML(".marcos {color: blue; content: 'asdf'}")),
    
    #Modification of default error
    tags$style(HTML("
-        .shiny-output-error { visibility: hidden; }
+	     .shiny-output-error { visibility: visible; }
         .shiny-output-error:before {
           visibility: visible;
-          content: 'An error has occurred. Please contact the app authors at diaz2@clinic.cat or submit your bug-reports at https://github.com/marcos-diazg/musica/issues.'; }
+			 color: orangered;
+          content: 'ERROR. An error has occurred. Please contact the app authors at diaz2@clinic.cat or submit your bug-reports at https://github.com/marcos-diazg/musica/issues.\t'; }
         }
 ")),
 
