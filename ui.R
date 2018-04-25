@@ -11,18 +11,8 @@ shinyUI(fluidPage(
    #CSS style specification
    theme = shinytheme("united"),
    
-   #Errors color
-   #tags$style(HTML(".marcos {color: blue; content: 'asdf'}")),
-   
-   #Modification of default error
-   tags$style(HTML("
-	     .shiny-output-error { visibility: visible; }
-        .shiny-output-error:before {
-          visibility: visible;
-			 color: orangered;
-          content: 'ERROR. An error has occurred. Please contact the app authors at diaz2@clinic.cat or submit your bug-reports at https://github.com/marcos-diazg/musica/issues.\t'; }
-        }
-")),
+   #Error management
+	uiOutput("custom_error"),
 
    #Activation of Shiny js
    useShinyjs(),
@@ -67,9 +57,9 @@ shinyUI(fluidPage(
               
                br(),
                br(),
-              #Sample selection for plots (post push run)         
-              uiOutput("selected_samples"),
+              #Sample selection for plots (post push run)   
               uiOutput("mean_checkbox"),
+              uiOutput("selected_samples"),
               
               #Cancer type selection for plots (post push run)
               uiOutput("selected_cancer_types"),

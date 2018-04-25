@@ -9,8 +9,70 @@ library(plotly)
 
 shinyServer(function(input, output,session){
    
-   #Setting maximum file size for uploading (500 MB)
-   options(shiny.maxRequestSize=500*1024^2)
+	#Custom error messages management
+	output$custom_error<-renderUI({
+	
+		if (input$datatype=="TSV" & exists("input[['fileinput']]")==TRUE){
+			mat_list<-list()
+			for (w in 1:length(input[["fileinput"]]$datapath)){
+				mat <- fread(input[["fileinput"]]$datapath[w],header=T,sep="\t",data.table=F)
+				condition <- as.character(length(grep("TRUE", (c("CHROM", "POS", "REF", "ALT") %in% colnames(mat))))==4)
+				
+				mat_list[[w]] <- condition
+			}
+			mat_vector <- as.vector(do.call(cbind, mat_list))
+		} else {
+			mat_vector<-NULL
+		}
+		
+		if (input$datatype=="Excel" & exists("input[['fileinput']]")==TRUE){
+			mat_list<-list()
+			for (w in 1:length(input[["fileinput"]]$datapath)){
+				
+				if (length(grep(".xlsx",input[["fileinput"]]$datapath[w]))>0){
+					mat<-data.frame(read.xlsx(input[["fileinput"]]$datapath[w],1))
+				} else {
+					mat<-data.frame(read_xls(input[["fileinput"]]$datapath[w],col_names = TRUE,col_types = "text"))
+				}
+				
+				condition <- as.character(length(grep("TRUE", (c("CHROM", "POS", "REF", "ALT") %in% colnames(mat))))==4)
+				
+				mat_list[[w]] <- condition
+			}
+			mat_vector <- as.vector(do.call(cbind, mat_list))
+		} else {
+			mat_vector<-NULL
+		}
+		
+		
+		
+		
+		if (input$datatype=="VCF" & length(grep(".vcf",input[["fileinput"]]$datapath))<=0 |
+			 input$datatype=="TSV" & (length(grep(".tsv",input[["fileinput"]]$datapath))<=0 | length(grep(".txt",input[["fileinput"]]$datapath))<=0) |
+			 input$datatype=="TSV" & length(grep("FALSE", mat_vector))!=0 |
+			 input$datatype=="Excel" & (length(grep(".xlsx",input[["fileinput"]]$datapath))<=0 | length(grep(".xls",input[["fileinput"]]$datapath))<=0) |
+			 input$datatype=="Excel" & length(grep("FALSE", mat_vector))==0 |
+			 input$datatype=="MAF" & length(grep(".maf",input[["fileinput"]]$datapath))<=0 |
+			 input$datatype=="MAF" & length(input[["fileinput"]]$datapath)!=1
+			 ){
+			tags$style(HTML(".shiny-output-error {color: orangered}"))
+		} else {
+			#Modification of default error
+			tags$style(HTML("
+				     .shiny-output-error { visibility: hidden; }
+			        .shiny-output-error:before {
+			          visibility: visible;
+						 color: orangered;
+			          content: 'ERROR. An error has occurred. Please contact the app authors at diaz2@clinic.cat or submit your bug-reports at https://github.com/marcos-diazg/musica/issues.\t'; }
+			        }
+				"))
+		}
+
+	})
+	
+	
+   #Setting maximum file size for uploading (1000 MB)
+   options(shiny.maxRequestSize=1000*1024^2)
    options(shiny.sanitize.errors = TRUE)
    
    #Resolution of the tiff images
@@ -19,9 +81,52 @@ shinyServer(function(input, output,session){
    
    #Hidding/Showing tabs of mainpanel, run and clear buttons, ...
    observeEvent(input$run,{
+   	shinyjs::hide(id="run")
+   	shinyjs::show(id="after_run")
+   	
+   	if (input$datatype=="TSV" & exists("input[['fileinput']]")==TRUE){
+   		
+   		mat_list<-list()
+   		for (w in 1:length(input[["fileinput"]]$datapath)){
+   			mat <- fread(input[["fileinput"]]$datapath[w],header=T,sep="\t",data.table=F)
+   			condition <- as.character(length(grep("TRUE", (c("CHROM", "POS", "REF", "ALT") %in% colnames(mat))))==4)
+   			
+   			mat_list[[w]] <- condition
+   		}
+   		mat_vector <- as.vector(do.call(cbind, mat_list))
+   	} else {
+   		mat_vector<-NULL
+   	}
+   	
+   	if (input$datatype=="Excel" & exists("input[['fileinput']]")==TRUE){
+   		mat_list<-list()
+   		for (w in 1:length(input[["fileinput"]]$datapath)){
+   			
+   			if (length(grep(".xlsx",input[["fileinput"]]$datapath[w]))>0){
+   				mat<-data.frame(read.xlsx(input[["fileinput"]]$datapath[w],1))
+   			} else {
+   				mat<-data.frame(read_xls(input[["fileinput"]]$datapath[w],col_names = TRUE,col_types = "text"))
+   			}
+   			
+   			condition <- as.character(length(grep("TRUE", (c("CHROM", "POS", "REF", "ALT") %in% colnames(mat))))==4)
+   			
+   			mat_list[[w]] <- condition
+   		}
+   		mat_vector <- as.vector(do.call(cbind, mat_list))
+   	} else {
+   		mat_vector<-NULL
+   	}
+   	
+   	if (input$datatype=="VCF" & length(grep(".vcf",input[["fileinput"]]$datapath))<=0 |
+   		 input$datatype=="TSV" & (length(grep(".tsv",input[["fileinput"]]$datapath))<=0 | length(grep(".txt",input[["fileinput"]]$datapath))<=0) |
+   		 input$datatype=="TSV" & length(grep("FALSE", mat_vector))!=0 |
+   		 input$datatype=="Excel" & (length(grep(".xlsx",input[["fileinput"]]$datapath))<=0 | length(grep(".xls",input[["fileinput"]]$datapath))<=0) |
+   		 input$datatype=="Excel" & length(grep("FALSE", mat_vector))==0 |
+   		 input$datatype=="MAF" & length(grep(".maf",input[["fileinput"]]$datapath))<=0 |
+   		 input$datatype=="MAF" & length(input[["fileinput"]]$datapath)!=1
+   		 ){}else{
       shinyjs::show(id="mainpanel")
-      shinyjs::hide(id="run")
-      shinyjs::show(id="after_run")
+   	}
    })
    
    observeEvent(input$clear, {
@@ -249,14 +354,16 @@ shinyServer(function(input, output,session){
    output$selected_samples<-renderUI({
       
       #Error managemente for file format
+   	error_message<-"File format error, please select the correct input file format before uploading your file/s."
+   	
       if (input$datatype=="VCF"){
          validate(
-            need(length(grep(".vcf",input[["fileinput"]]$datapath))>0,"")
+            need(length(grep(".vcf",input[["fileinput"]]$datapath))>0,error_message)
          )
       }
       if (input$datatype=="TSV"){
          validate(
-            need(length(grep(".tsv",input[["fileinput"]]$datapath))>0 | length(grep(".txt",input[["fileinput"]]$datapath))>0,"")
+            need(length(grep(".tsv",input[["fileinput"]]$datapath))>0 | length(grep(".txt",input[["fileinput"]]$datapath))>0,error_message)
          )
       }
       if (input$datatype=="TSV"){
@@ -270,19 +377,41 @@ shinyServer(function(input, output,session){
        }
        mat_vector <- as.vector(do.call(cbind, mat_list))
        validate(
-         need(length(grep("FALSE", mat_vector))==0, "")
+         need(length(grep("FALSE", mat_vector))==0, "Uploaded files header do not have necessary columns CHROM, POS, REF and ALT")
        )
 
       }
       if (input$datatype=="Excel"){
          validate(
-            need(length(grep(".xlsx",input[["fileinput"]]$datapath))>0 | length(grep(".xls",input[["fileinput"]]$datapath))>0,"")
+            need(length(grep(".xlsx",input[["fileinput"]]$datapath))>0 | length(grep(".xls",input[["fileinput"]]$datapath))>0,error_message)
          )
       }
+   	if (input$datatype=="Excel"){
+   		   mat_list<-list()
+   		   for (w in 1:length(input[["fileinput"]]$datapath)){
+
+   		      if (length(grep(".xlsx",input[["fileinput"]]$datapath[w]))>0){
+   		         mat<-read.xlsx(input[["fileinput"]]$datapath[w],1)
+   		      } else {
+   		         mat<-data.frame(read_xls(input[["fileinput"]]$datapath[w],col_names = TRUE,col_types = "text"))
+   		      }
+
+   		      condition <- as.character(length(grep("TRUE", (c("CHROM", "POS", "REF", "ALT") %in% colnames(mat))))==4)
+
+   		      mat_list[[w]] <- condition
+   		   }
+   		   mat_vector <- as.vector(do.call(cbind, mat_list))
+   		   validate(
+   		      need(length(grep("FALSE", mat_vector))==0, "Uploaded files header do not have necessary columns CHROM, POS, REF and ALT")
+   		   )
+
+   	}
+
+   	
       if (input$datatype=="MAF"){
          validate(
-            need(length(grep(".maf",input[["fileinput"]]$datapath))>0,""),
-            need(length(input[["fileinput"]]$datapath)==1, "")
+            need(length(grep(".maf",input[["fileinput"]]$datapath))>0,error_message),
+            need(length(input[["fileinput"]]$datapath)==1, "Only one multi-sample MAF file is allowed")
          )
       }
 
@@ -429,72 +558,73 @@ shinyServer(function(input, output,session){
 #   PLOT somatic mutation prevalence
    output$smp <- renderPlot({
       
-      #Error managemente for file format
-      error_message<-"File format error, please select the correct input file format before uploading your file/s."
-      
-      if (input$datatype=="VCF"){
-         validate(
-            need(length(grep(".vcf",input[["fileinput"]]$datapath))>0,error_message),errorClass = "marcos"
-         )
-      }
-      
-      #####TSV
-      if (input$datatype=="TSV"){
-         validate(
-            need(length(grep(".tsv",input[["fileinput"]]$datapath))>0 | length(grep(".txt",input[["fileinput"]]$datapath))>0,error_message)
-         )
-      }
-      if (input$datatype=="TSV"){
-         
-         mat_list<-list()
-         for (w in 1:length(input[["fileinput"]]$datapath)){
-            mat <- fread(input[["fileinput"]]$datapath[w],header=T,sep="\t",data.table=F)
-            condition <- as.character(length(grep("TRUE", (c("CHROM", "POS", "REF", "ALT") %in% colnames(mat))))==4)
-            
-            mat_list[[w]] <- condition
-         }
-         mat_vector <- as.vector(do.call(cbind, mat_list))
-         validate(
-            need(length(grep("FALSE", mat_vector))==0, "Uploaded files header do not have necessary columns CHROM, POS, REF and ALT")
-         )
-
-      }
-      
-      #####Excel
-      if (input$datatype=="Excel"){
-         validate(
-            need(length(grep(".xlsx",input[["fileinput"]]$datapath))>0 | length(grep(".xls",input[["fileinput"]]$datapath))>0,error_message)
-         )
-      }
-      if (input$datatype=="Excel"){
-         mat_list<-list()
-         for (w in 1:length(inFile$datapath)){
-            
-            if (length(grep(".xlsx",inFile$datapath[w]))>0){
-               mat<-read.xlsx(inFile$datapath[w],1)
-            } else {
-               mat<-data.frame(read_xls(inFile$datapath[w],col_names = TRUE,col_types = "text"))
-            }
-            
-            condition <- as.character(length(grep("TRUE", (c("CHROM", "POS", "REF", "ALT") %in% colnames(mat))))==4)
-            
-            mat_list[[w]] <- condition
-         }
-         mat_vector <- as.vector(do.call(cbind, mat_list))
-         validate(
-            need(length(grep("FALSE", mat_vector))==0, "Uploaded files header do not have necessary columns CHROM, POS, REF and ALT")
-         )
-         
-      }
-      
-      #####MAF
-      if (input$datatype=="MAF"){
-         validate(
-            need(length(grep(".maf",input[["fileinput"]]$datapath))>0,error_message),
-            need(length(input[["fileinput"]]$datapath)==1, "Only one multi-sample MAF file is allowed")
-         )
-      }
-      
+      # #Error managemente for file format
+      # error_message<-"File format error, please select the correct input file format before uploading your file/s."
+      # 
+      # # if (input$datatype=="VCF"){
+      # #    validate(
+      # #       need(length(grep(".vcf",input[["fileinput"]]$datapath))>0,error_message)
+      # #    )
+      # # }
+      # 
+      # #####TSV
+      # if (input$datatype=="TSV"){
+      #    validate(
+      #       need(length(grep(".tsv",input[["fileinput"]]$datapath))>0 | length(grep(".txt",input[["fileinput"]]$datapath))>0,error_message)
+      #    )
+      # }
+      # if (input$datatype=="TSV"){
+      #    
+      #    mat_list<-list()
+      #    for (w in 1:length(input[["fileinput"]]$datapath)){
+      #       mat <- fread(input[["fileinput"]]$datapath[w],header=T,sep="\t",data.table=F)
+      #       condition <- as.character(length(grep("TRUE", (c("CHROM", "POS", "REF", "ALT") %in% colnames(mat))))==4)
+      #       
+      #       mat_list[[w]] <- condition
+      #    }
+      #    mat_vector <- as.vector(do.call(cbind, mat_list))
+      #    validate(
+      #       need(length(grep("FALSE", mat_vector))==0, "Uploaded files header do not have necessary columns CHROM, POS, REF and ALT")
+      #    )
+      # 
+      # }
+      # 
+      # #####Excel
+      # if (input$datatype=="Excel"){
+      #    validate(
+      #       need(length(grep(".xlsx",input[["fileinput"]]$datapath))>0 | length(grep(".xls",input[["fileinput"]]$datapath))>0,error_message)
+      #    )
+      # }
+      # if (input$datatype=="Excel"){
+      #    mat_list<-list()
+      #    for (w in 1:length(inFile$datapath)){
+      #       
+      #       if (length(grep(".xlsx",inFile$datapath[w]))>0){
+      #          mat<-read.xlsx(inFile$datapath[w],1)
+      #       } else {
+      #          mat<-data.frame(read_xls(inFile$datapath[w],col_names = TRUE,col_types = "text"))
+      #       }
+      #       
+      #       condition <- as.character(length(grep("TRUE", (c("CHROM", "POS", "REF", "ALT") %in% colnames(mat))))==4)
+      #       
+      #       mat_list[[w]] <- condition
+      #    }
+      #    mat_vector <- as.vector(do.call(cbind, mat_list))
+      #    validate(
+      #       need(length(grep("FALSE", mat_vector))==0, "Uploaded files header do not have necessary columns CHROM, POS, REF and ALT")
+      #    )
+      #    
+      # }
+      # 
+      # #####MAF
+      # if (input$datatype=="MAF"){
+      #    validate(
+      #       need(length(grep(".maf",input[["fileinput"]]$datapath))>0,error_message),
+      #       need(length(input[["fileinput"]]$datapath)==1, "Only one multi-sample MAF file is allowed")
+      #    )
+      # }
+   
+   	
       #Error management
       if (length(input$mysamp)==0) return(invisible(NULL))
       
