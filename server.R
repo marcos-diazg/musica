@@ -9,6 +9,8 @@ library(plotly)
 
 shinyServer(function(input, output,session){
 	
+
+	
    #Setting maximum file size for uploading (1000 MB)
    options(shiny.maxRequestSize=1000*1024^2)
    options(shiny.sanitize.errors = TRUE)
@@ -69,6 +71,7 @@ shinyServer(function(input, output,session){
    	}
    })
    
+
    observeEvent(input$clear, {
       shinyjs::js$refresh()
    })
@@ -290,6 +293,57 @@ shinyServer(function(input, output,session){
    }
    
 
+   ################################################################
+   output$custom_error_style<-renderUI({
+   	
+   	if (input$datatype=="TSV" & (length(grep(".tsv",input[["fileinput"]]$datapath))>0 | length(grep(".txt",input[["fileinput"]]$datapath))>0)){
+   		
+   		mat_list<-list()
+   		for (w in 1:length(input[["fileinput"]]$datapath)){
+   			mat <- fread(input[["fileinput"]]$datapath[w],header=T,sep="\t",data.table=F)
+   			condition <- as.character(length(grep("TRUE", (c("CHROM", "POS", "REF", "ALT") %in% colnames(mat))))==4)
+   			
+   			mat_list[[w]] <- condition
+   		}
+   		mat_vector <- as.vector(do.call(cbind, mat_list))
+   		samples_failed<-grep("FALSE", mat_vector)
+   	} else {
+   		mat_vector<-c("mat_vector")
+   	}
+   	
+   	if (input$datatype=="Excel" & (length(grep(".xlsx",input[["fileinput"]]$datapath))>0 | length(grep(".xls",input[["fileinput"]]$datapath))>0)){
+   		mat_list<-list()
+   		for (w in 1:length(input[["fileinput"]]$datapath)){
+   			
+   			if (length(grep(".xlsx",input[["fileinput"]]$datapath[w]))>0){
+   				mat<-read.xlsx(input[["fileinput"]]$datapath[w],1)
+   			} else {
+   				mat<-data.frame(read_xls(input[["fileinput"]]$datapath[w],col_names = TRUE,col_types = "text"))
+   			}
+   			
+   			condition <- as.character(length(grep("TRUE", (c("CHROM", "POS", "REF", "ALT") %in% colnames(mat))))==4)
+   			
+   			mat_list[[w]] <- condition
+   		}
+   		mat_vector_2 <- as.vector(do.call(cbind, mat_list))
+   		samples_failed<-grep("FALSE", mat_vector_2)
+   	} else {
+   		mat_vector_2<-c("mat_vector_2")
+   	}
+   	
+
+   	tags$style(HTML(paste(".shiny-output-error-formats {visibility: hidden;}
+   						 .shiny-output-error-formats:before {visibility: visible; color: orangered; content:'File format error, please select the correct input file format before uploading your file/s.';}
+   						 .shiny-output-error-maf {visibility: hidden;}
+   						 .shiny-output-error-maf:before {visibility: visible; color: orangered; content:'Only one multi-sample MAF file is allowed.';}
+   						 .shiny-output-error-noheader {visibility: hidden;}
+   						 .shiny-output-error-noheader:before {visibility: visible; color: orangered; content:'Uploaded file/s:  ", paste(input[["fileinput"]]$name[samples_failed],collapse=" | "),"  do not have the mandatory header with columns CHROM, POS, REF and ALT.';}")
+   					)
+   	)
+   })
+   ################################################################
+
+   
    #Plot selectize to select samples to plot.
    output$selected_samples<-renderUI({
       

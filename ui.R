@@ -68,17 +68,7 @@ shinyUI(fluidPage(
                br(),
               #Sample selection for plots (post push run)   
               uiOutput("mean_checkbox"),
-              
-              tags$style(HTML(".shiny-output-error-formats {visibility: hidden;}
-               			.shiny-output-error-formats:before {visibility: visible; color: orangered; content:'File format error, please select the correct input file format before uploading your file/s.';}
-              					 .shiny-output-error-maf {visibility: hidden;}
-              					 .shiny-output-error-maf:before {visibility: visible; color: orangered; content:'Only one multi-sample MAF file is allowed.';}
-              					 .shiny-output-error-noheader {visibility: hidden;}
-              					 .shiny-output-error-noheader:before {visibility: visible; color: orangered; content:'Uploaded files header do not have necessary columns CHROM, POS, REF and ALT.';}
-              					 
-              					 "
-              					 )
-              			  ),
+              uiOutput("custom_error_style"),
               uiOutput("selected_samples"),
               
               #Cancer type selection for plots (post push run)
