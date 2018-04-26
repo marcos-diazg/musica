@@ -61,9 +61,9 @@ shinyServer(function(input, output,session){
    	
    	if (length(grep("FALSE", mat_vector))!=0 |
    		 length(grep("FALSE", mat_vector_2))!=0 |
-   		(input$datatype=="VCF" & length(grep(".vcf",input[["fileinput"]]$datapath))<=0) |
-		    (input$datatype=="TSV" & (length(grep(".tsv",input[["fileinput"]]$datapath))<=0 & length(grep(".txt",input[["fileinput"]]$datapath))<=0)) |
-   		 (input$datatype=="Excel" & (length(grep(".xlsx",input[["fileinput"]]$datapath))<=0 & length(grep(".xls",input[["fileinput"]]$datapath))<=0)) |
+   		(input$datatype=="VCF" & length(grep(".vcf",input[["fileinput"]]$datapath))!=length(input[["fileinput"]]$datapath)) |
+		    (input$datatype=="TSV" & ((length(grep(".tsv",input[["fileinput"]]$datapath)) + length(grep(".txt",input[["fileinput"]]$datapath)))!=length(input[["fileinput"]]$datapath))) |
+   		 (input$datatype=="Excel" & ((length(grep(".xlsx",input[["fileinput"]]$datapath)) + length(grep(".xls",input[["fileinput"]]$datapath)))!=length(input[["fileinput"]]$datapath))) |
    		 (input$datatype=="MAF" & length(grep(".maf",input[["fileinput"]]$datapath))<=0) |
    		 (input$datatype=="MAF" & length(input[["fileinput"]]$datapath)!=1)
    		 ){}else{
@@ -294,7 +294,7 @@ shinyServer(function(input, output,session){
    
 
    ################################################################
-   output$custom_error_style<-renderUI({
+   output$custom_error<-renderUI({
    	
    	if (input$datatype=="TSV" & (length(grep(".tsv",input[["fileinput"]]$datapath))>0 | length(grep(".txt",input[["fileinput"]]$datapath))>0)){
    		
@@ -309,6 +309,7 @@ shinyServer(function(input, output,session){
    		samples_failed<-grep("FALSE", mat_vector)
    	} else {
    		mat_vector<-c("mat_vector")
+   		samples_failed<-NULL
    	}
    	
    	if (input$datatype=="Excel" & (length(grep(".xlsx",input[["fileinput"]]$datapath))>0 | length(grep(".xls",input[["fileinput"]]$datapath))>0)){
@@ -329,7 +330,12 @@ shinyServer(function(input, output,session){
    		samples_failed<-grep("FALSE", mat_vector_2)
    	} else {
    		mat_vector_2<-c("mat_vector_2")
+   		samples_failed<-NULL
    	}
+   	
+   	#if (input$datatype=="VCF" & ){
+   	
+   	
    	
 
    	tags$style(HTML(paste(".shiny-output-error-formats {visibility: hidden;}
@@ -352,12 +358,12 @@ shinyServer(function(input, output,session){
    	
       if (input$datatype=="VCF"){
          validate(
-            need(length(grep(".vcf",input[["fileinput"]]$datapath))>0,error_message), errorClass = "formats"
+            need(length(grep(".vcf",input[["fileinput"]]$datapath))==length(input[["fileinput"]]$datapath),error_message), errorClass = "formats"
          )
       }
       if (input$datatype=="TSV"){
          validate(
-            need(length(grep(".tsv",input[["fileinput"]]$datapath))>0 | length(grep(".txt",input[["fileinput"]]$datapath))>0,error_message), errorClass = "formats"
+            need((length(grep(".tsv",input[["fileinput"]]$datapath)) + length(grep(".txt",input[["fileinput"]]$datapath))) == length(input[["fileinput"]]$datapath),error_message), errorClass = "formats"
          )
       }
       if (input$datatype=="TSV"){
@@ -377,7 +383,7 @@ shinyServer(function(input, output,session){
       }
       if (input$datatype=="Excel"){
          validate(
-            need(length(grep(".xlsx",input[["fileinput"]]$datapath))>0 | length(grep(".xls",input[["fileinput"]]$datapath))>0,error_message), errorClass = "formats"
+            need((length(grep(".xlsx",input[["fileinput"]]$datapath)) + length(grep(".xls",input[["fileinput"]]$datapath))) == length(input[["fileinput"]]$datapath),error_message), errorClass = "formats"
          )
       }
    	if (input$datatype=="Excel"){
