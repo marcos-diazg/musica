@@ -10,6 +10,10 @@ There are many ways to download and run Mutational Signatures ShinyApp:
 
 First check the dependencies (you only need to do this once):
 
+
+*** It is mandatory to use Shiny package version 1.0.5, because the application is not working with the latest version of Shiny (1.1.0). We will work on this soon. Sorry for the inconveniences.***
+
+
 ```R
 if(!require(MutationalPatterns)) {source("http://www.bioconductor.org/biocLite.R");biocLite("MutationalPatterns")}
 if(!require(VariantAnnotation)) {source("http://www.bioconductor.org/biocLite.R");biocLite("VariantAnnotation")}
