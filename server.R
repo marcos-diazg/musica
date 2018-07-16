@@ -258,7 +258,15 @@ shinyServer(function(input, output,session){
    #Mutation Matrix creation [mut_mat]
    #######################################
    mut_mat <- reactive({
-         return(mut_matrix(vcfs(),ref_genome()))
+       if (input$genome=="19"){
+           return(mut_matrix(vcfs(),"BSgenome.Hsapiens.UCSC.hg19"))
+       }
+       if (input$genome=="37"){
+           return(mut_matrix(vcfs(),"BSgenome.Hsapiens.1000genomes.hs37d5"))
+       }
+       if (input$genome=="hg38"){
+           return(mut_matrix(vcfs(),"BSgenome.Hsapiens.UCSC.hg38"))
+       } 
    })
       
    
@@ -531,6 +539,26 @@ shinyServer(function(input, output,session){
    })
 
 
+   
+   
+   
+   
+   
+   
+   
+   
+   ################################################################################
+   ################################################################################
+   ################################################################################ 
+   
+   
+   
+   
+   
+   
+   
+   
+   
    #######################################
    #PLOT Somatic Mutation Prevalence (number mutations per megabase)
    #######################################
