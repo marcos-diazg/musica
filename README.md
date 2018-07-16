@@ -2,7 +2,7 @@
 
 MuSiCa (Mutational Signatures in Cancer) is a shiny-based web application aimed to visualize the somatic mutational profile of a series of provided samples (different formats are allowed) and to extract the contribution of the reported mutational signatures ([Alexandrov L.B. et al., Nature (2013)](http://dx.doi.org/10.1038/nature12477), [Catalogue Of Somatic Mutations In Cancer, COSMIC (2017)](http://cancer.sanger.ac.uk/cosmic/signatures)) on their variation profile. It is mainly based on the MutationalPatterns R package ([Blokzijl et al., Genome Medicine (2018)](https://doi.org/10.1186/s13073-018-0539-0)).
 
-Please give credit and cite MuSiCa app when you use it for your genomic analysis ([Díaz-Gay et al, BMC Bioinformatics (2018)](https://doi.org/10.1186/s12859-018-2234-y)).
+Please give credit and cite MuSiCa app when you use it for your genomic analysis ([Díaz-Gay et al., BMC Bioinformatics (2018)](https://doi.org/10.1186/s12859-018-2234-y)).
 
 ## Running the app
 
@@ -11,9 +11,6 @@ There are many ways to download and run Mutational Signatures ShinyApp:
 First check the dependencies (you only need to do this once):
 
 
-
-
-***It is mandatory to use Shiny package version 1.0.5, because the application is not working with the latest version of Shiny (1.1.0). We will work on this soon. Sorry for the inconveniences.***
 
 
 
