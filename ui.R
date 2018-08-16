@@ -8,6 +8,9 @@ library(plotly)
 
 shinyUI(fluidPage(
    
+   #Google Analytics tracking
+   tags$head(includeHTML(("google-analytics.html"))),   
+	
    #CSS style specification
    theme = shinytheme("united"),
    
