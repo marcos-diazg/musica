@@ -190,9 +190,9 @@ shinyServer(function(input, output,session){
                write.table(aux_list[[i]],file=ff[i],row.names=F,quote=F,sep="\t")
             }
 
-			validate(
-			 need(length(names(ff))<=20,"samplenumber"),errorClass="numberofsamples"
-		 	)
+			#validate(
+			# need(length(names(ff))<=20,"samplenumber"),errorClass="numberofsamples"
+		 	#)
 
             return(read_vcfs_as_granges(ff,names(ff),ref_genome(),group = "auto+sex", check_alleles = TRUE))
          }
@@ -402,17 +402,17 @@ shinyServer(function(input, output,session){
          validate(
             need(length(grep(".vcf",input[["fileinput"]]$datapath))==length(input[["fileinput"]]$datapath),error_message), errorClass = "formats"
          )
-		 validate(
-			 need(length(input[["fileinput"]]$datapath)<=20,"samplenumber"),errorClass="numberofsamples"
-		 )
+		 #validate(
+		#	 need(length(input[["fileinput"]]$datapath)<=20,"samplenumber"),errorClass="numberofsamples"
+		# )
       }
       if (input$datatype=="TSV"){
          validate(
             need((length(grep(".tsv",input[["fileinput"]]$datapath)) + length(grep(".txt",input[["fileinput"]]$datapath))) == length(input[["fileinput"]]$datapath),error_message), errorClass = "formats"
          )
-		validate(
-			 need(length(input[["fileinput"]]$datapath)<=20,"samplenumber"),errorClass="numberofsamples"
-		 )
+		#validate(
+		#	 need(length(input[["fileinput"]]$datapath)<=20,"samplenumber"),errorClass="numberofsamples"
+		# )
       }
       if (input$datatype=="TSV"){
 
@@ -433,9 +433,9 @@ shinyServer(function(input, output,session){
          validate(
             need(length(grep(".xls",input[["fileinput"]]$datapath)) == length(input[["fileinput"]]$datapath),error_message), errorClass = "formats"
          )
-		validate(
-			 need(length(input[["fileinput"]]$datapath)<=20,"samplenumber"),errorClass="numberofsamples"
-		 )
+		#validate(
+		#	 need(length(input[["fileinput"]]$datapath)<=20,"samplenumber"),errorClass="numberofsamples"
+		# )
       }
    	if (input$datatype=="Excel"){
    		   mat_list<-list()
