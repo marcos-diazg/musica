@@ -189,6 +189,11 @@ shinyServer(function(input, output,session){
             for (i in 1:length(aux_list)){
                write.table(aux_list[[i]],file=ff[i],row.names=F,quote=F,sep="\t")
             }
+
+			validate(
+			 need(length(names(ff))<=20,"samplenumber"),errorClass="numberofsamples"
+		 	)
+
             return(read_vcfs_as_granges(ff,names(ff),ref_genome(),group = "auto+sex", check_alleles = TRUE))
          }
       
@@ -378,7 +383,9 @@ shinyServer(function(input, output,session){
    						 .shiny-output-error-maf {visibility: hidden;}
    						 .shiny-output-error-maf:before {visibility: visible; color: orangered; content:'Only one multi-sample MAF file is allowed.';}
    						 .shiny-output-error-noheader {visibility: hidden;}
-   						 .shiny-output-error-noheader:before {visibility: visible; color: orangered; content:'Uploaded file/s:  ", paste(input[["fileinput"]]$name[samples_failed],collapse=" | "),"  do not have the mandatory header with columns CHROM, POS, REF and ALT.';}")
+   						 .shiny-output-error-noheader:before {visibility: visible; color: orangered; content:'Uploaded file/s:  ", paste(input[["fileinput"]]$name[samples_failed],collapse=" | "),"  do not have the mandatory header with columns CHROM, POS, REF and ALT.';}
+						 .shiny-output-error-numberofsamples {visibility: hidden;}
+   						 .shiny-output-error-numberofsamples:before {visibility: visible; color: orangered; content:'Too many samples for the online version of MuSiCa. Please, reduce the number of samples to 20 or download local version.';}")
    					)
    	)
    })
@@ -395,11 +402,17 @@ shinyServer(function(input, output,session){
          validate(
             need(length(grep(".vcf",input[["fileinput"]]$datapath))==length(input[["fileinput"]]$datapath),error_message), errorClass = "formats"
          )
+		 validate(
+			 need(length(input[["fileinput"]]$datapath)<=20,"samplenumber"),errorClass="numberofsamples"
+		 )
       }
       if (input$datatype=="TSV"){
          validate(
             need((length(grep(".tsv",input[["fileinput"]]$datapath)) + length(grep(".txt",input[["fileinput"]]$datapath))) == length(input[["fileinput"]]$datapath),error_message), errorClass = "formats"
          )
+		validate(
+			 need(length(input[["fileinput"]]$datapath)<=20,"samplenumber"),errorClass="numberofsamples"
+		 )
       }
       if (input$datatype=="TSV"){
 
@@ -420,6 +433,9 @@ shinyServer(function(input, output,session){
          validate(
             need(length(grep(".xls",input[["fileinput"]]$datapath)) == length(input[["fileinput"]]$datapath),error_message), errorClass = "formats"
          )
+		validate(
+			 need(length(input[["fileinput"]]$datapath)<=20,"samplenumber"),errorClass="numberofsamples"
+		 )
       }
    	if (input$datatype=="Excel"){
    		   mat_list<-list()
