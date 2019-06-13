@@ -21,11 +21,12 @@ First check the dependencies (you only need to do this once):
 
 
 ```R
-if(!require(MutationalPatterns)) {source("http://www.bioconductor.org/biocLite.R");biocLite("MutationalPatterns")}
-if(!require(VariantAnnotation)) {source("http://www.bioconductor.org/biocLite.R");biocLite("VariantAnnotation")}
-if(!require(BSgenome.Hsapiens.UCSC.hg38)) {source("http://www.bioconductor.org/biocLite.R");biocLite("BSgenome.Hsapiens.UCSC.hg38")}
-if(!require(BSgenome.Hsapiens.UCSC.hg19)) {source("http://www.bioconductor.org/biocLite.R");biocLite("BSgenome.Hsapiens.UCSC.hg19")}
-if(!require(BSgenome.Hsapiens.1000genomes.hs37d5)) {source("http://www.bioconductor.org/biocLite.R");biocLite("BSgenome.Hsapiens.1000genomes.hs37d5")}
+if(!requireNamespace("BiocManager", quietly = TRUE)) {install.packages("BiocManager")}
+if(!require(MutationalPatterns)) {BiocManager::install("MutationalPatterns")}
+if(!require(VariantAnnotation)) {BiocManager::install("VariantAnnotation")}
+if(!require(BSgenome.Hsapiens.UCSC.hg38)) {BiocManager::install("BSgenome.Hsapiens.UCSC.hg38")}
+if(!require(BSgenome.Hsapiens.UCSC.hg19)) {BiocManager::install("BSgenome.Hsapiens.UCSC.hg19")}
+if(!require(BSgenome.Hsapiens.1000genomes.hs37d5)) {BiocManager::install("BSgenome.Hsapiens.1000genomes.hs37d5")}
 
 if(!require(ggplot2)) install.packages("ggplot2")
 if(!require(heatmaply)) install.packages("heatmaply")
@@ -64,7 +65,7 @@ runUrl("https://github.com/marcos-diazg/musica/archive/master.tar.gz")
 runUrl("https://github.com/marcos-diazg/musica/archive/master.zip")
 
 # Using runApp(),  first clone the repository with git. If you have cloned it into
-# ~/music, first go to that directory, then use runApp().
+# ~/musica, first go to that directory, then use runApp().
 setwd("~/musica")
 runApp()
 ```
