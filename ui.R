@@ -16,7 +16,7 @@ shinyUI(fluidPage(
 			        .shiny-output-error:before {
 			          visibility: visible;
 						 color: orangered;
-			          content: 'ERROR. An error has occurred. Please contact the app authors at diaz2@clinic.cat or submit your bug-reports at https://github.com/marcos-diazg/musica/issues.'; }
+			          content: 'ERROR. An error has occurred. Please contact the app authors at m.diaz.gay@gmail.com or submit your bug-reports at https://github.com/marcos-diazg/musica/issues.'; }
 			        }
 				")),
    
