@@ -241,6 +241,7 @@ shinyServer(function(input, output,session){
          if (input$datatype=="Excel"){
 
             ff_list<-list()
+						new_ff_list = list()
             for (w in 1:length(inFile$datapath)){
 
                if (length(grep(".xlsx",inFile$datapath[w]))>0){
@@ -261,10 +262,12 @@ shinyServer(function(input, output,session){
                aux$FILTER<-"PASS"
                aux<-aux[,c("#CHROM","POS","ID","REF","ALT","QUAL","FILTER")]
                ff_list[[w]]<-tempfile("tp",fileext=".vcf")
+							 new_ff_list[[w]] = do.call("c",lapply(sapply(ff_list[[w]],strsplit,"[.]"),paste,collapse="_new."))
                write.table(aux,file=ff_list[[w]],row.names=F,quote=F,sep="\t")
+							 system(paste0('echo "##fileformat=VCFv4.2" | cat - ',ff_list[[w]],' > ',new_ff_list[[w]]))
             }
 
-            ff<-do.call("c",ff_list)
+						ff<-do.call("c",new_ff_list)
 
             return(read_vcfs_as_granges(ff,inFile$name,ref_genome(),group = "auto+sex", check_alleles = TRUE))
          }
