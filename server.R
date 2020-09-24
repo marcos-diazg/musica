@@ -24,7 +24,7 @@ shinyServer(function(input, output,session){
 
    #Setting maximum file size for uploading (1000 MB)
    options(shiny.maxRequestSize=1000*1024^2)
-   options(shiny.sanitize.errors = TRUE)   
+   options(shiny.sanitize.errors = TRUE)
    #Resolution of the tiff images
    ppi<-200
 
@@ -196,15 +196,17 @@ shinyServer(function(input, output,session){
             aux_list<-split(aux,f=aux$Tumor_Sample_Barcode)
             aux_list<-lapply(aux_list,"[",c(1:7))
             ff<-sapply(aux_list,function(i){tempfile(pattern="tp",fileext=".vcf")})
+						new_ff = do.call("c",lapply(sapply(ff,strsplit,"[.]"),paste,collapse="_new."))
             for (i in 1:length(aux_list)){
                write.table(aux_list[[i]],file=ff[i],row.names=F,quote=F,sep="\t")
+							 system(paste0('echo "##fileformat=VCFv4.2" | cat - ',ff[i],' > ',new_ff[i]))
             }
 
 			#validate(
 			# need(length(names(ff))<=20,"samplenumber"),errorClass="numberofsamples"
 		 	#)
-
-            return(read_vcfs_as_granges(ff,names(ff),ref_genome(),group = "auto+sex", check_alleles = TRUE))
+						system(paste0('cat ', new_ff[i]))
+            return(read_vcfs_as_granges(new_ff,names(ff),ref_genome(),group = "auto+sex", check_alleles = TRUE))
          }
 
          #TSV
