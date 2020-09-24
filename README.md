@@ -32,9 +32,14 @@ conda env create -f musica_env.yml
 conda activate musica
 ```
 
+Subsequently, you will need to install the required R dependencies by using the following command in your shell.
+```shell
+Rscript musica_setup.R
+```
+
 ### Local version runnning
 
-Once you have the conda environment ready and activated, you can now launch the app on your local machine. Run R and copy the following commands.
+Once you have the conda environment ready and activated, as well as the R dependencies installed, you can now launch the app on your local machine. Run R and copy the following commands.
 
 ```{R}
 library(shiny)
