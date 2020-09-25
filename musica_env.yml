@@ -69,6 +69,7 @@ dependencies:
   - pcre2=10.35=h977ceac_0
   - pip=20.2.2=py38_0
   - pixman=0.38.0=h01d97ff_1003
+  - pkg-config=0.29.2
   - python=3.8.5=h26836e1_1
   - python_abi=3.8=1_cp38
   - r-base=4.0.2=hc30ca75_1
