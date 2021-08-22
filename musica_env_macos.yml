@@ -1,4 +1,4 @@
-name: musica_macos
+name: musica
 channels:
   - conda-forge
   - defaults
