@@ -3,6 +3,8 @@
 <p>
 <a href="https://github.com/marcos-diazg/musica/releases" alt="latest release version">
   <img src="https://img.shields.io/github/release/marcos-diazg/musica.svg" /></a>
+<a href="https://github.com/marcos-diazg/musica/issues">
+  <img src="https://img.shields.io/github/issues/marcos-diazg/musica"</a>
 <a href="http://bioinfo.ciberehd.org:3838/MuSiCa/">
   <img src="https://img.shields.io/website?down_color=lightgrey&down_message=not%20available%20online%20version&up_color=green&up_message=online%20version&url=http%3A%2F%2Fbioinfo.ciberehd.org%3A3838%2FMuSiCa%2F" /></a>
 </p>
