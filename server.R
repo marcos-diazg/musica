@@ -180,7 +180,7 @@ shinyServer(function(input, output,session){
          #MAF
          if (input$datatype=="MAF"){
 
-            aux<-fread(inFile$datapath,header=T,sep="\t",skip="#",data.table=F)
+            aux<-fread(inFile$datapath,header=T,sep="\t",data.table=F)
             aux<-aux[,c("Chromosome","Start_Position","Reference_Allele","Tumor_Seq_Allele2","Tumor_Sample_Barcode")]
             colnames(aux)[1:4]<-c("#CHROM","POS","REF","ALT")
 
