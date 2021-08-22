@@ -173,7 +173,7 @@ shinyServer(function(input, output,session){
          if (input$datatype=="VCF"){
 
          #Read vcf for MutationalPatterns
-            return(read_vcfs_as_granges(inFile$datapath,inFile$name,ref_genome(),group = "auto+sex", check_alleles = TRUE))
+            return(read_vcfs_as_granges(inFile$datapath,inFile$name,ref_genome(),group = "auto+sex"))#, check_alleles = TRUE))
          }
 
 
@@ -205,7 +205,7 @@ shinyServer(function(input, output,session){
 			#validate(
 			# need(length(names(ff))<=20,"samplenumber"),errorClass="numberofsamples"
 		 	#)
-            return(read_vcfs_as_granges(new_ff,names(ff),ref_genome(),group = "auto+sex", check_alleles = TRUE))
+            return(read_vcfs_as_granges(new_ff,names(ff),ref_genome(),group = "auto+sex"))#, check_alleles = TRUE))
          }
 
          #TSV
@@ -234,7 +234,7 @@ shinyServer(function(input, output,session){
 
             ff<-do.call("c",new_ff_list)
 
-            return(read_vcfs_as_granges(ff,inFile$name,ref_genome(),group = "auto+sex", check_alleles = TRUE))
+            return(read_vcfs_as_granges(ff,inFile$name,ref_genome(),group = "auto+sex"))#, check_alleles = TRUE))
          }
 
          #Excel
@@ -269,7 +269,7 @@ shinyServer(function(input, output,session){
 
 						ff<-do.call("c",new_ff_list)
 
-            return(read_vcfs_as_granges(ff,inFile$name,ref_genome(),group = "auto+sex", check_alleles = TRUE))
+            return(read_vcfs_as_granges(ff,inFile$name,ref_genome(),group = "auto+sex"))#, check_alleles = TRUE))
          }
 
 
