@@ -25,7 +25,9 @@ git clone https://github.com/marcos-diazg/musica.git
 cd musica
 ```
 
-Please execute the following command to install and activate the required environment to run MuSiCa on your local machine. You will need to have conda installed. A quick way to do this is by installing miniconda3, available for different platforms at https://docs.conda.io/en/latest/miniconda.html.
+Please execute the following commands to install and activate the required environment to run MuSiCa on your local machine. You will need to have conda installed. A quick way to do this is by installing miniconda3, available for different platforms at https://docs.conda.io/en/latest/miniconda.html.
+
+#### Linux
 
 ```shell
 conda env create -f musica_env.yml
@@ -35,6 +37,12 @@ conda activate musica
 Subsequently, you will need to install the required R dependencies by using the following command in your shell.
 ```shell
 Rscript musica_setup.R
+```
+
+#### macOS
+
+```shell
+source musica_setup_macos.sh
 ```
 
 ### Local version runnning
