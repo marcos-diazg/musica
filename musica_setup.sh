@@ -1,9 +1,9 @@
-# Script to install environment for MuSiCa on macOS
+# Script to install environment for MuSiCa
 # Author: Marcos Díaz-Gay
 # Date: Aug 22, 2021
-# Conda environment: musica_macos
+# Conda environment: musica
 
-conda env create -f musica_env_macos.yml
+conda env create -f musica_env.yml
 conda activate musica
 
 echo 'devtools::install_github("AnalytixWare/ShinySky")' | Rscript -
