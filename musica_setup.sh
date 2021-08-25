@@ -4,7 +4,9 @@
 # Conda environment: musica
 
 conda env create -f musica_env.yml
+
 conda activate musica
+source activate musica
 
 echo 'devtools::install_github("AnalytixWare/ShinySky")' | Rscript -
 echo 'webshot::install_phantomjs(force=TRUE)' | Rscript -
