@@ -1,3 +1,8 @@
+> [!WARNING]  
+> ## MuSiCa has now been deprecated and will not be updated. We suggest transitioning to our new [SigProfilerAssignment](https://github.com/AlexandrovLab/SigProfilerAssignment) tool, with an online web version available at https://cancer.sanger.ac.uk/signatures/assignment/, and recently published ([Díaz-Gay _et al._ 2023 Bioinformatics](https://doi.org/10.1093/bioinformatics/btad756)).
+
+---------
+
 # MuSiCa - Mutational Signatures in Cancer
 
 <p>
@@ -5,10 +10,8 @@
   <img src="https://img.shields.io/github/release/marcos-diazg/musica.svg" /></a>
 <a href="https://github.com/marcos-diazg/musica/issues">
   <img src="https://img.shields.io/github/issues/marcos-diazg/musica"</a>
-<a href="https://toolsr.fcrb.es/sample-apps/MuSiCa/">
-  <img src="https://img.shields.io/website?down_color=lightgrey&down_message=not%20available%20online%20version&up_color=green&up_message=online%20version&url=http%3A%2F%2Ftoolsr.fcrb.es%2Fsample-apps%2FMuSiCa%2F" /></a>
 </p>
-
+  
 MuSiCa (Mutational Signatures in Cancer) is a shiny-based web application aimed to visualize the somatic mutational profile of a series of provided samples (different formats are allowed) and to extract the contribution of the reported mutational signatures ([Alexandrov L.B. et al., Nature (2013)](http://dx.doi.org/10.1038/nature12477), [Catalogue Of Somatic Mutations In Cancer, COSMIC (2020)](http://cancer.sanger.ac.uk/cosmic/signatures)) on their variation profile. It is mainly based on the MutationalPatterns R package ([Blokzijl et al., Genome Medicine (2018)](https://doi.org/10.1186/s13073-018-0539-0)).
 
 Please give credit and cite MuSiCa app when you use it for your genomic analysis ([Díaz-Gay et al., BMC Bioinformatics (2018)](https://doi.org/10.1186/s12859-018-2234-y)).
